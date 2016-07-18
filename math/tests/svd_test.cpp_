@@ -1,0 +1,193 @@
+#include <stdio.h>
+#include <iostream>
+#include "opencv2/core.hpp"
+#include "mio/altro/opencv.hpp"
+#include "mio/altro/casting.hpp"
+
+
+void powerFunctionFit(){
+  //y = ax^b
+  //log(y) = log(a) + blog(x)
+
+  //generate some x,y points based on an arbitrary power function
+  double alpha = 1.0f/3.0f,
+         beta = 2;
+  cv::Mat x_data(10, 1, CV_32F), y_data(10, 1, CV_32F);
+  double val = 2;
+  for(int i = 0; i < 25; ++i, val+=0.5){
+    x_data.at<float>(i) = val;
+    y_data.at<float>(i) = alpha*std::pow(val, beta);
+  }
+  std::cout << x_data << std::endl << y_data << std::endl;
+
+  //sanity check
+  for(int i = 0; i < 10; ++i)
+    printf( "%f = %f\n", std::log( y_data.at<float>(i) ), beta * std::log( x_data.at<float>(i) ) + std::log(alpha) );
+
+  //setup linear system Ax = b
+  cv::Mat A(10, 2, CV_32F), b, x_data_log;
+  cv::log(y_data, b);
+  A.col(0).setTo(1);
+  cv::log(x_data, x_data_log);
+  x_data_log.copyTo( A.col(1) );
+
+  std::cout << A << std::endl << b << std::endl;
+
+  //solve for solution vector x
+  cv::Mat x, x_exp;
+  cv::solve(A, b, x, cv::DECOMP_SVD);
+  x.copyTo(x_exp);
+  x_exp.at<float>(0) = cv::exp( x_exp.at<float>(0) ); //first coefficient needs log canceled out (it's a constant)
+  std::cout << x << std::endl << x_exp << std::endl;
+}
+
+
+//Ax = b
+void solveLinearEquation(){
+  // 3x + 2y = 7
+  // -6x + 6y = 6
+  float data_a[2][2] = { { 3, 2},
+                         {-6, 6} };
+
+  float data_b[2][1] = { {7},
+                         {6} };
+
+  cv::Mat A = cv::Mat(2, 2, CV_32FC1, data_a);
+  cv::Mat b = cv::Mat(2, 1, CV_32FC1, data_b);
+
+  cv::Mat x = A.inv() * b;
+  std::cout << "x = " << std::endl << " " << x << std::endl;
+}
+
+
+float GetPolySolution(const float val, const cv::Mat coef){
+  float out = 0;
+  for(int i = 0; i < coef.rows; ++i)
+    out += coef.at<float>(i) * pow(val, i);
+  return(out);
+}
+
+
+/*
+2 * i  +  -3 * j  = -2
+4 * i  +   1 * j  = 24
+
+
+Ax = b
+
+A = [ 2, -3
+      4,  1 ]
+b = [ -2
+      24 ]
+x = [ i
+      j ]
+
+
+x = [ 5
+      4 ]
+
+2 * 5  +  -3 * 4  = -2
+4 * 5  +   1 * 4  = 24
+*/
+void SolveTest(bool use_my_solve_svd){
+  double a1[] = {2, -3,
+                 4,  1};
+
+  cv::Mat A(2, 2, CV_64F, a1),
+          b = (cv::Mat_<double>(2, 1) << -2, 24), x;
+
+  if(use_my_solve_svd)
+    mio::SolveSVD(A, b, x, 2, false);
+  else
+    cv::solve(A, b, x, cv::DECOMP_SVD); //default is cv::DECOMP_LU
+
+  std::cout << "A:" << std::endl << A << std::endl;
+  std::cout << "x:" << std::endl << x << std::endl;
+  std::cout << "b:" << std::endl << b << std::endl << std::endl;
+}
+
+
+/*
+A = [ 1     , x_0  , x_0^2 ;
+      1     , x_1  , x_1^2 ;
+      1     , x_2  , x_2^2 ;
+      ...     ...    ...   ]
+
+b = [ y_0,
+      y_1,
+      ...,
+      y_n ]
+*/
+void PolySolveTest1(const int polynomial_degree, bool use_my_solve_svd){
+  const int data_length = 10;
+  const int num_terms = polynomial_degree + 1;
+
+  float x[10], y[10], val;
+
+  for(int i = 0; i < data_length; i++){
+    val = i;
+    x[i] = val;
+    y[i] = (1.0f) + (2.0f*val) + (3.0f*val*val);
+  }
+  cv::Mat A(data_length, num_terms, CV_32F),
+          b(data_length, 1, CV_32F, y), coefficient_matrix;
+
+  A.col(0).setTo(1.0f);
+  for(int r = 0; r < data_length; r++)
+    for(int c = 1; c < num_terms; c++)
+      A.at<float>(r, c) = pow(x[r], c);
+
+  if(use_my_solve_svd)
+    mio::SolveSVD(A, b, coefficient_matrix, 3, false);
+  else
+    cv::solve(A, b, coefficient_matrix, cv::DECOMP_SVD); //default is cv::DECOMP_LU
+
+  std::cout << "A: " << std::endl << A << std::endl;
+  std::cout << "b: " << std::endl << b << std::endl;
+  std::cout << "coefficient_matrix: " << std::endl << coefficient_matrix << std::endl;
+}
+
+
+void PolySolveTest2(const int polynomial_degree, bool use_my_solve_svd){
+  const int data_length = 50;
+  const int num_terms = polynomial_degree + 1;
+
+  float x[data_length], y[data_length], val = 0;
+
+  for(int i = 0; i < data_length; ++i){
+    x[i] = val;
+    y[i] = pow( x[i], sin(x[i]) );
+    val += 0.2f;
+  }
+  cv::Mat A(data_length, num_terms, CV_32F),
+          b(data_length, 1, CV_32F, y), coefficient_matrix;
+
+  A.col(0).setTo(1.0f);
+  for(int r = 0; r < data_length; r++)
+    for(int c = 1; c < num_terms; c++)
+      A.at<float>(r, c) = pow(x[r], c);
+
+  if(use_my_solve_svd)
+    mio::SolveSVD(A, b, coefficient_matrix, 3, false);
+  else
+    cv::solve(A, b, coefficient_matrix, cv::DECOMP_SVD); //default is cv::DECOMP_LU
+
+  std::cout << "A: " << std::endl << A << std::endl;
+  std::cout << "b: " << std::endl << b << std::endl;
+  std::cout << "coefficient_matrix: " << std::endl << coefficient_matrix << std::endl;
+  for(int i = 0; i < data_length; ++i)
+    printf( "%f, %f, %f\n", x[i], y[i], GetPolySolution(x[i], coefficient_matrix) );
+}
+
+
+int main(int argc, char *argv[]){
+  SolveTest(false);
+  SolveTest(true);
+//  PolySolveTest2(atoi(argv[1]), false);
+//  PolySolveTest2(atoi(argv[1]), true);
+
+//  powerFunctionFit();
+
+  return(0);
+}
+

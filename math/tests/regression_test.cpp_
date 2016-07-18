@@ -1,0 +1,178 @@
+#include <stdio.h>
+#include <iostream>
+#include "opencv2/core.hpp"
+#include "mio/altro/opencv.hpp"
+#include "mio/altro/types.hpp"
+
+
+void InitDataStructs_linearModel(cv::Mat &b, cv::Mat &A, cv::Mat &y_data_col, const bool simple = true){
+  const size_t num_poly_term = simple ? 1 : 4,
+               num_train_sample = 100;
+  std::vector<double> x_data_vec(num_train_sample),
+                      y_data_vec(num_train_sample);
+  const double mean = 0.0, stddev = 0.01;
+  mio::CRandNum<double> rand_num(mean, std_dev);
+
+  //generate polynomial data
+  //NOTE: this is technically not a polynomial because of the 0.75 exponent
+  for(size_t i = 0; i < num_train_sample; ++i){
+    const double x = i + 1;
+    x_data_vec[i] = x;
+    if(simple)
+      y_data_vec[i] = 2*x*x;
+    else{
+      y_data_vec[i] = 5.25 + 3.75*x + 1.33*x*x + 4.52*std::pow(static_cast<double>(x), 0.75);
+      y_data_vec[i] += rand_num.GetRandNum(); //add some noise for fun
+    }
+  }
+  cv::Mat x_data_col = cv::Mat(x_data_vec, true);
+  y_data_col = cv::Mat(y_data_vec, true);
+  STD_INVALID_ARG_E(x_data_col.rows == y_data_col.rows && x_data_col.cols == y_data_col.cols &&
+                    x_data_col.cols == 1)
+
+  b = y_data_col;
+
+  //this deisgn matrix, A, is set up specifically for the data generated above
+  A = cv::Mat( num_train_sample, num_poly_term, x_data_col.type() );
+  if(simple)
+    cv::pow( x_data_col, 2, A.col(0) ); //x^0
+  else{
+    A.col(0).setTo(1.0); //x^0
+    x_data_col.copyTo( A.col(1) ); //x^1
+    cv::pow( x_data_col, 2, A.col(2) ); //x^2
+    cv::pow( x_data_col, .75, A.col(3) ); //x^3
+  }
+
+  std::cout << "True Linear Coeff: \n" << ( simple ? (cv::Mat_<double>(1, 1) << 2) :
+                                                     (cv::Mat_<double>(1, 4) << 5.25, 3.75, 1.33, 4.52) ) << std::endl;
+}
+
+
+void MySolveSVD_linearModel(const cv::Mat &b, const cv::Mat &A){
+  cv::Mat x;
+  mio::SolveSVD(A, b, x);
+  std::cout << "MySolveSVD_linearModel()\n" << x.t() << std::endl;
+}
+
+
+void SolveOpenCV_linearModel(const cv::Mat &b, const cv::Mat &A){
+  cv::Mat x;
+  cv::solve(A, b, x, cv::DECOMP_SVD);
+  std::cout << "SolveOpenCV_linearModel()\n" << x.t() << std::endl;
+}
+
+
+/*
+y = 5.25 + 3.75*x + 1.33*x^2 + 4.52*x^0.75
+a = [a_0; a_1; a_2; a_3]
+f(x) = a_0 + a_1*x + a_2*x^2 + a_3*x^0.75
+*/
+void SolveGD_linearModel(const cv::Mat &X, const cv::Mat &y_data_col, const bool simple = true){
+  STD_INVALID_ARG_E(X.rows == y_data_col.rows && y_data_col.cols == 1) //TODO: normalize X
+  const double alpha = 0.00000001,
+               lambda = 0,
+               m = X.rows;
+  const size_t num_iter = 50000;
+
+  //normalize the features
+  cv::Mat X_norm( X.size(), X.type() );
+  cv::Scalar mean, stddev;
+  if(simple){
+    cv::meanStdDev(X, mean, stddev);
+    X_norm = (X - mean[0]) * (1.0/stddev[0]);
+  }
+  else{
+    X_norm.col(0).setTo(1.0);
+    for(size_t i = 0; i < X.cols; ++i){
+      cv::meanStdDev(X.col(i), mean, stddev);
+      X_norm.col(i) = (X.col(i) - mean[0]) * (1.0/stddev[0]);
+    }
+  }
+  X_norm = X;
+
+  cv::Mat a = simple ? (cv::Mat_<double>(1, 1) << 1) : (cv::Mat_<double>(4, 1) << 5.2, 3.5, 1.2, 4.4), a_temp;
+  for(size_t i = 0; i < num_iter; ++i){
+    //a_temp = a * ( 1 - ( (alpha*lambda)/m ) ) - (alpha/m) * X_norm.t() * (X_norm*a - y_data_col);
+    a_temp = a - (alpha/m) * X_norm.t() * (X_norm*a - y_data_col);
+    a_temp.copyTo(a);
+  }
+
+  std::cout << "SolveGD_linearModel()\n" << a.t() << std::endl;
+}
+
+
+//estimate a and b in power function y = ax^b
+//convert to linear equation so we can use a linear solver
+//log(y) = log(ax^b)
+//log(y) = log(a) + b*log(x)
+void InitDataStructs_powerFunc(cv::Mat &b, cv::Mat &A, cv::Mat &y_data_col){
+  const size_t num_train_sample = 20;
+  std::vector<double> x_data_vec(num_train_sample),
+                      y_data_vec(num_train_sample);
+  const double mean = 0.0, stddev = 0.01;
+  mio::CRandNum<double> rand_num(mean, std_dev);
+
+  //generate power function data
+  const double alpha = 11.33,
+               beta = 2.75;
+  for(size_t i = 0, j = 1; i < num_train_sample; ++j){
+    const double x = j,
+                 y = alpha*std::pow(x, beta);
+    if(x > 0 && y > 0){ //can't have any zero data to perform regression on power function
+      x_data_vec[i] = x;
+      y_data_vec[i] = y;
+      //y_data_vec[i] += rand_num.GetRandNum(); //add some noise for fun
+      ++i;
+    }
+  }
+  cv::Mat x_data_col = cv::Mat(x_data_vec, true);
+  y_data_col = cv::Mat(y_data_vec, true);
+  STD_INVALID_ARG_E(x_data_col.rows == y_data_col.rows && x_data_col.cols == y_data_col.cols &&
+                    x_data_col.cols == 1)
+
+  cv::log(y_data_col, b); //notice here we are taking the log of the training outputs
+
+  //this deisgn matrix, A, is set up specifically for the data generated above
+  A = cv::Mat( num_train_sample, 2, x_data_col.type() );
+  A.col(0).setTo(1);
+  cv::log( x_data_col, A.col(1) );
+
+  std::cout << "True Power Coefficients: \n" << (cv::Mat_<double>(1, 2) << alpha, beta) << std::endl;
+}
+
+
+void MySolveSVD_powerFunc(const cv::Mat &b, const cv::Mat &A){
+  cv::Mat x;
+  mio::SolveSVD(A, b, x);
+  //convert constant coefficients
+  cv::Mat x_first_elem = x( cv::Range(0, 1), cv::Range(0, 1) );
+  cv::exp(x_first_elem, x_first_elem);
+  std::cout << "MySolveSVD_powerFunc()\n" << x.t() << std::endl;
+}
+
+
+void SolveOpenCV_powerFunc(const cv::Mat &b, const cv::Mat &A){
+  cv::Mat x;
+  cv::solve(A, b, x, cv::DECOMP_SVD);
+  //convert constant coefficients
+  cv::Mat x_first_elem = x( cv::Range(0, 1), cv::Range(0, 1) );
+  cv::exp(x_first_elem, x_first_elem);
+  std::cout << "SolveOpenCV_powerFunc()\n" << x.t() << std::endl;
+}
+
+
+int main(int argc, char *argv[]){
+  const bool simple = false;
+  cv::Mat b, A, y_data_col;
+  InitDataStructs_linearModel(b, A, y_data_col, simple);
+//  MySolveSVD_linearModel(b, A);
+  SolveOpenCV_linearModel(b, A);
+  SolveGD_linearModel(A, y_data_col, simple);
+//  std::cout << "\n";
+//  InitDataStructs_powerFunc(b, A, y_data_col);
+//  MySolveSVD_powerFunc(b, A);
+//  SolveOpenCV_powerFunc(b, A);
+
+  return 0;
+}
+

@@ -1,0 +1,6 @@
+struct lcm_create_shm_t
+{
+    string shm_name;
+    int32_t shm_size;
+    int64_t numeric_id;
+}

@@ -1,0 +1,15 @@
+struct lcm_opencv_mat_t
+{
+    int32_t rows;
+    int32_t cols;
+    int32_t channels;
+    int32_t openCvType;
+    int32_t length;
+    int8_t data[length];
+    /* The number of bits used to meausure a pixel value in a camera is not necessarily 8, 16, 32, etc. bits.  
+       Some cameras use non-byte-multiples such as 12 or 14 bits.  bits_in_use holds this number. */
+    int32_t bits_in_use; 
+    boolean error; /*could be a timeout. current usage is to tell videoDisplayWidget to use its local UpdateDisplay()*/
+    int32_t id;
+    int32_t index;
+}
