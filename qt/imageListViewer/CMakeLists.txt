@@ -20,9 +20,7 @@ if(BUILD_IMG_LIST_VIEWER_SELF)
   ## Qt5
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
-  if(IMG_LIST_VIEWER_FIND_QT5)
-    find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
-  endif()
+  find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
   ## OpenCV
   find_package(OpenCV REQUIRED)#HINTS /usr/local/src/share)
