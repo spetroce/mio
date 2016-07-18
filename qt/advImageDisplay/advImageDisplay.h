@@ -33,6 +33,7 @@
 
 
 struct Roi{
+  //enum Type{RECT = 0, POLY, CENTER_CIRCLE, DRAG_CIRCLE};
   static const int ROI_RECT = 0,
                    ROI_POLY = 1,
                    ROI_CENTER_CIRCLE = 2,
@@ -40,11 +41,10 @@ struct Roi{
   static constexpr std::array<const char*, 4> roi_type_str = {"rect", "poly", "cent-circ", "drag-circ"};
 
   std::mutex mutex;
-  bool creating_flag;
   int type;
   std::vector<cv::Point2f> vertices;
 
-  Roi() : creating_flag(false), type(-1) {};
+  Roi() : type(-1) {};
 };
 
 
@@ -61,7 +61,7 @@ class AdvImageDisplay : public QWidget{
   QImage qt_disp_img_;
   cv::Mat cv_disp_img_;
 
-  Roi roi_data_;
+  Roi roi_data_, disp_roi_;
   std::mutex roi_mask_mtx_;
   cv::Mat roi_mask_, roi_mask_resize_;
   std::vector<Roi> roi_vec_;
@@ -91,7 +91,7 @@ class AdvImageDisplay : public QWidget{
   std::mutex resize_total_mutex_;
   bool normalize_img_, convert_to_false_colors_;
 
-  SBackEndConvert bec_;
+  //SBackEndConvert bec_;
 
   bool is_init_;
 
@@ -104,8 +104,7 @@ class AdvImageDisplay : public QWidget{
     int id_;
     std::string m_new_frame_lcm_chan_name;
     std::mutex cv_disp_img_mtx_;
-    //TODO - there are two boolean flags to stop video display show_image_ and pause_display_
-    bool show_image_, pause_display_, limit_view_;
+    bool show_image_, limit_view_;
 
   public:
     AdvImageDisplay(QWidget *parent = NULL);
@@ -116,7 +115,8 @@ class AdvImageDisplay : public QWidget{
     void SetMaxImgSize(cv::Size size){};
     void GetRoi(const size_t idx, Roi &roi){};
     void GetRoi(const size_t idx, cv::Mat &roi){};
-    void CreateRoi(); //void AddRoi(const Roi &roi){};
+    void BeginCreateRoi(const int roi_type);
+    void AddRoi();
     void ClearRoi(){};
     void RemoveRoi();
     void ShowStripes();
