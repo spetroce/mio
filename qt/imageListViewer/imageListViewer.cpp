@@ -2,7 +2,7 @@
 #include "ui_imageListViewer.h"
 
 
-ImageListViewer::ImageListViewer(QWidget *parent) : QWidget(parent), ui(new Ui::ImageListViewer){
+ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidget(parent), ui(new Ui::ImageListViewer){
   ui->setupUi(this);
   adv_img_disp_ = new AdvImageDisplay();
   adv_img_disp_->Init(0, false);
@@ -15,11 +15,11 @@ ImageListViewer::ImageListViewer(QWidget *parent) : QWidget(parent), ui(new Ui::
   connect(ui->pb_prev_img, SIGNAL(clicked()), this, SLOT(DecrementImgIdxSlider()));
   connect(ui->pb_next_img, SIGNAL(clicked()), this, SLOT(IncrementImgIdxSlider()));
 
-  STD_RT_ERR_E(mio::FileExists(IMG_LIST_VIEWER_EARTH_JPEG_DIR"/earth.jpg"))
-  std::vector<std::string> img_file_name_vec = {"earth_.jpg"};
-//  SetImageList(IMG_LIST_VIEWER_EARTH_JPEG_DIR, img_file_name_vec);
-//  mio::GetDirList("/home/spetroce/code/src/testImages", std::vector<std::string>(), "tiff", img_file_name_vec);
-  SetImageList("/home/spetroce/code/src/testImages", img_file_name_vec);
+  if(show_earth){
+    STD_RT_ERR_E(mio::FileExists(IMG_LIST_VIEWER_EARTH_JPEG_DIR"/earth.jpg"))
+    std::vector<std::string> img_file_name_vec = {"earth.jpg"};
+    SetImageList(IMG_LIST_VIEWER_EARTH_JPEG_DIR, img_file_name_vec);
+  }
 }
 
 
