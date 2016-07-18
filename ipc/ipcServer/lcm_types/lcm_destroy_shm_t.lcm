@@ -1,0 +1,4 @@
+struct lcm_destroy_shm_t
+{
+    string shm_name;
+}

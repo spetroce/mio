@@ -1,0 +1,4 @@
+struct lcm_double_t
+{
+    double val;
+}

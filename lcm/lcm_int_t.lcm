@@ -1,0 +1,4 @@
+struct lcm_int_t
+{
+    int32_t val;
+}

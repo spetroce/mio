@@ -1,0 +1,4 @@
+struct lcm_string_t
+{
+    string str;
+}
