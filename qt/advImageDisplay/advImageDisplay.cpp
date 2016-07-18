@@ -1,7 +1,7 @@
 #include "advImageDisplay.h"
 
 
-AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false), 
+AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
     pause_display_(false), is_init_(false), limit_view_(false){
   bec_.perform = false;
@@ -47,7 +47,7 @@ void AdvImageDisplay::Init(const int id, const bool manage_layout){
   // Handle key press events, you must click on the video display so it can receive KeyPress events
   label_->setFocusPolicy(Qt::StrongFocus);
 
-  cv::Mat img_type_error = cv::imread("/modules/common/resources/stripes_type_error.png");
+  //cv::Mat img_type_error = cv::imread("/modules/common/resources/stripes_type_error.png");
   SetupMat2QImage();
   //OpenCVMat2QImage(img_type_error, m_img_type_error_qt, true); //TODO - check for error here
 
@@ -120,7 +120,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
             disp_roi.mutex.lock();
             if(disp_roi.type == Roi::ROI_RECT ||
                disp_roi.type == Roi::ROI_CENTER_CIRCLE || disp_roi.type == Roi::ROI_DRAG_CIRCLE){
-              disp_roi.mutex.unlock();              
+              disp_roi.mutex.unlock();
               CreateRoi(); //CreateROI() calls SendPptFrameLcm()
               disp_roi.mutex.lock();
             }
@@ -146,7 +146,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
           QKeyEvent *keyEvent = mio::StaticCastPtr<QKeyEvent>(event);
           const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
           disp_roi.mutex.lock();
-          if(disp_roi.type == Roi::ROI_POLY && disp_roi.vertices.size() > 3 && 
+          if(disp_roi.type == Roi::ROI_POLY && disp_roi.vertices.size() > 3 &&
              keyEvent->key() == Qt::Key_Space && modifiers == Qt::NoButton){
             disp_roi.vertices.pop_back();
             disp_roi.mutex.unlock();
@@ -159,21 +159,25 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         }
         break;
       case QEvent::Wheel:
-        QWheelEvent *wheel_event = mio::StaticCastPtr<QWheelEvent>(event);
-        zoom_info_tmp_.scroll_wheel_count += wheel_event->delta()/120;
-        if(zoom_info_tmp_.scroll_wheel_count < 0)
-          zoom_info_tmp_.scroll_wheel_count = 0;
-        zoom_info_tmp_.pixmap_mouse_pos = cv::Point2f(wheel_event->x(), wheel_event->y());
-        UpdateZoom(zoom_info_tmp_);
-        UpdateDisplay();
+        {
+          QWheelEvent *wheel_event = mio::StaticCastPtr<QWheelEvent>(event);
+          zoom_info_tmp_.scroll_wheel_count += wheel_event->delta()/120;
+          if(zoom_info_tmp_.scroll_wheel_count < 0)
+            zoom_info_tmp_.scroll_wheel_count = 0;
+          zoom_info_tmp_.pixmap_mouse_pos = cv::Point2f(wheel_event->x(), wheel_event->y());
+          UpdateZoom(zoom_info_tmp_);
+          UpdateDisplay();
+          break;
+        }
+      default:
         break;
     }
   }
-//  else if( (target == ui->scrollAreaWidgetContents_cv || target == ui->scrollAreaWidgetContents_misc) && 
+//  else if( (target == ui->scrollAreaWidgetContents_cv || target == ui->scrollAreaWidgetContents_misc) &&
 //           event->type() == QEvent::Resize ){ //Scroll Widget Resize (only happens once on program startup)
-//    ui->scrollArea_cv->setMinimumWidth( ui->scrollAreaWidgetContents_cv->minimumSizeHint().width() + 
+//    ui->scrollArea_cv->setMinimumWidth( ui->scrollAreaWidgetContents_cv->minimumSizeHint().width() +
 //                                        ui->scrollArea_cv->verticalScrollBar()->width() );
-//    ui->scrollArea_misc->setMinimumWidth( ui->scrollAreaWidgetContents_misc->minimumSizeHint().width() + 
+//    ui->scrollArea_misc->setMinimumWidth( ui->scrollAreaWidgetContents_misc->minimumSizeHint().width() +
 //                                          ui->scrollArea_misc->verticalScrollBar()->width() );
 //  }
 
@@ -182,13 +186,13 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
 
 
 cv::Point2f AdvImageDisplay::View2Image(const cv::Point2f &view_pnt){
-  return cv::Point2f( (view_pnt.x*prev_zoom_ + origin_.x) * max_scale_inv_, 
+  return cv::Point2f( (view_pnt.x*prev_zoom_ + origin_.x) * max_scale_inv_,
                       (view_pnt.y*prev_zoom_ + origin_.y) * max_scale_inv_ );
 }
 
 
 cv::Point2f AdvImageDisplay::Image2View(const cv::Point2f &img_pnt){
-  return cv::Point2f( (img_pnt.x - origin_bounded_.x) / zoom_scaler_ / max_scale_inv_, 
+  return cv::Point2f( (img_pnt.x - origin_bounded_.x) / zoom_scaler_ / max_scale_inv_,
                       (img_pnt.y - origin_bounded_.y) / zoom_scaler_ / max_scale_inv_ );
 }
 
@@ -212,7 +216,7 @@ void AdvImageDisplay::UpdateZoom(zoomInfo_t &zoom_info){
   //m_mtx.lock();
     zoom_info_ = zoom_info;
     const float zoom_factor_step_size = 0.025f;
-    if(is_zoom_ = zoom_info_.scroll_wheel_count > 0) //if true, check for a minimum of 20 horizontal pixels
+    if((is_zoom_ = zoom_info_.scroll_wheel_count > 0)) //if true, check for a minimum of 20 horizontal pixels
       while( cv_disp_img_.cols * (1.0f - static_cast<float>(zoom_info_.scroll_wheel_count)*zoom_factor_step_size) < 20 )
         if(zoom_info_.scroll_wheel_count-1 > 0)
           zoom_info_.scroll_wheel_count--;
@@ -224,7 +228,7 @@ void AdvImageDisplay::UpdateZoom(zoomInfo_t &zoom_info){
       ResetZoom();
 
     if(is_zoom_){
-      //if zoom_info wheel count should take the updated value if it was too large 
+      //if zoom_info wheel count should take the updated value if it was too large
       zoom_info.scroll_wheel_count = zoom_info_.scroll_wheel_count;
 
       zoom_scaler_ = 1.0f - static_cast<float>(zoom_info_.scroll_wheel_count)*zoom_factor_step_size;
@@ -232,10 +236,10 @@ void AdvImageDisplay::UpdateZoom(zoomInfo_t &zoom_info){
       zoom_region_size_ = cv::Point2f(frameSize.width*zoom_scaler_, frameSize.height*zoom_scaler_);
 
       //scale the mouse position by the last zoom_scaler_
-      cv::Point2f scaledMouse = cv::Point2f(zoom_info_.pixmap_mouse_pos.x*prev_zoom_, 
+      cv::Point2f scaledMouse = cv::Point2f(zoom_info_.pixmap_mouse_pos.x*prev_zoom_,
                                             zoom_info_.pixmap_mouse_pos.y*prev_zoom_);
       //find the new origin within the last scaled image and add it to the last origin_
-      origin_ = cv::Point2f( origin_.x + ( scaledMouse.x - scaledMouse.x*(zoom_scaler_/prev_zoom_) ), 
+      origin_ = cv::Point2f( origin_.x + ( scaledMouse.x - scaledMouse.x*(zoom_scaler_/prev_zoom_) ),
                               origin_.y + ( scaledMouse.y - scaledMouse.y*(zoom_scaler_/prev_zoom_) ) );
 
       prev_zoom_ = zoom_scaler_;
@@ -279,7 +283,7 @@ void AdvImageDisplay::UpdateDisplay(){
       if(origin_bounded_.y + zoom_region_size_.height > cv_disp_img_.rows)
         zoom_region_size_.height = static_cast<float>(cv_disp_img_.rows) - origin_bounded_.y;
 
-      zoom_img_ = cv::Mat(cv_disp_img_, cv::Rect(origin_bounded_.x, origin_bounded_.y, 
+      zoom_img_ = cv::Mat(cv_disp_img_, cv::Rect(origin_bounded_.x, origin_bounded_.y,
                                                  zoom_region_size_.width, zoom_region_size_.height));
       if(max_img_size == zoom_img_.size()) //don't call resize if we don't have to
         final_img_ = zoom_img_.clone();
@@ -349,7 +353,7 @@ void AdvImageDisplay::Image2View(const std::vector<cv::Point2f> &src, std::vecto
 }
 
 
-//TODO - there could be a race between the image processing loop and the data used to draw the ROI's, that is, 
+//TODO - there could be a race between the image processing loop and the data used to draw the ROI's, that is,
 //maybe the Roi should be emitted with each frame.
 void AdvImageDisplay::DrawRoi(cv::Mat &img){
   cv::Scalar color = img.channels() > 1 ? cv::Scalar(0, 0, 0) : cv::Scalar(255, 255, 255);
