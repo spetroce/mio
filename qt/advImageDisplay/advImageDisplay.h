@@ -31,29 +31,6 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/core.hpp"
 
-//#include "mio/lcm/lcmTypes.h"
-//#include "mio/lcm/qtLcmUtils.h"
-//#include "mio/lcm/lcmTypes.h"
-//#include "mio/ipc/shMem.h"
-//#include "mio/ipc/sem.h"
-//#include "mio/ipc/macro.h"
-//#include "mio/lcm/lcmUtils.h"
-
-/*#include "videoDisplayWidget.h"*/
-/*#include "imgProcQueue.h"*/
-/*#include "videoCVWidget.h"*/
-/*#ifdef HAVE_QWT*/
-/*#include "histogram.h"*/
-/*#endif*/
-/*#include "videoCVWidgetCVFunc.h"*/
-/*#include "icvLcmTypes.h"*/
-/*#include "videoCVDisplay.h"*/
-/*#include "settingEditor.h"*/
-/*#include "infraCvConfig.h"*/
-/*#include "ui_videoCVWidget.h"*/
-/*#include "infraCvConfig.h"*/
-/*#include "lcmChannels.h"*/
-
 
 struct Roi{
   static const int ROI_RECT = 0,

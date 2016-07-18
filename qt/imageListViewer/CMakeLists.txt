@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(ImageListViewer)
 
-option(BUILD_IMG_LIST_VIEWER_TEST "Build imageListViewer test executable" ON)
-option(BUILD_IMG_LIST_VIEWER_SELF "Turn on if compiling imageListViewer alone" ON)
+option(BUILD_IMG_LIST_VIEWER_TEST "Build imageListViewer test executable" OFF)
+option(BUILD_IMG_LIST_VIEWER_SELF "Turn on if compiling imageListViewer alone" OFF)
 
 if(BUILD_IMG_LIST_VIEWER_SELF)
   ## User defined library/include paths
