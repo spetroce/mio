@@ -37,7 +37,7 @@ inline time_t GetEpochTime(const uint32_t year, const uint8_t month, const uint8
 }
 
 inline time_t GetEpochTime(const TimeStamp ts){
-  GetEpochTime(ts.year, ts.month, ts.day, ts.hour, ts.min, ts.sec);
+  return GetEpochTime(ts.year, ts.month, ts.day, ts.hour, ts.min, ts.sec);
 }
 
 
@@ -51,12 +51,12 @@ typedef class FileDescript{
     long long int file_size;
     int num;
     time_t epoch_time_;
-    
+
     FileDescript() : ext_sep("."){};
-    
-    FileDescript(std::string file_full_, std::string ext_sep_ = ".") : 
+
+    FileDescript(std::string file_full_, std::string ext_sep_ = ".") :
                   file_full(file_full_), ext_sep(ext_sep_) {};
-                  
+
     void ExpandFileName(){
       if( !(file_full.empty() || ext_sep.empty()) )
         FileNameExpand(*this);
@@ -84,7 +84,7 @@ typedef class FileDescript{
 
 inline int PathType(const char *file_full){
   struct stat stbuf;
-  
+
   if(stat(file_full, &stbuf) == 0){
     if(stbuf.st_mode & S_IFDIR) //it's a directory
       return 0;
@@ -138,7 +138,7 @@ inline long long int GetFileSize(const std::string file_full){
   //get the size of all files in a directory
 //  if( (stbuf.st_mode & S_IFMT) == S_IFDIR )
 //    lintsize = dirwalk(name, fsize);
-      
+
   llnSize = llnSize + stbuf.st_size;
   return(llnSize);
 }
@@ -160,22 +160,22 @@ inline void FormatFileExt(std::string &file_ext){
 }
 
 
-//Directory constants are the '.' and '..' files always present in a directory 
-inline int GetDirList(const std::string dir_path, std::vector<std::string> &dir_list_vec, 
+//Directory constants are the '.' and '..' files always present in a directory
+inline int GetDirList(const std::string dir_path, std::vector<std::string> &dir_list_vec,
                        const bool Remove_dir_constants, const bool print_flag = false){
   struct dirent *entry;
   DIR *dp;
   unsigned int unDirListSize = 0, idx;
   std::string name;
-  
+
   ERRNO_CHK_E((dp = opendir(dir_path.c_str())) != NULL, return(-1))
-  
+
   while( ( entry = readdir(dp) ) != 0 )
     unDirListSize++;
   rewinddir(dp);
   dir_list_vec.clear();
   dir_list_vec.resize(unDirListSize);
-  
+
   idx = 0;
   while( ( entry = readdir(dp) ) != 0 ){
     name = std::string(entry->d_name);
@@ -183,22 +183,23 @@ inline int GetDirList(const std::string dir_path, std::vector<std::string> &dir_
     //printf("inode number: %d\n", entry->d_ino);
     idx++;
   }
-  
-  ERRNO_CHK_E(closedir(dp) == 0, return(-1)); 
+
+  ERRNO_CHK_E(closedir(dp) == 0, return(-1));
 
   std::sort(dir_list_vec.begin(), dir_list_vec.end());
   if(print_flag)
     for(size_t i = 0; i < dir_list_vec.size(); i++)
       printf( "%s\n", dir_list_vec[i].c_str() );
-      
+
   if(Remove_dir_constants)
-    for(size_t i = 0; i < dir_list_vec.size();)
+    for(size_t i = 0; i < dir_list_vec.size();){
       if( (dir_list_vec[i] == ".") || (dir_list_vec[i] == "..") )
         dir_list_vec.erase(dir_list_vec.begin() + i);
       else
         i++;
-      
-  return(0);
+    }
+
+  return 0;
 }
 
 
@@ -221,7 +222,7 @@ inline size_t GetDirList(std::string file_path, const std::vector<std::string> &
   mio::GetDirList(file_path, dir_list_vec, true);
   filt_dir_list_vec.clear();
   filt_dir_list_vec.reserve(dir_list_vec.size());
-  
+
   for(std::string &file_name : dir_list_vec){
     bool match = false;
     if(check_prefix)
@@ -245,24 +246,24 @@ inline size_t GetDirList(std::string file_path, const std::vector<std::string> &
   example:
     file_full: /home/sam/Desktop/Ottawa/car/000106car16.upc
     ext_sep: .
-  
+
   returns:
     file_path: /home/sam/Desktop/Ottawa/car
     file_name: 000106car16.upc
     file_name_no_ext: 000106car16
     file_ext: upc
 */
-inline void FileNameExpand(const std::string file_full, const std::string ext_sep, std::string &file_path, 
+inline void FileNameExpand(const std::string file_full, const std::string ext_sep, std::string &file_path,
                            std::string &file_name, std::string &file_name_no_ext, std::string &file_ext){
   if( file_full.empty() )
     return;
 
   size_t path_sep_pos = file_full.find_last_of("/\\"),
          ext_sep_pos = file_full.rfind(ext_sep);
-  
+
   file_path = (path_sep_pos == std::string::npos) ? "" : file_full.substr(0, path_sep_pos);
   file_name = file_full.substr(path_sep_pos + 1);
-  
+
   if(ext_sep_pos == std::string::npos)
     file_name_no_ext = file_ext = "";
   else{
@@ -272,22 +273,22 @@ inline void FileNameExpand(const std::string file_full, const std::string ext_se
 }
 
 
-inline void FileNameExpand(const std::string file_full, const std::string ext_sep, std::string *file_path, 
+inline void FileNameExpand(const std::string file_full, const std::string ext_sep, std::string *file_path,
                            std::string *file_name, std::string *file_name_no_ext, std::string *file_ext){
   std::string file_path_temp, file_name_temp, file_name_no_ext_temp, file_ext_temp;
-  FileNameExpand(file_full, ext_sep, 
-                  file_path ? *file_path : file_path_temp, 
+  FileNameExpand(file_full, ext_sep,
+                  file_path ? *file_path : file_path_temp,
                   file_name ? *file_name : file_name_temp,
-                  file_name_no_ext ? *file_name_no_ext : file_name_no_ext_temp, 
+                  file_name_no_ext ? *file_name_no_ext : file_name_no_ext_temp,
                   file_ext ? *file_ext : file_ext_temp);
 }
 
-inline void FileNameExpand(const char *file_full, const char *ext_sep, char *file_path, 
+inline void FileNameExpand(const char *file_full, const char *ext_sep, char *file_path,
                            char *file_name, char *file_name_no_ext, char *file_ext){
   if( (file_full != NULL) && (ext_sep != NULL) ){
     std::string file_path_, file_name_, file_name_no_ext_, file_ext_;
-    
-    FileNameExpand(std::string(file_full), std::string(ext_sep), 
+
+    FileNameExpand(std::string(file_full), std::string(ext_sep),
                    file_path_, file_name_, file_name_no_ext_, file_ext_);
     if(file_path != NULL)
       strcpy( file_path, file_path_.c_str() );
@@ -311,7 +312,7 @@ inline void ReplaceSubStr(std::string &str, const std::string old_sub_str, const
   size_t pos = 0;
   if( str.empty() || old_sub_str.empty() )
     return;
-  
+
   while( ( pos = str.find(old_sub_str, pos) ) != std::string::npos ){
      str.replace(pos, old_sub_str.length(), new_sub_str);
      pos += new_sub_str.length();
@@ -323,7 +324,7 @@ inline void ReplaceSubStr(char *str, const char *old_sub_str, const char *new_su
   if(str != NULL){
     std::string str_ = std::string(str);
     ReplaceSubStr( str_, std::string(old_sub_str), std::string(new_sub_str) );
-    
+
     strcpy( str, str_.c_str() );
   }
 }

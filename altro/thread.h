@@ -38,7 +38,7 @@ namespace mio{
 
     //handle remainder situations. disperse the remainder among the partitions
     const int remainder = num_indice % num_partition;
-    if(remainder > 0)
+    if(remainder > 0){
       if(partition_idx == 0)
         idx_high++;
       else if(last_partition)
@@ -51,6 +51,7 @@ namespace mio{
         idx_low += remainder;
         idx_high += remainder;
       }
+    }
   }
 
   template <typename OBJ_T>

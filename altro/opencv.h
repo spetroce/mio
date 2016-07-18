@@ -124,13 +124,13 @@ elemSize1() is the data size
 inline void PrintMatProp(const cv::Mat &mat, const char *mat_name = NULL){
   if(mat_name)
     printf("cv::Mat %s\n", mat_name);
-  printf( "elemSize: %d\n", mat.elemSize() ); //bytes per pixel, eg. 8-bit rgb image returns 3
-  printf( "elemSize1: %d\n", mat.elemSize1() ); //bytes per pixel (only in first channel), eg. 8-bit rgb image returns 1
-  printf( "size: %s\n", SizeStr(mat).c_str() );
-  printf( "step1: %d\n", mat.step1() ); //matrix step divided by elemSize1()
-  printf( "CvMat type: %d\n", mat.type() ); //an identifier compatible with the CvMat type system
-  printf( "channels: %d\n", mat.channels() );
-  printf( "depth: %s\n\n", DepthStr(mat).c_str() );
+  printf("elemSize: %lu\n", mat.elemSize()); //bytes per pixel, eg. 8-bit rgb image returns 3
+  printf("elemSize1: %lu\n", mat.elemSize1()); //bytes per pixel (only in first channel), eg. 8-bit rgb image returns 1
+  printf("size: %s\n", SizeStr(mat).c_str());
+  printf("step1: %lu\n", mat.step1()); //matrix step divided by elemSize1()
+  printf("CvMat type: %d\n", mat.type()); //an identifier compatible with the CvMat type system
+  printf("channels: %d\n", mat.channels());
+  printf("depth: %s\n\n", DepthStr(mat).c_str());
 }
 
 
@@ -149,19 +149,19 @@ inline double GetPixelValue(const cv::Mat &mat, const cv::Point &pnt){
   if(mat.channels() == 1){
     switch( mat.depth() ){
       case CV_8U:
-        return( mat.at<uint8_t>(pnt) );
+        return mat.at<uint8_t>(pnt);
       case CV_8S:
-        return( mat.at<int8_t>(pnt) );
+        return mat.at<int8_t>(pnt);
       case CV_16U:
-        return( mat.at<uint16_t>(pnt) );
+        return mat.at<uint16_t>(pnt);
       case CV_16S:
-        return( mat.at<int16_t>(pnt) );
+        return mat.at<int16_t>(pnt);
       case CV_32S:
-        return( mat.at<int32_t>(pnt) );
+        return mat.at<int32_t>(pnt);
       case CV_32F:
-        return( mat.at<float>(pnt) );
+        return mat.at<float>(pnt);
       case CV_64F:
-        return( mat.at<double>(pnt) );
+        return mat.at<double>(pnt);
       default:
         printf( "GetPixelValue() - invalid depth: %d\n", mat.depth() );
         break;
@@ -170,24 +170,26 @@ inline double GetPixelValue(const cv::Mat &mat, const cv::Point &pnt){
   else{
     switch( mat.depth() ){
       case CV_8U:
-        return( GetPixelAvg<uint8_t>(mat, pnt) );
+        return GetPixelAvg<uint8_t>(mat, pnt);
       case CV_8S:
-        return( GetPixelAvg<int8_t>(mat, pnt) );
+        return GetPixelAvg<int8_t>(mat, pnt);
       case CV_16U:
-        return( GetPixelAvg<uint16_t>(mat, pnt) );
+        return GetPixelAvg<uint16_t>(mat, pnt);
       case CV_16S:
-        return( GetPixelAvg<int16_t>(mat, pnt) );
+        return GetPixelAvg<int16_t>(mat, pnt);
       case CV_32S:
-        return( GetPixelAvg<int32_t>(mat, pnt) );
+        return GetPixelAvg<int32_t>(mat, pnt);
       case CV_32F:
-        return( GetPixelAvg<float>(mat, pnt) );
+        return GetPixelAvg<float>(mat, pnt);
       case CV_64F:
-        return( GetPixelAvg<double>(mat, pnt) );
+        return GetPixelAvg<double>(mat, pnt);
       default:
         printf( "GetPixelValue() - invalid depth: %d\n", mat.depth() );
         break;
     }
   }
+
+  return 0;
 }
 
 
