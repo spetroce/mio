@@ -14,7 +14,7 @@ class ImageListViewer : public QWidget {
   Q_OBJECT
 
   public:
-    explicit ImageListViewer(QWidget *parent = 0);
+    explicit ImageListViewer(const bool show_earth = false, QWidget *parent = 0);
     ~ImageListViewer();
     void SetImageList(const std::string file_path, const std::vector<std::string> &img_file_name_vec);
     void SetImageList(const std::vector<std::string> &img_file_name_vec,
