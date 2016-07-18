@@ -32,6 +32,8 @@ class ImageListViewer : public QWidget {
     void SetImage(const int idx);
     void DecrementImgIdxSlider();
     void IncrementImgIdxSlider();
+    void AddRoi();
+    void RemoveRoi();
 };
 
 #endif // IMAGELISTVIEWER_H

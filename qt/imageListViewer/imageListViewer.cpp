@@ -14,6 +14,8 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
   connect(ui->slider_img_idx, SIGNAL(valueChanged(int)), this, SLOT(SetImage(int)));
   connect(ui->pb_prev_img, SIGNAL(clicked()), this, SLOT(DecrementImgIdxSlider()));
   connect(ui->pb_next_img, SIGNAL(clicked()), this, SLOT(IncrementImgIdxSlider()));
+  connect(ui->pb_roi_add, SIGNAL(clicked()), this, SLOT(AddRoi()));
+  connect(ui->pb_roi_rem, SIGNAL(clicked()), this, SLOT(RemoveRoi()));
 
   if(show_earth){
     STD_RT_ERR_E(mio::FileExists(IMG_LIST_VIEWER_EARTH_JPEG_DIR"/earth.jpg"))
@@ -110,3 +112,12 @@ void ImageListViewer::IncrementImgIdxSlider(){
   ui->slider_img_idx->setValue(ui->slider_img_idx->value() + 1);
 }
 
+
+void ImageListViewer::AddRoi(){
+  adv_img_disp_->BeginCreateRoi(Roi::ROI_RECT);
+}
+
+
+void ImageListViewer::RemoveRoi(){
+  adv_img_disp_->RemoveRoi();
+}
