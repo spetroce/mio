@@ -24,5 +24,5 @@ mio is a collection of code that I have added to over several years while workin
 ##serialIO
   Simple class for performing serial communications (eg. RS-232)
   
-#socket
+##socket
   TCP and UDP socket helper classes
