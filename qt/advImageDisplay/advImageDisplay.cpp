@@ -1,9 +1,11 @@
 #include "advImageDisplay.h"
 
+constexpr std::array<const char*, 4> Roi::roi_type_str;
+
 
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
-    is_init_(false), limit_view_(false){
+    is_init_(false), limit_view_(false), show_roi_(false){
   // bec_.perform = false;
   // bec_.scale = 1.0f;
   prev_src_img_size_ = cv::Point(-1, -1);
@@ -258,6 +260,13 @@ void AdvImageDisplay::UpdateDisplay(){
   resize_total_mutex_.unlock();
 
   try{
+//    if(show_roi_){
+//      cv::Mat tmp_img(final_img_.size(), final_img_.type());
+//      final_img_.copyTo(tmp_img, disp_roi_mask_);
+//      final_img_ *= 0.4;
+//      tmp_img.copyTo(final_img_, disp_roi_mask_);
+//    }
+
     cv::Size max_img_size = cv_disp_img_.size();
     float max_dim_scale_factor;
     const bool is_scaled = limit_view_ ? mio::GetMaxSize(cv_disp_img_, 640, max_img_size, max_dim_scale_factor) : false;
@@ -302,7 +311,7 @@ void AdvImageDisplay::UpdateDisplay(){
       cv::normalize(final_img_, final_img_, 0, 255, cv::NORM_MINMAX);
     else if(normalize_roi_){
       roi_data_.mutex.lock();
-      if(roi_data_.vertices.size() > 0 && !roi_data_.creating_flag){
+      if(roi_data_.vertices.size() > 0 && !create_roi_){
         if(roi_data_.vertices.size() > 1 && roi_data_.type == Roi::ROI_RECT){
           cv::Point2f p1 = Image2View( cv::Point2f(roi_data_.vertices[0].x * resize_fx_total_,
                                                    roi_data_.vertices[0].y * resize_fy_total_) ),
@@ -428,7 +437,6 @@ void AdvImageDisplay::DrawRoi(cv::Mat &img){
 
 
  void AdvImageDisplay::RemoveRoi(){
-  //ShowRoi();
   disp_roi_.mutex.lock();
   create_roi_ = false;
   disp_roi_.vertices.clear();
@@ -453,6 +461,7 @@ void AdvImageDisplay::AddRoi(){
   disp_roi_.mutex.lock();
   create_roi_ = false;
   disp_roi_.mutex.unlock();
+  UpdateRoiMask();
 }
 
 
@@ -460,13 +469,15 @@ void AdvImageDisplay::UpdateRoiMask(){
   printf("%s - id=%d\n", CURRENT_FUNC, id_);
   try{
 //    m_out_img.lock();
-//      cv::Size out_img_size = m_out_img.obj_.size();
+      cv::Size final_img_size = final_img_.size();
 //    m_out_img.unlock();
 
+    roi_data_.vertices = disp_roi_.vertices;
+    roi_data_.type = disp_roi_.type;
     roi_mask_mtx_.lock();
     {
       if(roi_data_.vertices.size() > 0){
-//        roi_mask_ = cv::Mat::zeros(out_img_size, CV_8UC1);
+        roi_mask_ = cv::Mat::zeros(final_img_size, CV_8UC1);
 #if ICV_OPENCV_VERSION_MAJOR < 3
         const int fill_flag = CV_FILLED;
 #else
@@ -507,9 +518,9 @@ void AdvImageDisplay::UpdateRoiMask(){
       }
       else
         roi_mask_ = cv::Mat();
-      roi_mask_resize_ = roi_mask_;
+      disp_roi_mask_ = roi_mask_;
 
-      cv::Mat roi_mask_copy = roi_mask_.clone();
+      //cv::Mat roi_mask_copy = roi_mask_.clone();
     }
     roi_mask_mtx_.unlock();
   }
@@ -614,6 +625,12 @@ inline bool BackEndConvert(const cv::Mat &src_img, cv::Mat &dst_img, const SBack
 void AdvImageDisplay::ShowStripes(){
   STD_RT_ERR_E(mio::FileExists(ADV_IMG_DISP_STRIPES_JPEG))
   cv_disp_img_ = cv::imread(ADV_IMG_DISP_STRIPES_JPEG);
+  UpdateDisplay();
+}
+
+
+void AdvImageDisplay::ShowRoi(const bool show_roi){
+  show_roi_ = show_roi;
   UpdateDisplay();
 }
 
