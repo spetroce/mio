@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>348</width>
-    <height>151</height>
+    <width>366</width>
+    <height>150</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,16 @@
    <property name="sizeConstraint">
     <enum>QLayout::SetFixedSize</enum>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item row="0" column="0">
@@ -38,7 +47,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="com_box_roi_type">
+        <widget class="QComboBox" name="comboBox_roi_type">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -51,11 +60,6 @@
            <height>0</height>
           </size>
          </property>
-         <item>
-          <property name="text">
-           <string>poly</string>
-          </property>
-         </item>
         </widget>
        </item>
        <item>
@@ -73,12 +77,19 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="com_box_select_roi">
+        <widget class="QComboBox" name="comboBox_select_roi">
          <property name="minimumSize">
           <size>
            <width>80</width>
            <height>0</height>
           </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBox_show_roi">
+         <property name="text">
+          <string>show</string>
          </property>
         </widget>
        </item>

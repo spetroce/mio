@@ -66,7 +66,7 @@ class AdvImageDisplay : public QWidget{
   cv::Mat roi_mask_, roi_mask_resize_;
   std::vector<Roi> roi_vec_;
   std::vector< std::vector<cv::Point> > roi_polygons_tmp_;
-  bool create_roi_, normalize_roi_;
+  bool create_roi_, normalize_roi_, show_roi_;
   void DrawRoi(cv::Mat &img);
   void CreateRoiMask();
 
@@ -120,6 +120,7 @@ class AdvImageDisplay : public QWidget{
     void ClearRoi(){};
     void RemoveRoi();
     void ShowStripes();
+    void ShowRoi(const bool show_roi);
 
     void UpdateZoom(zoomInfo_t &zoomInfo);
     void SetBackEndNorm(bool);

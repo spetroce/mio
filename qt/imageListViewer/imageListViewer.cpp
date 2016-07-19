@@ -11,11 +11,15 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
   ui->slider_img_idx->setMinimum(0);
   ui->slider_img_idx->setMaximum(0);
 
+  for(size_t i = 0; i < Roi::roi_type_str.size(); ++i)
+    ui->comboBox_roi_type->addItem(Roi::roi_type_str[i]);
+
   connect(ui->slider_img_idx, SIGNAL(valueChanged(int)), this, SLOT(SetImage(int)));
   connect(ui->pb_prev_img, SIGNAL(clicked()), this, SLOT(DecrementImgIdxSlider()));
   connect(ui->pb_next_img, SIGNAL(clicked()), this, SLOT(IncrementImgIdxSlider()));
   connect(ui->pb_roi_add, SIGNAL(clicked()), this, SLOT(AddRoi()));
   connect(ui->pb_roi_rem, SIGNAL(clicked()), this, SLOT(RemoveRoi()));
+  connect(ui->checkBox_show_roi, SIGNAL(clicked()), this, SLOT(ShowRoi()));
 
   if(show_earth){
     STD_RT_ERR_E(mio::FileExists(IMG_LIST_VIEWER_EARTH_JPEG_DIR"/earth.jpg"))
@@ -114,10 +118,16 @@ void ImageListViewer::IncrementImgIdxSlider(){
 
 
 void ImageListViewer::AddRoi(){
-  adv_img_disp_->BeginCreateRoi(Roi::ROI_RECT);
+  adv_img_disp_->BeginCreateRoi(ui->comboBox_roi_type->currentIndex());
 }
 
 
 void ImageListViewer::RemoveRoi(){
   adv_img_disp_->RemoveRoi();
 }
+
+
+void ImageListViewer::ShowRoi(){
+  adv_img_disp_->ShowRoi(ui->checkBox_show_roi->isChecked());
+}
+
