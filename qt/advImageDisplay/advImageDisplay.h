@@ -60,22 +60,30 @@ class AdvImageDisplay : public QWidget{
   QLabel *label_;
   QImage qt_disp_img_;
   cv::Mat cv_disp_img_;
+  bool is_init_;
+  float resize_fx_total_, resize_fy_total_;
+  cv::Size prev_src_img_size_;
+  std::mutex resize_total_mutex_;
+  bool normalize_img_, convert_to_false_colors_, auto_convert_img_;
+
+  void UpdateDisplay();
+  void UpdateZoom(zoomInfo_t &zoom_info);
+  void ResetResizeTotal();
 
   Roi roi_data_, disp_roi_;
   std::mutex roi_mask_mtx_;
   cv::Mat roi_mask_, disp_roi_mask_;
-  std::vector<Roi> roi_vec_;
-  std::vector< std::vector<cv::Point> > roi_polygons_tmp_;
+  //std::vector<Roi> roi_vec_;
+  //std::vector< std::vector<cv::Point> > roi_polygons_tmp_;
   bool create_roi_, normalize_roi_, show_roi_;
   void DrawRoi(cv::Mat &img);
   void CreateRoiMask();
+  void InitCreateRoi();
+  void UpdateRoiMask();
 
   cv::Point2f View2Image(const cv::Point2f &view_coord);
   cv::Point2f Image2View(const cv::Point2f &img_coord);
   void Image2View(const std::vector<cv::Point2f> &src, std::vector<cv::Point> &dst, const bool scale_vertices);
-
-  void UpdateDisplay();
-
 
   zoomInfo_t zoom_info_, zoom_info_tmp_;
   cv::Mat zoom_img_, final_img_;
@@ -86,23 +94,8 @@ class AdvImageDisplay : public QWidget{
   void UpdateZoom();
   void ResetZoom();
 
-  float resize_fx_total_, resize_fy_total_;
-  cv::Size prev_src_img_size_;
-  std::mutex resize_total_mutex_;
-  bool normalize_img_, convert_to_false_colors_;
-
-  //SBackEndConvert bec_;
-
-  bool is_init_;
-
-  void InitCreateRoi();
-  void UpdateRoiMask();
-
-  void ShowRoi();
-
   protected:
     int id_;
-    std::string m_new_frame_lcm_chan_name;
     std::mutex cv_disp_img_mtx_;
     bool show_image_, limit_view_;
 
@@ -110,40 +103,32 @@ class AdvImageDisplay : public QWidget{
     AdvImageDisplay(QWidget *parent = NULL);
     ~AdvImageDisplay();
 
+    void Init(const int id, const bool manage_layout = true);
     void SetImage(const cv::Mat &img, const bool clone);
-    void SetResizeScale(const float height_scale, const float width_scale){};
-    void SetMaxImgSize(cv::Size size){};
-    void GetRoi(const size_t idx, Roi &roi){};
-    void GetRoi(const size_t idx, cv::Mat &roi){};
+    //void SetResizeScale(const float height_scale, const float width_scale);
+    //void SetMaxImgSize(cv::Size size);
+    //void GetRoi(const size_t idx, Roi &roi);
+    //void GetRoi(const size_t idx, cv::Mat &roi);
     void BeginCreateRoi(const int roi_type);
     void AddRoi();
-    void ClearRoi(){};
+    //void ClearRoi();
     void RemoveRoi();
     void ShowStripes();
-    void ShowRoi(const bool show_roi);
-
-    void UpdateZoom(zoomInfo_t &zoomInfo);
-    void SetBackEndNorm(bool);
-    bool GetBackEndNorm();
-    void SetBackEndNormROI(bool);
-    bool GetBackEndNormROI();
-    void SetBackEndFalseColors(bool);
-    bool GetBackEndFalseColors();
-    void SetLimitView(bool);
+    void ShowRoi(const bool state);
+    void SetNormalizeImage(const bool state);
+    bool GetNormalizeImage();
+    void SetNormalizeRoi(const bool state);
+    bool GetNormalizeRoi();
+    void SetConvertToFalseColors(const bool state);
+    bool GetConvertToFalseColors();
+    void SetLimitView(const bool state);
     bool GetLimitView();
-    void ResetResizeTotal();
-
-    void Init(const int id, const bool manage_layout = true);
     int GetID();
-    void SetShowImage(bool);
+    void SetShowImage(const bool state);
     bool GetShowImage();
-    void SetPauseDisplay(bool);
-    bool GetPauseDisplay();
-    void SetBackEndConvert(bool);
-    bool GetBackEndConvert();
-    void SetBackEndScale(float);
-    float GetBackEndScale();
     QLabel* GetImageQLabel();
+    void SetAutoConvertImage(const bool state);
+    bool GetAutoConvertImage();
 
   protected:
     bool eventFilter(QObject *target, QEvent *event);
