@@ -72,7 +72,7 @@ class AdvImageDisplay : public QWidget{
 
   Roi roi_data_, disp_roi_;
   std::mutex roi_mask_mtx_;
-  cv::Mat roi_mask_, disp_roi_mask_;
+  cv::Mat roi_mask_, disp_roi_mask_, disp_roi_mask_resize_;
   //std::vector<Roi> roi_vec_;
   //std::vector< std::vector<cv::Point> > roi_polygons_tmp_;
   bool create_roi_, normalize_roi_, show_roi_;
@@ -87,7 +87,7 @@ class AdvImageDisplay : public QWidget{
 
   zoomInfo_t zoom_info_, zoom_info_tmp_;
   cv::Mat zoom_img_, final_img_;
-  float zoom_scaler_, prev_zoom_, max_scale_inv_;
+  float zoom_scaler_, prev_zoom_, max_dim_scale_inv_;
   cv::Point2f origin_, origin_bounded_;
   cv::Size2f zoom_region_size_;
   bool is_zoom_;
