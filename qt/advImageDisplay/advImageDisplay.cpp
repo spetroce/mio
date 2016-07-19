@@ -5,11 +5,8 @@ constexpr std::array<const char*, 4> Roi::roi_type_str;
 
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
-    is_init_(false), limit_view_(false), show_roi_(false){
-  // bec_.perform = false;
-  // bec_.scale = 1.0f;
+    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false){
   prev_src_img_size_ = cv::Point(-1, -1);
-  //init zoom variables
   zoom_info_.pixmap_mouse_pos = cv::Point2f(0, 0);
   zoom_info_.scroll_wheel_count = 0;
   zoom_info_tmp_.pixmap_mouse_pos = cv::Point2f(0, 0);
@@ -21,7 +18,6 @@ AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), nor
 AdvImageDisplay::~AdvImageDisplay(){
   cv_disp_img_ = cv::Mat();
   UpdateDisplay();
-  //disconnect( this, SIGNAL( SignalUpdateDisplay(bool, bool) ), this, SLOT( UpdateDisplaySlot(bool, bool) ) );
   delete label_;
   label_ = NULL;
   if(layout_)
@@ -55,7 +51,14 @@ void AdvImageDisplay::Init(const int id, const bool manage_layout){
 
 
 void AdvImageDisplay::SetImage(const cv::Mat &img, const bool clone){
-  cv_disp_img_ = clone ? img.clone() : img;
+  const int type = img.type();
+  if(type == CV_8UC1 || type == CV_8UC3 || type == CV_32FC1 || type == CV_32FC3)
+    cv_disp_img_ = clone ? img.clone() : img;
+  else if(auto_convert_img_)
+    img.convertTo(cv_disp_img_, CV_8U);
+  else
+    ShowStripes();
+
   UpdateDisplay();
 }
 
@@ -173,13 +176,6 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         break;
     }
   }
-//  else if( (target == ui->scrollAreaWidgetContents_cv || target == ui->scrollAreaWidgetContents_misc) &&
-//           event->type() == QEvent::Resize ){ //Scroll Widget Resize (only happens once on program startup)
-//    ui->scrollArea_cv->setMinimumWidth( ui->scrollAreaWidgetContents_cv->minimumSizeHint().width() +
-//                                        ui->scrollArea_cv->verticalScrollBar()->width() );
-//    ui->scrollArea_misc->setMinimumWidth( ui->scrollAreaWidgetContents_misc->minimumSizeHint().width() +
-//                                          ui->scrollArea_misc->verticalScrollBar()->width() );
-//  }
 
   return QWidget::eventFilter(target, event);
 }
@@ -397,54 +393,6 @@ void AdvImageDisplay::DrawRoi(cv::Mat &img){
 }
 
 
-//create will remove the drawn ROI, but leaves the image processing ROI in the background
-//to remove the background processing ROI, you must call Remove ROI
-//void AdvImageDisplay::InitCreateRoi(){
-  //create_roi_ = true;
-  //roi_data_.mutex.lock();
-    //roi_data_.vertices.clear();
-//    roi_data_.type = ui->comboBox_ROIType->currentIndex();
-    //ResetResizeTotal();
-    //roi_data_.creating_flag = true;
-  //roi_data_.mutex.unlock();
-
-//  ui->comboBox_ROIType->setEnabled(false);
-//  m_func_cv_add_button[VCV_RESIZE]->setEnabled(false); //no resizing allowed during Roi creation
-//}
-
-
-// void AdvImageDisplay::CreateRoi(){
-//   roi_data_.mutex.lock();
-//   create_roi_ = false;
-//   roi_data_.creating_flag = false;
-
-//  CImgProcQueue::roi_data_.vertices = roi_data_.vertices;
-//  CImgProcQueue::roi_data_.type = roi_data_.type;
-//  roi_data_.mutex.unlock();
-
-//  CImgProcQueue::UpdateRoiMask();
-
-//  ui->comboBox_ROIType->setEnabled(true);
-//  m_func_cv_add_button[VCV_RESIZE]->setEnabled(true);
-//  AdvImageDisplay::SendPptFrameLcm();
-//}
-
-
-//void AdvImageDisplay::ShowRoi(){
-//  m_show_roi = ui->checkBox_showROI->isChecked();
-//  AdvImageDisplay::SendPptFrameLcm();
-//}
-
-
- void AdvImageDisplay::RemoveRoi(){
-  disp_roi_.mutex.lock();
-  create_roi_ = false;
-  disp_roi_.vertices.clear();
-  disp_roi_.mutex.unlock();
-  UpdateDisplay();
-}
-
-
 void AdvImageDisplay::BeginCreateRoi(const int roi_type){
   printf("%s\n", CURRENT_FUNC);
   disp_roi_.mutex.lock();
@@ -462,6 +410,15 @@ void AdvImageDisplay::AddRoi(){
   create_roi_ = false;
   disp_roi_.mutex.unlock();
   UpdateRoiMask();
+}
+
+
+ void AdvImageDisplay::RemoveRoi(){
+  disp_roi_.mutex.lock();
+  create_roi_ = false;
+  disp_roi_.vertices.clear();
+  disp_roi_.mutex.unlock();
+  UpdateDisplay();
 }
 
 
@@ -537,91 +494,6 @@ void AdvImageDisplay::ResetResizeTotal(){
 }
 
 
-void AdvImageDisplay::SetBackEndNorm(bool state){
-  normalize_img_ = state;
-}
-
-bool AdvImageDisplay::GetBackEndNorm(){
-  return normalize_img_;
-}
-
-// void AdvImageDisplay::SetBackEndNormROI(bool state){
-//   normalize_roi_ = state;
-// }
-
-// bool AdvImageDisplay::GetBackEndNormROI(){
-//   return normalize_roi_;
-// }
-
-void AdvImageDisplay::SetBackEndFalseColors(bool state){
-  convert_to_false_colors_ = state;
-}
-
-bool AdvImageDisplay::GetBackEndFalseColors(){
-  return convert_to_false_colors_;
-}
-
-void AdvImageDisplay::SetLimitView(bool state){
-  limit_view_ = state;
-  if(state){
-    zoom_info_tmp_.scroll_wheel_count = 0;
-    zoom_info_tmp_.pixmap_mouse_pos = cv::Point2f(0, 0);
-    UpdateZoom(zoom_info_tmp_);
-  }
-}
-
-bool AdvImageDisplay::GetLimitView(){
-  return limit_view_;
-}
-
-int AdvImageDisplay::GetID(){
-  return id_;
-}
-
-void AdvImageDisplay::SetShowImage(bool state){
-  show_image_ = state;
-}
-
-bool AdvImageDisplay::GetShowImage(){
-  return show_image_;
-}
-
-// void AdvImageDisplay::SetBackEndConvert(bool state){
-//   bec_.perform = state;
-// }
-
-// bool AdvImageDisplay::GetBackEndConvert(){
-//   return bec_.perform;
-// }
-
-// void AdvImageDisplay::SetBackEndScale(float val){
-//   bec_.scale = val;
-// }
-
-// float AdvImageDisplay::GetBackEndScale(){
-//   return bec_.scale;
-// }
-
-QLabel* AdvImageDisplay::GetImageQLabel(){
-  return label_;
-}
-
-
-inline bool BackEndConvert(const cv::Mat &src_img, cv::Mat &dst_img, const SBackEndConvert &bec){
-  const int type = src_img.type();
-  if(type == CV_8UC1 || type == CV_8UC3 || type == CV_32FC1 || type == CV_32FC3){
-    dst_img = src_img.clone();
-    return false;
-  }
-  else if(bec.perform){
-    src_img.convertTo(dst_img, CV_8U, bec.scale);
-    return false;
-  }
-
-  return true;
-}
-
-
 void AdvImageDisplay::ShowStripes(){
   STD_RT_ERR_E(mio::FileExists(ADV_IMG_DISP_STRIPES_JPEG))
   cv_disp_img_ = cv::imread(ADV_IMG_DISP_STRIPES_JPEG);
@@ -634,3 +506,72 @@ void AdvImageDisplay::ShowRoi(const bool show_roi){
   UpdateDisplay();
 }
 
+
+void AdvImageDisplay::SetLimitView(const bool state){
+  limit_view_ = state;
+  if(state){
+    zoom_info_tmp_.scroll_wheel_count = 0;
+    zoom_info_tmp_.pixmap_mouse_pos = cv::Point2f(0, 0);
+    UpdateZoom(zoom_info_tmp_);
+  }
+}
+
+
+bool AdvImageDisplay::GetLimitView(){
+  return limit_view_;
+}
+
+
+int AdvImageDisplay::GetID(){
+  return id_;
+}
+
+
+void AdvImageDisplay::SetShowImage(const bool state){
+  show_image_ = state;
+}
+
+
+bool AdvImageDisplay::GetShowImage(){
+  return show_image_;
+}
+
+
+void AdvImageDisplay::SetAutoConvertImage(const bool state){
+  auto_convert_img_ = state;
+}
+
+
+bool AdvImageDisplay::GetAutoConvertImage(){
+  return auto_convert_img_;
+}
+
+
+QLabel* AdvImageDisplay::GetImageQLabel(){
+  return label_;
+}
+
+
+void AdvImageDisplay::SetNormalizeImage(const bool state){
+  normalize_img_ = state;
+}
+
+bool AdvImageDisplay::GetNormalizeImage(){
+  return normalize_img_;
+}
+
+void AdvImageDisplay::SetNormalizeRoi(const bool state){
+  normalize_roi_ = state;
+}
+
+bool AdvImageDisplay::GetNormalizeRoi(){
+  return normalize_roi_;
+}
+
+void AdvImageDisplay::SetConvertToFalseColors(const bool state){
+  convert_to_false_colors_ = state;
+}
+
+bool AdvImageDisplay::GetConvertToFalseColors(){
+  return convert_to_false_colors_;
+}
