@@ -21,6 +21,7 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
   connect(ui->pb_roi_rem, SIGNAL(clicked()), this, SLOT(RemoveRoi()));
   connect(ui->checkBox_show_roi, SIGNAL(clicked()), this, SLOT(ShowRoi()));
 
+  adv_img_disp_->SetLimitView(true);
   if(show_earth){
     STD_RT_ERR_E(mio::FileExists(IMG_LIST_VIEWER_EARTH_JPEG_DIR"/earth.jpg"))
     std::vector<std::string> img_file_name_vec = {"earth.jpg"};
