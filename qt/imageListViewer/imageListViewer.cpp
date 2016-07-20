@@ -19,7 +19,7 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
   connect(ui->pb_next_img, SIGNAL(clicked()), this, SLOT(IncrementImgIdxSlider()));
   connect(ui->pb_roi_add, SIGNAL(clicked()), this, SLOT(AddRoi()));
   connect(ui->pb_roi_rem, SIGNAL(clicked()), this, SLOT(RemoveRoi()));
-  connect(ui->checkBox_show_roi, SIGNAL(clicked()), this, SLOT(ShowRoi()));
+  connect(ui->pb_show_roi, SIGNAL(clicked()), this, SLOT(ShowRoi()));
 
   adv_img_disp_->SetLimitView(true);
   if(show_earth){
@@ -27,6 +27,10 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
     std::vector<std::string> img_file_name_vec = {"earth.jpg"};
     SetImageList(IMG_LIST_VIEWER_EARTH_JPEG_DIR, img_file_name_vec);
   }
+
+  //TODO - add support for multiple roi's
+  ui->horizontalLayout_roi->removeWidget(ui->comboBox_select_roi);
+  delete ui->comboBox_select_roi;
 }
 
 
@@ -129,6 +133,6 @@ void ImageListViewer::RemoveRoi(){
 
 
 void ImageListViewer::ShowRoi(){
-  adv_img_disp_->ShowRoi(ui->checkBox_show_roi->isChecked());
+  adv_img_disp_->ShowRoi();
 }
 
