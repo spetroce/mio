@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>366</width>
+    <width>356</width>
     <height>150</height>
    </rect>
   </property>
@@ -35,7 +35,7 @@
       <number>0</number>
      </property>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <layout class="QHBoxLayout" name="horizontalLayout_roi">
        <property name="bottomMargin">
         <number>0</number>
        </property>
@@ -64,6 +64,12 @@
        </item>
        <item>
         <widget class="QPushButton" name="pb_roi_add">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Add</string>
          </property>
@@ -71,6 +77,12 @@
        </item>
        <item>
         <widget class="QPushButton" name="pb_roi_rem">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Rem</string>
          </property>
@@ -87,7 +99,13 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBox_show_roi">
+        <widget class="QPushButton" name="pb_show_roi">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>show</string>
          </property>
