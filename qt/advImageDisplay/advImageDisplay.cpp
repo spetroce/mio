@@ -199,7 +199,7 @@ void AdvImageDisplay::UpdateZoom(){
     //check for a minimum of 20 horizontal pixels
     while(kSrcImgSize.width * (1.0f - static_cast<float>(scroll_wheel_count_)*kZoomScale) < 20)
       if(scroll_wheel_count_-1 > 0)
-        scroll_wheel_count_--;
+        --scroll_wheel_count_;
       else{
         //could not find a zoom factor yielding the 20 pixel minimum; don't zoom
         ResetZoom();
@@ -216,7 +216,7 @@ void AdvImageDisplay::UpdateZoom(){
 
     //scale the mouse position by the last zoom_scaler_
     cv::Point2f scaled_mouse = cv::Point2f(pixmap_mouse_pos_.x*prev_zoom_,
-                                          pixmap_mouse_pos_.y*prev_zoom_);
+                                           pixmap_mouse_pos_.y*prev_zoom_);
     //find the new origin within the last scaled image and add it to the last origin_
     origin_ = cv::Point2f( origin_.x + ( scaled_mouse.x - scaled_mouse.x*(zoom_scaler_/prev_zoom_) ),
                            origin_.y + ( scaled_mouse.y - scaled_mouse.y*(zoom_scaler_/prev_zoom_) ) );
@@ -236,8 +236,8 @@ void AdvImageDisplay::ResetZoom(){
 
 // label_ to src_img_ coordinates
 cv::Point2f AdvImageDisplay::View2Image(const cv::Point2f &view_pnt){
-  return cv::Point2f( (view_pnt.x*prev_zoom_ + origin_.x) * max_dim_scale_inv_,
-                      (view_pnt.y*prev_zoom_ + origin_.y) * max_dim_scale_inv_ );
+  return cv::Point2f((view_pnt.x*prev_zoom_ + origin_.x) * max_dim_scale_inv_,
+                     (view_pnt.y*prev_zoom_ + origin_.y) * max_dim_scale_inv_ );
 }
 
 
@@ -250,14 +250,15 @@ cv::Point2f AdvImageDisplay::Image2View(const cv::Point2f &img_pnt){
 
 void AdvImageDisplay::UpdateDisplay(){
   src_img_mtx_.lock();
-  resize_total_mtx_.lock();
   const cv::Size kSrcImgSize = src_img_.size();
+  resize_total_mtx_.lock();
   if(kSrcImgSize != prev_src_img_size_){
     resize_fx_total_ *= static_cast<float>(kSrcImgSize.width) / static_cast<float>(prev_src_img_size_.width);
     resize_fy_total_ *= static_cast<float>(kSrcImgSize.height) / static_cast<float>(prev_src_img_size_.height);
   }
-  prev_src_img_size_ = kSrcImgSize;
   resize_total_mtx_.unlock();
+  prev_src_img_size_ = kSrcImgSize;
+
 
   try{
     cv::Size max_img_size = src_img_.size();
@@ -284,7 +285,7 @@ void AdvImageDisplay::UpdateDisplay(){
         zoom_region_size_.height = static_cast<float>(src_img_.rows) - origin_bounded_.y;
 
       zoom_img_ = cv::Mat(src_img_, cv::Rect(origin_bounded_.x, origin_bounded_.y,
-                                                 zoom_region_size_.width, zoom_region_size_.height));
+                                             zoom_region_size_.width, zoom_region_size_.height));
       if(max_img_size == zoom_img_.size()) //don't call resize if we don't have to
         disp_img_ = zoom_img_.clone();
       else
@@ -303,14 +304,14 @@ void AdvImageDisplay::UpdateDisplay(){
     if(normalize_img_)
       cv::normalize(disp_img_, disp_img_, 0, 255, cv::NORM_MINMAX);
     else if(normalize_roi_){
-      roi_data_.mutex.lock();
-      if(roi_data_.vertices.size() > 0 && !create_roi_){
-        if(roi_data_.vertices.size() > 1 && roi_data_.type == Roi::ROI_RECT){
+      src_roi_.mutex.lock();
+      if(src_roi_.vertices.size() > 0 && !create_roi_){
+        if(src_roi_.vertices.size() > 1 && src_roi_.type == Roi::ROI_RECT){
           resize_total_mtx_.lock();
-          cv::Point2f p1 = Image2View( cv::Point2f(roi_data_.vertices[0].x * resize_fx_total_,
-                                                   roi_data_.vertices[0].y * resize_fy_total_) ),
-                      p2 = Image2View( cv::Point2f(roi_data_.vertices[1].x * resize_fx_total_,
-                                                   roi_data_.vertices[1].y * resize_fy_total_) );
+          cv::Point2f p1 = Image2View( cv::Point2f(src_roi_.vertices[0].x * resize_fx_total_,
+                                                   src_roi_.vertices[0].y * resize_fy_total_) ),
+                      p2 = Image2View( cv::Point2f(src_roi_.vertices[1].x * resize_fx_total_,
+                                                   src_roi_.vertices[1].y * resize_fy_total_) );
           resize_total_mtx_.unlock();
           mio::SetBound<float>(p1.x, 0, disp_img_.cols);
           mio::SetBound<float>(p1.y, 0, disp_img_.rows);
@@ -322,7 +323,7 @@ void AdvImageDisplay::UpdateDisplay(){
           }
         }
       }
-      roi_data_.mutex.unlock();
+      src_roi_.mutex.unlock();
     }
     if(convert_to_false_colors_)
       cv::applyColorMap(disp_img_, disp_img_, cv::COLORMAP_JET);
@@ -445,45 +446,45 @@ void AdvImageDisplay::UpdateRoiMask(){
     cv::Size disp_img_size = src_img_.size();
     src_img_mtx_.unlock();
 
-    roi_data_.vertices = disp_roi_.vertices;
-    roi_data_.type = disp_roi_.type;
+    src_roi_.vertices = disp_roi_.vertices;
+    src_roi_.type = disp_roi_.type;
     roi_mask_mtx_.lock();
     {
-      if(roi_data_.vertices.size() > 0){
+      if(src_roi_.vertices.size() > 0){
         roi_mask_ = cv::Mat::zeros(disp_img_size, CV_8UC1);
 #if ICV_OPENCV_VERSION_MAJOR < 3
         const int fill_flag = CV_FILLED;
 #else
         const int fill_flag = cv::FILLED;
 #endif
-        switch(roi_data_.type){
+        switch(src_roi_.type){
           case Roi::ROI_RECT:
-            STD_INVALID_ARG_E(roi_data_.vertices.size() == 2)
-            cv::rectangle(roi_mask_, roi_data_.vertices[0], roi_data_.vertices[1], cv::Scalar(255), fill_flag);
+            STD_INVALID_ARG_E(src_roi_.vertices.size() == 2)
+            cv::rectangle(roi_mask_, src_roi_.vertices[0], src_roi_.vertices[1], cv::Scalar(255), fill_flag);
             break;
           case Roi::ROI_POLY:
             {
-            const size_t roi_vertices_size = roi_data_.vertices.size();
+            const size_t roi_vertices_size = src_roi_.vertices.size();
             std::vector< std::vector<cv::Point> > roi_vertices;
             roi_vertices.resize(1);
             roi_vertices.front().resize(roi_vertices_size);
             for(size_t i = 0; i < roi_vertices_size; ++i)
-              roi_vertices[0][i] = roi_data_.vertices[i];
+              roi_vertices[0][i] = src_roi_.vertices[i];
             cv::fillPoly( roi_mask_, roi_vertices, cv::Scalar(255) );
             }
             break;
           case Roi::ROI_CENTER_CIRCLE:
             {
-            STD_INVALID_ARG_E(roi_data_.vertices.size() == 2)
-            const float radius = sm::VerDist2(roi_data_.vertices[0], roi_data_.vertices[1]);
-            cv::circle(roi_mask_, roi_data_.vertices[0], radius, cv::Scalar::all(255), fill_flag);
+            STD_INVALID_ARG_E(src_roi_.vertices.size() == 2)
+            const float radius = sm::VerDist2(src_roi_.vertices[0], src_roi_.vertices[1]);
+            cv::circle(roi_mask_, src_roi_.vertices[0], radius, cv::Scalar::all(255), fill_flag);
             }
             break;
           case Roi::ROI_DRAG_CIRCLE:
             {
-            STD_INVALID_ARG_E(roi_data_.vertices.size() == 2)
-            const cv::Point2f center = sm::MidPoint2(roi_data_.vertices[0], roi_data_.vertices[1]);
-            const float radius = sm::VerDist2(roi_data_.vertices[0], roi_data_.vertices[1]) / 2.0f;
+            STD_INVALID_ARG_E(src_roi_.vertices.size() == 2)
+            const cv::Point2f center = sm::MidPoint2(src_roi_.vertices[0], src_roi_.vertices[1]);
+            const float radius = sm::VerDist2(src_roi_.vertices[0], src_roi_.vertices[1]) / 2.0f;
             cv::circle(roi_mask_, center, radius, cv::Scalar::all(255), fill_flag);
             }
             break;
