@@ -227,7 +227,7 @@ void AdvImageDisplay::UpdateZoom(){
 
 
 void AdvImageDisplay::ResetZoom(){
-  zoom_scaler_ = prev_zoom_ = max_dim_scale_inv_ = 1.0;
+  zoom_scaler_ = prev_zoom_ = max_disp_img_dim_scale_inv_ = 1.0;
   origin_ = origin_bounded_ = pixmap_mouse_pos_ = cv::Point2f(0, 0);
   scroll_wheel_count_ = 0;
   is_zoom_ = false;
@@ -236,15 +236,15 @@ void AdvImageDisplay::ResetZoom(){
 
 // label_ to src_img_ coordinates
 cv::Point2f AdvImageDisplay::View2Image(const cv::Point2f &view_pnt){
-  return cv::Point2f((view_pnt.x*prev_zoom_ + origin_.x) * max_dim_scale_inv_,
-                     (view_pnt.y*prev_zoom_ + origin_.y) * max_dim_scale_inv_ );
+  return cv::Point2f((view_pnt.x*prev_zoom_ + origin_.x) * max_disp_img_dim_scale_inv_,
+                     (view_pnt.y*prev_zoom_ + origin_.y) * max_disp_img_dim_scale_inv_ );
 }
 
 
 //src_img_ to label_ coordinates
 cv::Point2f AdvImageDisplay::Image2View(const cv::Point2f &img_pnt){
-  return cv::Point2f( (img_pnt.x - origin_bounded_.x) / zoom_scaler_ / max_dim_scale_inv_,
-                      (img_pnt.y - origin_bounded_.y) / zoom_scaler_ / max_dim_scale_inv_ );
+  return cv::Point2f( (img_pnt.x - origin_bounded_.x) / zoom_scaler_ / max_disp_img_dim_scale_inv_,
+                      (img_pnt.y - origin_bounded_.y) / zoom_scaler_ / max_disp_img_dim_scale_inv_ );
 }
 
 
@@ -261,13 +261,14 @@ void AdvImageDisplay::UpdateDisplay(){
 
 
   try{
-    cv::Size max_img_size = src_img_.size();
-    float max_dim_scale;
-    const bool is_scaled = limit_view_ ? mio::GetMaxSize(src_img_, 512, max_img_size, max_dim_scale) : false;
-    max_dim_scale_inv_ = is_scaled ? 1.0f/max_dim_scale : 1.0f;
+    cv::Size max_disp_img_size = src_img_.size();
+    float max_disp_img_dim_scale;
+    const bool is_scaled = limit_view_ ? mio::GetMaxSize(src_img_, max_disp_img_dim_, max_disp_img_size,
+                                                         max_disp_img_dim_scale) : false;
+    max_disp_img_dim_scale_inv_ = is_scaled ? 1.0f/max_disp_img_dim_scale : 1.0f;
 
     if(is_zoom_){ //ROI with original size or maxSize resizing
-      origin_bounded_ = cv::Point2f(origin_.x*max_dim_scale_inv_, origin_.y*max_dim_scale_inv_);
+      origin_bounded_ = cv::Point2f(origin_.x*max_disp_img_dim_scale_inv_, origin_.y*max_disp_img_dim_scale_inv_);
       //check that the ROI is not out of bounds on src_img_, move the origin if necessary
       if(origin_bounded_.x + zoom_region_size_.width > src_img_.cols)
          origin_bounded_.x = src_img_.cols - zoom_region_size_.width;
@@ -286,16 +287,16 @@ void AdvImageDisplay::UpdateDisplay(){
 
       zoom_img_ = cv::Mat(src_img_, cv::Rect(origin_bounded_.x, origin_bounded_.y,
                                              zoom_region_size_.width, zoom_region_size_.height));
-      if(max_img_size == zoom_img_.size()) //don't call resize if we don't have to
+      if(max_disp_img_size == zoom_img_.size()) //don't call resize if we don't have to
         disp_img_ = zoom_img_.clone();
       else
-        cv::resize(zoom_img_, disp_img_, max_img_size, 0, 0, cv::INTER_NEAREST);
+        cv::resize(zoom_img_, disp_img_, max_disp_img_size, 0, 0, cv::INTER_NEAREST);
     }
     else if(is_scaled){
-      if(max_img_size == src_img_.size()) //don't call resize if we don't have to
+      if(max_disp_img_size == src_img_.size()) //don't call resize if we don't have to
         disp_img_ = src_img_.clone();
       else
-        cv::resize(src_img_, disp_img_, max_img_size, 0, 0, cv::INTER_NEAREST);
+        cv::resize(src_img_, disp_img_, max_disp_img_size, 0, 0, cv::INTER_NEAREST);
     }
     else //original size
       disp_img_ = src_img_.clone();
@@ -331,7 +332,7 @@ void AdvImageDisplay::UpdateDisplay(){
     if(show_roi_){
       roi_mask_mtx_.lock();
       if(is_scaled)
-        cv::resize(roi_mask_, disp_roi_mask_, max_img_size, 0, 0, cv::INTER_NEAREST);
+        cv::resize(roi_mask_, disp_roi_mask_, max_disp_img_size, 0, 0, cv::INTER_NEAREST);
       else
         disp_roi_mask_ = roi_mask_;
       roi_mask_mtx_.unlock();
@@ -528,8 +529,9 @@ void AdvImageDisplay::ShowRoi(){
 }
 
 
-void AdvImageDisplay::SetLimitView(const bool state){
+void AdvImageDisplay::SetLimitView(const bool state, const int max_disp_img_dim){
   limit_view_ = state;
+  max_disp_img_dim_ = max_disp_img_dim;
   if(state){
     ResetZoom();
     UpdateDisplay();

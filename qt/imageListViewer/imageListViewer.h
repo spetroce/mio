@@ -22,7 +22,6 @@ class ImageListViewer : public QWidget {
 
   private:
     Ui::ImageListViewer *ui;
-    //QImage qt_img_;
     cv::Mat cv_mat_;
     AdvImageDisplay *adv_img_disp_;
     std::vector<cv::Mat> img_vec_;

@@ -72,7 +72,7 @@ class AdvImageDisplay : public QWidget{
     bool GetNormalizeRoi();
     void SetConvertToFalseColors(const bool state);
     bool GetConvertToFalseColors();
-    void SetLimitView(const bool state);
+    void SetLimitView(const bool state, const int max_disp_img_dim = 512);
     bool GetLimitView();
     int GetID();
     void SetShowImage(const bool state);
@@ -86,7 +86,7 @@ class AdvImageDisplay : public QWidget{
 
   private:
     bool is_init_, show_image_, limit_view_, normalize_img_, convert_to_false_colors_, auto_convert_img_;
-    int id_;
+    int id_, max_disp_img_dim_;
     std::mutex src_img_mtx_;
     QGridLayout *layout_;
     QLabel *label_;
@@ -114,7 +114,7 @@ class AdvImageDisplay : public QWidget{
 
     bool is_zoom_;
     int scroll_wheel_count_;
-    float zoom_scaler_, prev_zoom_, max_dim_scale_inv_;
+    float zoom_scaler_, prev_zoom_, max_disp_img_dim_scale_inv_;
     cv::Mat zoom_img_;
     cv::Point2f origin_, origin_bounded_, pixmap_mouse_pos_;
     cv::Size2f zoom_region_size_;
