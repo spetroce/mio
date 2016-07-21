@@ -1,20 +1,20 @@
 #ifndef __QWT_GRAPH_H__
 #define __QWT_GRAPH_H__
 
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_curve.h>
-#include <qwt/qwt_plot_grid.h>
-#include <qwt/qwt_plot_renderer.h>
-#include <qwt/qwt_plot_panner.h>
-#include <qwt/qwt_plot_magnifier.h>
-#include <qwt/qwt_symbol.h>
-#include <qwt/qwt_legend.h>
-#include <qwt/qwt_spline_local.h>
-#include <qwt/qwt_spline_cubic.h>
-#include <qwt/qwt_spline_pleasing.h>
-#include <qwt/qwt_spline_parametrization.h>
-#include <qwt/qwt_curve_fitter.h>
-#include <qwt/qwt_spline_curve_fitter.h>
+#include <qwt_plot.h>
+#include <qwt_plot_curve.h>
+#include <qwt_plot_grid.h>
+#include <qwt_plot_renderer.h>
+#include <qwt_plot_panner.h>
+#include <qwt_plot_magnifier.h>
+#include <qwt_symbol.h>
+#include <qwt_legend.h>
+#include <qwt_spline_local.h>
+#include <qwt_spline_cubic.h>
+#include <qwt_spline_pleasing.h>
+#include <qwt_spline_parametrization.h>
+#include <qwt_curve_fitter.h>
+#include <qwt_spline_curve_fitter.h>
 
 #include <QPrinter>
 #include <QPrintDialog>
