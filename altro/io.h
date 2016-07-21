@@ -17,12 +17,6 @@
 
 namespace mio{
 
-struct TimeStamp{
-  uint32_t year;
-  uint8_t month, day, hour, min, sec;
-};
-
-
 inline time_t GetEpochTime(const uint32_t year, const uint8_t month, const uint8_t day,
                     const uint8_t hour, const uint8_t min, const uint8_t sec){
   EXP_CHK_E(year >= 1900, return(0))
@@ -35,6 +29,11 @@ inline time_t GetEpochTime(const uint32_t year, const uint8_t month, const uint8
   t.tm_sec = sec;
   return mktime(&t);
 }
+
+struct TimeStamp{
+  uint32_t year;
+  uint8_t month, day, hour, min, sec;
+};
 
 inline time_t GetEpochTime(const TimeStamp ts){
   return GetEpochTime(ts.year, ts.month, ts.day, ts.hour, ts.min, ts.sec);
@@ -66,6 +65,13 @@ typedef class FileDescript{
       printf( "file_full: %s\next_sep: %s\nfile_path: %s\nfileName: %s\nfileNameNoExt: %s\nfileExt: %s\n",
               file_full.c_str(), ext_sep.c_str(), file_path.c_str(),
               file_name.c_str(), file_name_no_ext.c_str(), file_ext.c_str() );
+    }
+
+    static void GetFileNameVec(const std::vector<mio::FileDescript> &fd_vec, std::vector<std::string> &fn_vec){
+      fn_vec.clear();
+      fn_vec.resize(fd_vec.size());
+      for(const mio::FileDescript &fd : fd_vec)
+        fn_vec.push_back(fd.file_name);
     }
 
     COMPARE_VAL_LESS_THAN(FileDescript, file_size) // defines FileDescript::file_size_less_than
