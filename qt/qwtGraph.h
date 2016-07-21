@@ -322,35 +322,35 @@ typedef class MyGraph : public QObject{
       QwtPlotRenderer renderer;
       renderer.renderDocument(qwt_plot, QString::fromStdString(file_full), QSizeF(100, 100), 85);
     }
+/*
+   void PrintPlot(QwtPlot &qwt_plot, const std::string file_full){
+     QPrinter printer(QPrinter::HighResolution);
 
-//    void PrintPlot(QwtPlot &qwt_plot, const std::string file_full){
-//      QPrinter printer(QPrinter::HighResolution);
+     QString docName = qwt_plot->title().text();
+     if( !docName.isEmpty() ){
+       //docName.replace( QRegExp( QString::fromLatin1("\n") ), tr(" -- ") );
+       printer.setDocName(docName);
+     }
 
-//      QString docName = qwt_plot->title().text();
-//      if( !docName.isEmpty() ){
-//        //docName.replace( QRegExp( QString::fromLatin1("\n") ), tr(" -- ") );
-//        printer.setDocName(docName);
-//      }
+     //printer.setDocName( QString( file_full.c_str() ) );
+     //printer.setCreator("Bode example");
+     printer.setOrientation(QPrinter::Landscape);
 
-//      //printer.setDocName( QString( file_full.c_str() ) );
-//      //printer.setCreator("Bode example");
-//      printer.setOrientation(QPrinter::Landscape);
+     QPrintDialog dialog(&printer);
+     if( dialog.exec() ){
+       QwtPlotRenderer renderer;
 
-//      QPrintDialog dialog(&printer);
-//      if( dialog.exec() ){
-//        QwtPlotRenderer renderer;
+       if(printer.colorMode() == QPrinter::GrayScale){
+         renderer.setDiscardFlag(QwtPlotRenderer::DiscardBackground);
+         renderer.setDiscardFlag(QwtPlotRenderer::DiscardCanvasBackground);
+         renderer.setDiscardFlag(QwtPlotRenderer::DiscardCanvasFrame);
+         renderer.setLayoutFlag(QwtPlotRenderer::FrameWithScales);
+       }
 
-//        if(printer.colorMode() == QPrinter::GrayScale){
-//          renderer.setDiscardFlag(QwtPlotRenderer::DiscardBackground);
-//          renderer.setDiscardFlag(QwtPlotRenderer::DiscardCanvasBackground);
-//          renderer.setDiscardFlag(QwtPlotRenderer::DiscardCanvasFrame);
-//          renderer.setLayoutFlag(QwtPlotRenderer::FrameWithScales);
-//        }
-
-//        renderer.renderTo(&qwt_plot, printer);
-//      }
-//    }
-
+       renderer.renderTo(&qwt_plot, printer);
+     }
+   }
+*/
     void ExternalReplot(){
       emit ExternalReplotSignal();
     }
