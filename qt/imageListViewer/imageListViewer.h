@@ -14,6 +14,8 @@ class ImageListViewer : public QWidget {
   Q_OBJECT
 
   public:
+    AdvImageDisplay *adv_img_disp_;
+
     explicit ImageListViewer(const bool show_earth = false, QWidget *parent = 0);
     ~ImageListViewer();
     void SetImageList(const std::string file_path, const std::vector<std::string> &img_file_name_vec);
@@ -23,7 +25,6 @@ class ImageListViewer : public QWidget {
   private:
     Ui::ImageListViewer *ui;
     cv::Mat cv_mat_;
-    AdvImageDisplay *adv_img_disp_;
     std::vector<cv::Mat> img_vec_;
     std::vector<std::string> img_file_name_vec_;
 
