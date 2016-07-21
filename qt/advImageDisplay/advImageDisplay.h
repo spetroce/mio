@@ -57,13 +57,10 @@ class AdvImageDisplay : public QWidget{
     void Init(const int id, const bool manage_layout = true);
     void SetImage(const cv::Mat &img, const bool clone);
     //void SetResizeScale(const float height_scale, const float width_scale);
-    //void SetMaxImgSize(cv::Size size);
-    //void GetRoi(const size_t idx, Roi &roi);
-    //void GetRoi(const size_t idx, cv::Mat &roi);
     void BeginCreateRoi(const int roi_type);
     void AddRoi();
-    //void ClearRoi();
     void RemoveRoi();
+    void GetRoiMask(cv::Mat &roi, cv::Size resize_to = cv::Size());
     void ShowStripes();
     void ShowRoi();
     void SetNormalizeImage(const bool state);

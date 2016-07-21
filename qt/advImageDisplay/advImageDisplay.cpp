@@ -502,6 +502,16 @@ void AdvImageDisplay::UpdateRoiMask(){
 }
 
 
+void AdvImageDisplay::GetRoiMask(cv::Mat &roi, cv::Size resize_to){
+  roi_mask_mtx_.lock();
+  if(resize_to == cv::Size())
+    roi = roi_mask_.clone();
+  else
+    cv::resize(roi_mask_, roi, resize_to, 0, 0, cv::INTER_NEAREST);
+  roi_mask_mtx_.unlock();
+}
+
+
 void AdvImageDisplay::ResetResizeTotal(){
   resize_total_mtx_.lock();
   resize_fx_total_ = resize_fy_total_ = 1.0;
