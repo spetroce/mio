@@ -59,10 +59,12 @@ void ImageListViewer::SetImageList(std::string file_path, const std::vector<std:
   size_t num_valid_img = 0;
   mio::FormatFilePath(file_path);
   std::string file_full;
-  for(std::string file_name : img_file_name_vec){
+  for(const std::string &file_name : img_file_name_vec){
+    if(file_name.empty())
+      continue;
+    file_full = file_path + "/" + file_name;
+    EXP_CHK_EM(mio::FileExists(file_full), continue, "file_full=" + file_full)
     try{
-      file_full = file_path + "/" + file_name;
-      EXP_CHK_EM(mio::FileExists(file_full), continue, "file_full=" + file_full)
       img_vec_[num_valid_img] = cv::imread(file_full);
       img_file_name_vec_[num_valid_img] = file_name;
       ++num_valid_img;
