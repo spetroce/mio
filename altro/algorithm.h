@@ -9,7 +9,7 @@ namespace mio{
 
 template <typename T>
 inline void FillRange(std::vector<T> &vec, const T range_start, const T range_stop){
-  EXP_CHK_EM(false, return, "this is deprecated, use std::iota")
+  EXP_CHK_EM(false, NULL, "this is deprecated, use std::iota")
   STD_INVALID_ARG_E(vec.size() > 0)
   const T step = (range_stop-range_start) / static_cast<T>( vec.size()-1 );
   T val = range_start;
