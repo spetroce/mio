@@ -21,6 +21,7 @@ class ImageListViewer : public QWidget {
     void SetImageList(const std::string file_path, const std::vector<std::string> &img_file_name_vec);
     void SetImageList(const std::vector<std::string> &img_file_name_vec,
                       const std::vector<cv::Mat> &img_vec, const bool clone_images = true);
+    void ShowEarth();
 
   private:
     Ui::ImageListViewer *ui;

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>356</width>
-    <height>150</height>
+    <width>406</width>
+    <height>151</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -170,7 +170,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QLineEdit" name="line_edit_img_name">
+      <widget class="QLineEdit" name="lineEdit_img_name">
        <property name="readOnly">
         <bool>true</bool>
        </property>

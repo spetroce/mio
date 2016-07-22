@@ -22,11 +22,8 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
   connect(ui->pb_show_roi, SIGNAL(clicked()), this, SLOT(ShowRoi()));
 
   adv_img_disp_->SetLimitView(true);
-  if(show_earth){
-    STD_RT_ERR_E(mio::FileExists(IMG_LIST_VIEWER_EARTH_JPEG_DIR"/earth.jpg"))
-    std::vector<std::string> img_file_name_vec = {"earth.jpg"};
-    SetImageList(IMG_LIST_VIEWER_EARTH_JPEG_DIR, img_file_name_vec);
-  }
+  if(show_earth)
+    ShowEarth();
 
   //TODO - add support for multiple roi's
   ui->horizontalLayout_roi->removeWidget(ui->comboBox_select_roi);
@@ -52,7 +49,7 @@ ImageListViewer::~ImageListViewer(){
 
 
 void ImageListViewer::SetImageList(std::string file_path, const std::vector<std::string> &img_file_name_vec){
-  EXP_CHK_E(img_file_name_vec.size() > 0, return)
+  EXP_CHK_E(img_file_name_vec.size() > 0, adv_img_disp_->ShowStripes();return)
   const size_t img_file_name_vec_size = img_file_name_vec.size();
   img_vec_.resize(img_file_name_vec_size);
   img_file_name_vec_.resize(img_file_name_vec_size);
@@ -111,6 +108,14 @@ void ImageListViewer::SetImageList(const std::vector<std::string> &img_file_name
 void ImageListViewer::SetImage(const int idx){
   EXP_CHK_E(idx >= 0 && idx < img_vec_.size(), return)
   adv_img_disp_->SetImage(img_vec_[idx], true);
+  ui->lineEdit_img_name->setText(QString(img_file_name_vec_[idx].c_str()));
+}
+
+
+void ImageListViewer::ShowEarth(){
+  STD_RT_ERR_E(mio::FileExists(IMG_LIST_VIEWER_EARTH_JPEG_DIR"/earth.jpg"))
+  std::vector<std::string> img_file_name_vec = {"earth.jpg"};
+  SetImageList(IMG_LIST_VIEWER_EARTH_JPEG_DIR, img_file_name_vec);
 }
 
 

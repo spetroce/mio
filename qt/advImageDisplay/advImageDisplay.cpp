@@ -504,6 +504,7 @@ void AdvImageDisplay::UpdateRoiMask(){
 
 void AdvImageDisplay::GetRoiMask(cv::Mat &roi, cv::Size resize_to){
   roi_mask_mtx_.lock();
+  EXP_CHK_E(!roi_mask_.empty(), roi_mask_mtx_.unlock();return)
   if(resize_to == cv::Size())
     roi = roi_mask_.clone();
   else

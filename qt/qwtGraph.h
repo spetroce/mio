@@ -152,20 +152,22 @@ class MySplineFitter: public QwtCurveFitter{
 };
 
 
-typedef class MyGraph : public QObject{
+class MyGraph : public QObject{
   Q_OBJECT
 
   private:
     std::vector<QwtPlotCurve*> qwt_plot_curve_vec;
     std::vector<MySplineFitter*> spline_fitter_vec;
-    QwtLegend *qwt_legend;
-    QwtPlotGrid *qwt_plot_grid;
-    QwtPlotPanner *qwt_plot_pan;
-    QwtPlotMagnifier *qwt_plot_mag;
     int m_last_set_curve_data_flags;
+    bool magnify_, pan_;
 
   public:
     QwtPlot *qwt_plot;
+    QwtLegend *qwt_legend;
+    QwtPlotGrid *qwt_plot_grid;
+    QwtPlotMagnifier *qwt_plot_mag;
+    QwtPlotPanner *qwt_plot_pan;
+    QwtSymbol *symbol_;
     std::vector<int> qt_global_colors;
 
     enum {
@@ -173,22 +175,28 @@ typedef class MyGraph : public QObject{
       PLOT_DOTS = 2,
       DEFAULT_RAND_COLOR = 4,
       COPY_CURVE_DATA = 8,
-      ATTACH_CURVE_TO_PLOT = 16
+      ATTACH_CURVE_TO_PLOT = 16,
+      MARKERS = 32
     };
 
-    MyGraph() : m_last_set_curve_data_flags(-1) {
+    MyGraph(const bool magnify = true, const bool pan = false) :
+        m_last_set_curve_data_flags(-1), magnify_(magnify), pan_(pan) {
       qt_global_colors = {2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
       qwt_plot = new QwtPlot;
       qwt_legend = new QwtLegend;
       qwt_plot_grid = new QwtPlotGrid;
+      symbol_ = new QwtSymbol( QwtSymbol::Ellipse, QBrush( Qt::yellow ), QPen( Qt::red, 2 ), QSize( 8, 8 ) );
 
       qwt_plot->insertLegend(qwt_legend);
       qwt_plot_grid->enableXMin(true);
       qwt_plot_grid->enableYMin(true);
       qwt_plot_grid->setMinorPen(Qt::gray, 0.0, Qt::DotLine);
       qwt_plot_grid->attach(qwt_plot);
-      qwt_plot_pan = new QwtPlotPanner( qwt_plot->canvas() );
-      qwt_plot_mag = new QwtPlotMagnifier( qwt_plot->canvas() );
+      if(magnify_)
+        qwt_plot_mag = new QwtPlotMagnifier( qwt_plot->canvas() );
+      if(pan_)
+        qwt_plot_pan = new QwtPlotPanner( qwt_plot->canvas() );
+
 
       qwt_plot->setCanvasBackground(Qt::white);
 
@@ -202,8 +210,10 @@ typedef class MyGraph : public QObject{
       qwt_plot_grid->detach();
       delete qwt_plot_grid;
       delete qwt_legend;
-      delete qwt_plot_pan;
-      delete qwt_plot_mag;
+      if(magnify_)
+        delete qwt_plot_mag;
+      if(pan_)
+        delete qwt_plot_pan;
       delete qwt_plot;
     }
 
@@ -257,6 +267,8 @@ typedef class MyGraph : public QObject{
       STD_INVALID_ARG_E( curve_idx >= 0 && curve_idx < qwt_plot_curve_vec.size() )
       QwtPlotCurve *qwt_plot_curve = qwt_plot_curve_vec[curve_idx];
       qwt_plot_curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
+      if(flags & MARKERS)
+        qwt_plot_curve->setSymbol(symbol_);
 
       //if(m_last_set_curve_data_flags != flags){
         if(flags & FIT_SPLINE){
@@ -290,6 +302,12 @@ typedef class MyGraph : public QObject{
       if(color_idx < 0)
         color_idx = 0;
       qwt_plot_curve_vec[curve_idx]->setPen(static_cast<Qt::GlobalColor>( qt_global_colors[color_idx%num_colors] ), pen_width);
+    }
+
+    //QColor(int r, int g, int b, int a = 255)
+    void SetPen(const size_t curve_idx, const QColor &color, qreal width = 0.0, Qt::PenStyle style = Qt::SolidLine){
+      STD_INVALID_ARG_E( curve_idx >= 0 && curve_idx < qwt_plot_curve_vec.size() )
+      qwt_plot_curve_vec[curve_idx]->setPen(color, width, style);
     }
 
     void SetCurveTitle(const size_t curve_idx, const std::string &title){
@@ -365,7 +383,9 @@ typedef class MyGraph : public QObject{
   signals:
     void ExternalReplotSignal();
 
-} myGraph_t;
+};
+
+typedef MyGraph Graph;
 
 
 #ifdef HAVE_ADV_SLIDER_WIDGET
