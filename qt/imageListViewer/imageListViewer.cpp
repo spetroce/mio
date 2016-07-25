@@ -36,18 +36,6 @@ ImageListViewer::~ImageListViewer(){
 }
 
 
-//  QString load_dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), 
-                                                       //QString(image_dir_), QFileDialog::ShowDirsOnly);
-//  std::vector<std::string> file_prefix_vec = {"R__", "G__", "B__"};
-
-//        mio::FileDescript file_desc;
-//        file_desc.file_name_ = file_name;
-//        mio::TimeStamp ts;
-//        sscanf(file_name.c_str(), "%*s__%d-%d-%d__%d-%d-%d.%*s", ts.year, ts.month, ts.day, ts.hour, ts.min, ts.sec);
-//        file_desc.epoch_time_ = mio::EpochTime(ts);
-//        img_file_desc_vec_[j].push_back(file_desc);
-
-
 void ImageListViewer::SetImageList(std::string file_path, const std::vector<std::string> &img_file_name_vec){
   EXP_CHK_E(img_file_name_vec.size() > 0, adv_img_disp_->ShowStripes();return)
   const size_t img_file_name_vec_size = img_file_name_vec.size();
