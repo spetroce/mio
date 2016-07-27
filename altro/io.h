@@ -171,16 +171,16 @@ inline int GetDirList(const std::string dir_path, std::vector<std::string> &dir_
                        const bool Remove_dir_constants, const bool print_flag = false){
   struct dirent *entry;
   DIR *dp;
-  unsigned int unDirListSize = 0, idx;
+  unsigned int dir_list_size = 0, idx;
   std::string name;
 
   ERRNO_CHK_E((dp = opendir(dir_path.c_str())) != NULL, return(-1))
 
   while( ( entry = readdir(dp) ) != 0 )
-    unDirListSize++;
+    dir_list_size++;
   rewinddir(dp);
   dir_list_vec.clear();
-  dir_list_vec.resize(unDirListSize);
+  dir_list_vec.resize(dir_list_size);
 
   idx = 0;
   while( ( entry = readdir(dp) ) != 0 ){

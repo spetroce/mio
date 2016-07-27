@@ -1,18 +1,4 @@
-/*
-  6-Jan-2010 Samuel Petrocelli
-    -created
-  6-Jan-2010 Samuel Petrocelli
-    -major changes
-    -added functions for setting dtr/rts lines
-  6-Aug-2012 Samuel Petrocelli
-    -updated error checking to use ERR_CHK macros
-    -updated nRead and nWrite to use select(), timeouts, and number of bytes read/wrote checking
-  10-mar-2013
-    -added functions to set input/output types and set default port flags
-  22-oct-2015
-    -updated error checking to use EXP_CHK and ERRNO_CHK macros
-    -bug fix on setting output baud rate
-*/
+// 6-Jan-2010 Samuel Petrocelli
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,21 +6,21 @@
 #include <sys/select.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include "mio/serialIO/serialCom.h"
+#include "mio/serialCom/serialCom.h"
 
 
-CSerialComm::CSerialComm() : is_init_(false), port_fd_(0){}
+SerialCom::SerialCom() : is_init_(false), port_fd_(0){}
 
-CSerialComm::~CSerialComm(){
+SerialCom::~SerialCom(){
   if(is_init_)
     Uninit(true);
 }
 
 
-int CSerialComm::Init(const char *path_name, int nFlags){
+int SerialCom::Init(const char *path_name, int nFlags){
   EXP_CHK_E(!is_init_, return(0))
   if( ( port_fd_ = open(path_name, nFlags) ) == -1){
-    perror("CSerialComm::Init() - open()");
+    perror("SerialCom::Init() - open()");
     if(errno == EACCES)
       printf("It's possible that the current user is not part of the dialout group\n"
 "Run the following command to check if you are a member of dialout:\n" 
@@ -45,10 +31,10 @@ int CSerialComm::Init(const char *path_name, int nFlags){
   }
   //save original termios settings in termios_orig_ (only for restoring settings in Uninit)
   ERRNO_CHK_E(tcgetattr(port_fd_, &termios_orig_) == 0, return(-1))
-  //get original termios settings and put in m_termios_new (what is used throughtout library)
-  ERRNO_CHK_E(tcgetattr(port_fd_, &m_termios_new) == 0, return(-1))
+  //get original termios settings and put in termios_new_ (what is used throughtout library)
+  ERRNO_CHK_E(tcgetattr(port_fd_, &termios_new_) == 0, return(-1))
 
-  //used by select() in CSerialComm::Read() and CSerialComm::Write()
+  //used by select() in SerialCom::Read() and SerialCom::Write()
   FD_ZERO(&write_fd_set_);
   FD_SET(port_fd_, &write_fd_set_);
   FD_ZERO(&read_fd_set_);
@@ -59,7 +45,7 @@ int CSerialComm::Init(const char *path_name, int nFlags){
 }
 
 
-int CSerialComm::Uninit(const bool kRestoreSettings){
+int SerialCom::Uninit(const bool kRestoreSettings){
   EXP_CHK_E(is_init_, return(0))
 
   if(kRestoreSettings)
@@ -72,63 +58,63 @@ int CSerialComm::Uninit(const bool kRestoreSettings){
 }
 
 
-int CSerialComm::GetPortFD(){
+int SerialCom::GetPortFD(){
   return port_fd_;
 }
 
 
-int CSerialComm::SetDefaultControlFlags(){
+int SerialCom::SetDefaultControlFlags(){
   EXP_CHK_E(is_init_, return(-1))
   /*
     CLOCAL - local line, do not change "owner" of port
     CREAD - enable receiver, serial interface driver will read incoming data bytes
   */
-  m_termios_new.c_cflag |= (CLOCAL | CREAD);
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+  termios_new_.c_cflag |= (CLOCAL | CREAD);
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
 
 
-int CSerialComm::SetOutputType(const outputType type){
+int SerialCom::SetOutputType(const outputType type){
   EXP_CHK_E(is_init_, return(-1))
 
   switch(type){
     case PROCESSED_OUTPUT:
-      m_termios_new.c_oflag |= OPOST;
+      termios_new_.c_oflag |= OPOST;
       break;
     case RAW_OUTPUT:
-      m_termios_new.c_oflag &= ~OPOST;
+      termios_new_.c_oflag &= ~OPOST;
       break;
     default:
       printf("%s - invalid outputType\n", CURRENT_FUNC);
       return -1;
   }
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
 }
 
 
-int CSerialComm::SetInputType(const inputType type){
+int SerialCom::SetInputType(const inputType type){
   EXP_CHK_E(is_init_, return(-1))
 
   switch(type){
     case CANONICAL_INPUT:
-      m_termios_new.c_lflag |= (ICANON | ECHO | ECHOE);
+      termios_new_.c_lflag |= (ICANON | ECHO | ECHOE);
       break;
     case RAW_INPUT:
-      m_termios_new.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+      termios_new_.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
       break;
     default:
       printf("%s - invalid inputType\n", CURRENT_FUNC);
       return -1;
   }
   
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
 
 
 //baud rates defined in <bits/termios.h>
-speed_t CSerialComm::GetSpeedVal(const unsigned int baud_rate){
+speed_t SerialCom::GetSpeedVal(const unsigned int baud_rate){
   switch(baud_rate){
 #ifdef B0
     case 0: return(B0); //hang-up
@@ -243,66 +229,66 @@ speed_t CSerialComm::GetSpeedVal(const unsigned int baud_rate){
 }
 
 
-int CSerialComm::SetOutBaudRate(const unsigned int baud_rate){
+int SerialCom::SetOutBaudRate(const unsigned int baud_rate){
   speed_t speed;
   
   EXP_CHK_E(is_init_, return(-1))
   EXP_CHK_EM((speed = GetSpeedVal(baud_rate)) != -1, return(-1),
              std::string("invalid baud rate: ") + std::to_string(baud_rate));
-  EXP_CHK_EM(cfgetospeed(&m_termios_new) != speed, return(0), "already at requested baud rate, doing nothing")
-  ERRNO_CHK_E(cfsetospeed(&m_termios_new, speed) == 0, return(-1))
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+  EXP_CHK_EM(cfgetospeed(&termios_new_) != speed, return(0), "already at requested baud rate, doing nothing")
+  ERRNO_CHK_E(cfsetospeed(&termios_new_, speed) == 0, return(-1))
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
 
 
-int CSerialComm::SetInBaudRate(const unsigned int baud_rate){
+int SerialCom::SetInBaudRate(const unsigned int baud_rate){
   speed_t speed;
   
   EXP_CHK_E(is_init_, return(-1))
   EXP_CHK_EM((speed = GetSpeedVal(baud_rate)) != -1, return(-1),
              std::string("invalid baud rate: ") + std::to_string(baud_rate));
-  EXP_CHK_EM(cfgetispeed(&m_termios_new) != speed, return(0), "already at requested baud rate, doing nothing")
-  ERRNO_CHK_E(cfsetispeed(&m_termios_new, speed) == 0, return(-1))
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+  EXP_CHK_EM(cfgetispeed(&termios_new_) != speed, return(0), "already at requested baud rate, doing nothing")
+  ERRNO_CHK_E(cfsetispeed(&termios_new_, speed) == 0, return(-1))
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
   
 
-int CSerialComm::SetCharSize(const unsigned int char_size){
+int SerialCom::SetCharSize(const unsigned int char_size){
   EXP_CHK_E(is_init_, return(-1))
   assert(char_size >= 5 || char_size <= 8);
   
-  m_termios_new.c_cflag &= ~CSIZE;
+  termios_new_.c_cflag &= ~CSIZE;
   
   switch(char_size){
     case 5:
-      m_termios_new.c_cflag |= CS5; break;
+      termios_new_.c_cflag |= CS5; break;
     case 6:
-      m_termios_new.c_cflag |= CS6; break;
+      termios_new_.c_cflag |= CS6; break;
     case 7:
-      m_termios_new.c_cflag |= CS7; break;
+      termios_new_.c_cflag |= CS7; break;
     case 8:
-      m_termios_new.c_cflag |= CS8; break;
+      termios_new_.c_cflag |= CS8; break;
   }
   
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
 
 
-int CSerialComm::GetCharSize(unsigned int &char_size){
+int SerialCom::GetCharSize(unsigned int &char_size){
   EXP_CHK_E(is_init_, return(-1))
   char_size = 0;
   
   //the 5th and 6th bits of c_cflag are for character size, the order below is important
-  if( (m_termios_new.c_cflag & CS8) == CS8 ) //48
+  if( (termios_new_.c_cflag & CS8) == CS8 ) //48
     char_size = 8;
-  else if( (m_termios_new.c_cflag & CS7) == CS7 ) //32
+  else if( (termios_new_.c_cflag & CS7) == CS7 ) //32
     char_size = 7;
-  else if( (m_termios_new.c_cflag & CS6) == CS6 ) //16
+  else if( (termios_new_.c_cflag & CS6) == CS6 ) //16
     char_size = 6;
-  else if( (m_termios_new.c_cflag & CS5) == CS5) //0
+  else if( (termios_new_.c_cflag & CS5) == CS5) //0
     char_size = 5;
 
   EXP_CHK_EM(char_size != 0, return(-1), "could not determine char size")
@@ -313,96 +299,96 @@ int CSerialComm::GetCharSize(unsigned int &char_size){
 }
 
 
-int CSerialComm::SetParity(const unsigned int parity_type){
+int SerialCom::SetParity(const unsigned int parity_type){
   EXP_CHK_E(is_init_, return(-1))
 
   switch(parity_type){
     case PARITY_NONE:
-      m_termios_new.c_cflag &= ~PARENB;
+      termios_new_.c_cflag &= ~PARENB;
       break;
     case PARITY_EVEN:
-      m_termios_new.c_cflag |= PARENB;
-      m_termios_new.c_cflag &= ~PARODD;
+      termios_new_.c_cflag |= PARENB;
+      termios_new_.c_cflag &= ~PARODD;
       break;
     case PARITY_ODD:
-      m_termios_new.c_cflag |= (PARENB | PARODD);
+      termios_new_.c_cflag |= (PARENB | PARODD);
       break;
 #ifdef CMSPAR
     case PARITY_SPACE:
-      m_termios_new.c_cflag |= (PARENB | CMSPAR);
-      m_termios_new.c_cflag &= ~PARODD;
+      termios_new_.c_cflag |= (PARENB | CMSPAR);
+      termios_new_.c_cflag &= ~PARODD;
       break;
     case PARITY_MARK:
-      m_termios_new.c_cflag |= (PARENB | CMSPAR | PARODD);
+      termios_new_.c_cflag |= (PARENB | CMSPAR | PARODD);
 #endif
     default:
-      printf("CSerialComm::SetParity(): invalid parity option: %d\n", parity_type);
+      printf("SerialCom::SetParity(): invalid parity option: %d\n", parity_type);
       return(-1);
   }
   
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
 
 
-int CSerialComm::SetStopBits(unsigned int num_stop_bits){
+int SerialCom::SetStopBits(unsigned int num_stop_bits){
   EXP_CHK_E(is_init_, return(-1))
   assert(num_stop_bits == 1 || num_stop_bits == 2);
 
   if(num_stop_bits == 1)
-    m_termios_new.c_cflag &= ~CSTOPB;
+    termios_new_.c_cflag &= ~CSTOPB;
   else //num_stop_bits == 2
-    m_termios_new.c_cflag |= CSTOPB;
+    termios_new_.c_cflag |= CSTOPB;
 
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
 
 
-int CSerialComm::GetStopBits(unsigned int &num_stop_bits){
+int SerialCom::GetStopBits(unsigned int &num_stop_bits){
   EXP_CHK_E(is_init_, return(-1))
-  num_stop_bits = ( (m_termios_new.c_cflag & CSTOPB) == CSTOPB ) ? 2 : 1;
+  num_stop_bits = ( (termios_new_.c_cflag & CSTOPB) == CSTOPB ) ? 2 : 1;
   return 0;
 }
 
 
-int CSerialComm::SetHardwareFlowControl(const bool hardware_flow_control){
+int SerialCom::SetHardwareFlowControl(const bool hardware_flow_control){
   EXP_CHK_E(is_init_, return(-1))
   if(hardware_flow_control)
-    m_termios_new.c_cflag |= CRTSCTS;
+    termios_new_.c_cflag |= CRTSCTS;
   else
-    m_termios_new.c_cflag &= ~CRTSCTS;
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+    termios_new_.c_cflag &= ~CRTSCTS;
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
 
 
-int CSerialComm::GetHardwareFlowControl(bool &hardware_flow_control){
+int SerialCom::GetHardwareFlowControl(bool &hardware_flow_control){
   EXP_CHK_E(is_init_, return(-1))
-  hardware_flow_control = ( (m_termios_new.c_cflag & CRTSCTS) == CRTSCTS );
+  hardware_flow_control = ( (termios_new_.c_cflag & CRTSCTS) == CRTSCTS );
   return 0;
 }
 
 
-int CSerialComm::SetSoftwareFlowControl(const bool software_flow_control){
+int SerialCom::SetSoftwareFlowControl(const bool software_flow_control){
   EXP_CHK_E(is_init_, return(-1))
   if(software_flow_control)
-    m_termios_new.c_iflag |= (IXON | IXOFF | IXANY);
+    termios_new_.c_iflag |= (IXON | IXOFF | IXANY);
   else
-    m_termios_new.c_iflag &= ~(IXON | IXOFF | IXANY);
-  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &m_termios_new) == 0, return(-1))
+    termios_new_.c_iflag &= ~(IXON | IXOFF | IXANY);
+  ERRNO_CHK_E(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
 }
 
 
-int CSerialComm::GetSoftwareFlowControl(bool &software_flow_control){
+int SerialCom::GetSoftwareFlowControl(bool &software_flow_control){
   EXP_CHK_E(is_init_, return(-1))
-  software_flow_control = ( ( m_termios_new.c_iflag & (IXON | IXOFF | IXANY) ) == (IXON | IXOFF | IXANY) );
+  software_flow_control = ( ( termios_new_.c_iflag & (IXON | IXOFF | IXANY) ) == (IXON | IXOFF | IXANY) );
   return 0;
 }
 
 
-int CSerialComm::Write(const void *data_buf, const unsigned int data_buf_len, const bool drain_buffer, 
+int SerialCom::Write(const void *data_buf, const unsigned int data_buf_len, const bool drain_buffer, 
                         const unsigned int time_out_sec, const unsigned int time_out_limit){
   EXP_CHK_E(is_init_, return(-1))
   EXP_CHK_E(data_buf_len > 0, return(0))
@@ -442,7 +428,7 @@ int CSerialComm::Write(const void *data_buf, const unsigned int data_buf_len, co
 }
 
 
-int CSerialComm::SendByte(void *single_byte){
+int SerialCom::SendByte(void *single_byte){
   EXP_CHK_E(is_init_, return(-1))
   int num_byte_written;
   ERRNO_CHK_E((num_byte_written = write(port_fd_, single_byte, 1)) != -1, return(-1))
@@ -456,7 +442,7 @@ unsigned char *pucData = input buffer data (MUST BE LARGE ENOUGH!)
 int nReqLen            = attempt to read up to nReqLen number of bytes from port_fd_
 int &nActualLen        = number of bytes actually received from port
 */
-int CSerialComm::Read(void *data_buf, const unsigned int req_buffer_len, unsigned int &num_read_byte,
+int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned int &num_read_byte,
                        const unsigned int time_out_sec, const unsigned int time_out_limit){
   EXP_CHK_E(is_init_, return(-1))
   EXP_CHK_E(req_buffer_len > 0, return(0)) 
@@ -498,7 +484,7 @@ int CSerialComm::Read(void *data_buf, const unsigned int req_buffer_len, unsigne
 
 
 //use a pull-up resistor on this line to logic 0 (voltage high) so it's not floating
-int CSerialComm::CheckCTS(bool &state){
+int SerialCom::CheckCTS(bool &state){
   EXP_CHK_E(is_init_, return(-1))
   int status;
   //Read terminal status line: Clear To Send
@@ -509,7 +495,7 @@ int CSerialComm::CheckCTS(bool &state){
 
 
 //typically rests at logic 0 (voltage high)
-int CSerialComm::SetRTS(const bool state){
+int SerialCom::SetRTS(const bool state){
   EXP_CHK_E(is_init_, return(-1))
   int status;
   ERRNO_CHK_E(ioctl(port_fd_, TIOCMGET, &status) != -1, return(-1))
@@ -523,7 +509,7 @@ int CSerialComm::SetRTS(const bool state){
 
 
 //typically rests at logic 0 (voltage high)
-int CSerialComm::SetDTR(const bool state){
+int SerialCom::SetDTR(const bool state){
   EXP_CHK_E(is_init_, return(-1))
   int status;
   ERRNO_CHK_E(ioctl(port_fd_, TIOCMGET, &status) != -1, return(-1))
@@ -540,7 +526,7 @@ int CSerialComm::SetDTR(const bool state){
 Clear any bytes that may be queued for input on device without 
 reading these bytes; this is a DESTRUCTIVE input flush
 */
-int CSerialComm::FlushInput(){
+int SerialCom::FlushInput(){
   EXP_CHK_E(is_init_, return(-1))
   ERRNO_CHK_E(tcflush(port_fd_, TCIFLUSH) != -1, return(-1))
   return 0;
@@ -551,14 +537,14 @@ int CSerialComm::FlushInput(){
 Clear any bytes that may be queued for output on device without
 writing these bytes; this is a DESTRUCTIVE output flush
 */
-int CSerialComm::FlushOutput(){
+int SerialCom::FlushOutput(){
   EXP_CHK_E(is_init_, return(-1))
   ERRNO_CHK_E(tcflush(port_fd_, TCOFLUSH) != -1, return(-1))
   return 0;
 }
 
 
-int CSerialComm::FlushIO(){
+int SerialCom::FlushIO(){
   EXP_CHK_E(is_init_, return(-1))
   ERRNO_CHK_E(tcflush(port_fd_, TCIOFLUSH) != -1, return(-1))
   return 0;
@@ -569,7 +555,7 @@ int CSerialComm::FlushIO(){
 int &num_in_bytes, &num_out_bytes : references to load with values of bytes in input 
 			    queue and output queue respectively
 */
-int CSerialComm::InQueue(int &num_in_bytes, int &num_out_bytes){
+int SerialCom::InQueue(int &num_in_bytes, int &num_out_bytes){
   EXP_CHK_E(is_init_, return(-1))
   // at least this many bytes have to be available
   ERRNO_CHK_E(ioctl(port_fd_, FIONREAD, num_in_bytes) != -1, return(-1))

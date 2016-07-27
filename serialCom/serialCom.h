@@ -30,7 +30,7 @@ enum outputType{
 };
 
 
-class CSerialComm{
+class SerialCom{
 
   private:
     bool is_init_;
@@ -40,8 +40,8 @@ class CSerialComm{
     fd_set write_fd_set_, read_fd_set_;
 
   public:
-    CSerialComm();
-    ~CSerialComm();
+    SerialCom();
+    ~SerialCom();
 
     int Init(const char *path_name, int nFlags = O_RDWR | O_NDELAY); //must have O_RDONLY, O_WRONLY, or O_RDWR flag
     int Uninit(const bool kRestoreSettings);
