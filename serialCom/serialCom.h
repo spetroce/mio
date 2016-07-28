@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include "mio/altro/error.h"
-#include "mio/altro/timers.h"
 
 #define PARITY_NONE 0
 #define PARITY_EVEN 1
