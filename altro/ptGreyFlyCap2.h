@@ -30,6 +30,7 @@ EXP_CHK_E(ptgrey_func_call == PGRERROR_OK, _ptgrey_error.PrintErrorTrace(); exit
 #define PGR_EXP_CHK(exp, exit_function)\
 EXP_CHK_E(exp, _ptgrey_error.PrintErrorTrace(); exit_function);
 
+namespace mio{
 
 void FC2ImageToOpenCvMat(const FlyCapture2::Image &image, cv::Mat &mat,
                          FlyCapture2::Image *rgb_img = nullptr, const bool clone_data = false){
@@ -82,7 +83,7 @@ bool PollForTriggerReady(FlyCapture2::Camera *cam){
 }
 
 
-int InitCamera(FlyCapture2::Camera &cam, const bool with_ext_trig = false){
+int InitPtGreyFlyCap2Cam(FlyCapture2::PGRGuid &guid, FlyCapture2::Camera &cam, const bool with_ext_trig = false){
   PGR_ERR_VAR
 
   PGR_ERR_OK(cam.Connect(&guid));
@@ -151,21 +152,26 @@ int InitCamera(FlyCapture2::Camera &cam, const bool with_ext_trig = false){
 
   // Camera is ready, start capturing images
   PGR_ERR_OK(cam.StartCapture(), return(-1));
+  printf("trigger GPIO: %d\n", trigger_mode.source);
   return 0;
 }
 
 
-int UninitCamera(FlyCapture2::Camera &cam){
+int UninitPtGreyFlyCap2Cam(FlyCapture2::Camera &cam, const bool with_ext_trig = false){
   PGR_ERR_VAR
 
-	FlyCapture2::TriggerMode trigger_mode;
-  PGR_ERR_OK(cam.GetTriggerMode(&trigger_mode), return(-1))
-	trigger_mode.onOff = false;
-  PGR_ERR_OK(cam.SetTriggerMode(&trigger_mode), return(-1))
+  if(with_ext_trig){
+  	FlyCapture2::TriggerMode trigger_mode;
+    PGR_ERR_OK(cam.GetTriggerMode(&trigger_mode), return(-1))
+  	trigger_mode.onOff = false;
+    PGR_ERR_OK(cam.SetTriggerMode(&trigger_mode), return(-1))
+  }
   PGR_ERR_OK(cam.StopCapture(), return(-1))
   PGR_ERR_OK(cam.Disconnect(), return(-1))
   return 0;
 }
+
+} //namespace mio
 
 #endif //__MIO_PT_GREY_FLY_CAP__
 
