@@ -1,4 +1,7 @@
 #include "advImageDisplay.h"
+#include <QMessageBox>
+#include <QXmlStreamWriter>
+#include "mio/qt/qtXml.h"
 
 constexpr std::array<const char*, 4> Roi::roi_type_str;
 
@@ -609,3 +612,96 @@ bool AdvImageDisplay::GetConvertToFalseColors(){
   return convert_to_false_colors_;
 }
 
+
+void AdvImageDisplay::SaveRoi(QString file_full_qstr){
+  EXP_CHK_E(src_roi_.vertices.size() >= 2, return)
+  EXP_CHK_E(!file_full_qstr.isEmpty(), return)
+  std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
+  mio::FileNameExpand(file_full, ".", &file_path, NULL, NULL, NULL);
+  EXP_CHK_EM(mio::DirExists(file_path), return, file_path + "is not an existing directory")
+  ForceXmlExtension(file_full_qstr);
+  file_full = file_full_qstr.toStdString();
+  printf("%s - saving ROI to %s\n", CURRENT_FUNC, file_full.c_str());
+
+  QFile file(file_full_qstr);
+  EXP_CHK_E(file.open(QIODevice::WriteOnly),
+            QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
+
+  QXmlStreamWriter xml_writer(&file);
+  xml_writer.setAutoFormatting(true);
+  xml_writer.writeStartDocument(); //write XML version number
+
+  xml_writer.writeStartElement("ROI");
+  xml_writer.writeAttribute("type", INT_TO_QSTR(src_roi_.type));
+  for(auto &pnt : src_roi_.vertices){
+    xml_writer.writeStartElement("point");
+    xml_writer.writeTextElement("x", FLT_TO_QSTR(pnt.x));
+    xml_writer.writeTextElement("y", FLT_TO_QSTR(pnt.y));
+    xml_writer.writeEndElement(); //end point
+  }
+  xml_writer.writeEndElement(); //end ROI
+
+  xml_writer.writeEndDocument();
+  file.close();
+}
+
+
+void AdvImageDisplay::LoadRoi(const QString file_full_qstr){
+  EXP_CHK_E(!file_full_qstr.isEmpty(), return)
+  std::string file_full = file_full_qstr.toStdString();
+  EXP_CHK_E(mio::FileExists(file_full), return)
+  printf("%s - loading ROI from %s\n", CURRENT_FUNC, file_full.c_str());
+
+  QFile file(file_full_qstr);
+  EXP_CHK_E(file.open(QIODevice::ReadOnly | QIODevice::Text),
+            QMessageBox::warning(0, "AdvImageDisplay::LoadRoi", "Couldn't open xml file");return)
+
+  QXmlStreamAttributes attr;
+  QXmlStreamReader xml_reader(&file);
+  while( !xml_reader.atEnd() && !xml_reader.hasError() ){
+    xml_reader.readNext();
+    if(xml_reader.isStartDocument()) //skip StartDocument tokens
+      continue;
+
+    //if token is StartElement, we'll see if we can read it
+    if(xml_reader.isStartElement()){
+      if(xml_reader.name() == "ROI"){
+        attr = xml_reader.attributes();
+        if(attr.hasAttribute("type") ){
+          disp_roi_.type = ATTR_TO_INT(attr, "type");
+          printf("roi_type=%d\n", disp_roi_.type);
+        }
+      }
+      else if(xml_reader.name() == "point"){
+        size_t num_parsed_elem = 0;
+        cv::Point2f pnt;
+        while(!xml_reader.atEnd() && !xml_reader.hasError() && num_parsed_elem < 2){
+          xml_reader.readNext();
+          if(xml_reader.isStartElement()){
+            if(xml_reader.name() == "x"){
+              pnt.x = ELEM2FLT(xml_reader);
+              ++num_parsed_elem;
+            }
+            else if(xml_reader.name() == "y"){
+              pnt.y = ELEM2FLT(xml_reader);
+              ++num_parsed_elem;
+            }
+          }
+          else if(xml_reader.isEndElement() && xml_reader.name() == "point")
+            break;
+        }
+        disp_roi_.vertices.push_back(pnt);
+        std::cout << pnt << std::endl;
+      }
+    }
+  }
+
+  //error handling
+  if( xml_reader.hasError() )
+    QMessageBox::critical(this, "QXSRExample::parseXML", xml_reader.errorString(), QMessageBox::Ok);
+  xml_reader.clear(); //removes any device() or data from the reader and resets its internal state to the initial state
+
+  file.close();
+  AddRoi();
+  UpdateDisplay();
+}

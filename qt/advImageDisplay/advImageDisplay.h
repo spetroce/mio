@@ -77,6 +77,8 @@ class AdvImageDisplay : public QWidget{
     QLabel* GetImageQLabel();
     void SetAutoConvertImage(const bool state);
     bool GetAutoConvertImage();
+    void SaveRoi(QString file_full_qstr);
+    void LoadRoi(const QString file_full_qstr);
 
   protected:
     bool eventFilter(QObject *target, QEvent *event);
