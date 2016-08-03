@@ -1,7 +1,7 @@
-#ifndef __MIO_QT_XML_HPP__
-#define __MIO_QT_XML_HPP__
+#ifndef __MIO_QT_XML_H__
+#define __MIO_QT_XML_H__
 
-#include "mio/altro/io.hpp"
+#include "mio/altro/io.h"
 
 #define INT_TO_QSTR(val) QString().sprintf("%d", val)
 #define FLT_TO_QSTR(val) QString().sprintf("%.6f", val)
@@ -18,9 +18,9 @@
 
 inline void ForceXmlExtension(QString &file_full_qt){
   std::string file_full = file_full_qt.toStdString();
-  if( ForceFileExtension(file_full, "xml") )
+  if( mio::ForceFileExtension(file_full, "xml") )
     file_full_qt = QString::fromStdString(file_full);
 }
 
-#endif //__MIO_QT_XML_HPP__
+#endif //__MIO_QT_XML_H__
 
