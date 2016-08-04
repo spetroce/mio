@@ -63,6 +63,11 @@ int SerialCom::GetPortFD(){
 }
 
 
+bool SerialCom::IsInit(){
+  return is_init_;
+}
+
+
 int SerialCom::SetDefaultControlFlags(){
   EXP_CHK_E(is_init_, return(-1))
   /*

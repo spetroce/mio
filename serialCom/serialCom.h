@@ -46,6 +46,7 @@ class SerialCom{
     int Uninit(const bool kRestoreSettings);
 
     int GetPortFD();
+    bool IsInit();
 
     int SetInputType(const inputType type);
     int SetOutputType(const outputType type);
