@@ -62,15 +62,7 @@ void ImageListViewer::SetImageList(std::string file_path, const std::vector<std:
   img_vec_.resize(num_valid_img);
   img_file_name_vec_.resize(num_valid_img);
 
-  ui->slider_img_idx->setMaximum(num_valid_img <= 1 ? 1 : num_valid_img-1);
-  ui->slider_img_idx->setEnabled(num_valid_img > 1);
-  ui->pb_prev_img->setEnabled(num_valid_img > 1);
-  ui->pb_next_img->setEnabled(num_valid_img > 1);
-
-  if(num_valid_img == 0)
-    adv_img_disp_->ShowStripes();
-  else
-    SetImage(0);
+  SetImgIdxGui();
 }
 
 
@@ -89,7 +81,23 @@ void ImageListViewer::SetImageList(const std::vector<std::string> &img_file_name
   else
     img_vec_ = img_vec;
 
-  ui->slider_img_idx->setMaximum(img_vec_.size()-1);
+  SetImgIdxGui();
+}
+
+
+void ImageListViewer::SetImgIdxGui(){
+  STD_INVALID_ARG_E(img_vec_.size() == img_file_name_vec_.size())
+  const size_t num_valid_img = img_vec_.size();
+
+  ui->slider_img_idx->setMaximum(num_valid_img <= 1 ? 1 : num_valid_img-1);
+  ui->slider_img_idx->setEnabled(num_valid_img > 1);
+  ui->pb_prev_img->setEnabled(num_valid_img > 1);
+  ui->pb_next_img->setEnabled(num_valid_img > 1);
+
+  if(num_valid_img == 0)
+    adv_img_disp_->ShowStripes();
+  else
+    SetImage(0);
 }
 
 

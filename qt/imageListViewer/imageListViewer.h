@@ -28,6 +28,7 @@ class ImageListViewer : public QWidget {
     cv::Mat cv_mat_;
     std::vector<cv::Mat> img_vec_;
     std::vector<std::string> img_file_name_vec_;
+    void SetImgIdxGui();
 
   private slots:
     void SetImage(const int idx);
