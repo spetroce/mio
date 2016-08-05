@@ -96,8 +96,10 @@ void ImageListViewer::SetImgIdxGui(){
 
   if(num_valid_img == 0)
     adv_img_disp_->ShowStripes();
-  else
+  else{
+    ui->slider_img_idx->setValue(0);
     SetImage(0);
+  }
 }
 
 
