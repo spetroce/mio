@@ -15,38 +15,51 @@ namespace mio{
 class UiPropertySetter : public QWidget{
   Q_OBJECT
 
-  public:
-    bool is_init_;
-    QHBoxLayout *layout_;
-    QLabel *label_;
-    AdvSlider *adv_slider_;
-    DblAdvSlider *dbl_adv_slider_;
-    QCheckBox *chb_auto_, *chb_on_off_, *chb_one_push_;
-    FlyCapture2::PropertyInfo prop_info_;
-    FlyCapture2::Property prop_;
-    FlyCapture2::Camera *cam_;
-    std::mutex cam_mtx_;
-    mio::CFreqBuffer<double> dbl_freq_buf_;
-    mio::CFreqBuffer<int> int_freq_buf_;
+  bool is_init_;
+  int id_;
+  QHBoxLayout *layout_;
+  QLabel *label_;
+  AdvSlider *val_a_slider_;
+  DblAdvSlider *abs_val_slider_;
+  QCheckBox *chb_auto_, *chb_on_off_, *chb_one_push_;
+  FlyCapture2::PropertyInfo prop_info_;
+  FlyCapture2::Property prop_;
+  FlyCapture2::Camera *cam_;
+  std::mutex *cam_mtx_;
+  mio::CFreqBuffer<double> abs_val_freq_buf_;
+  mio::CFreqBuffer<int> val_a_freq_buf_;
+  int dbg_count_;
+  bool from_update_ui_;
 
-    UiPropertySetter() : is_init_(false){
+  static void AbsValFreqBufCallBack(double value, void *user_data){
+    static_cast<mio::UiPropertySetter*>(user_data)->SetCameraProp();
+  }
+
+  static void ValAFreqBufCallBack(int value, void *user_data){
+    static_cast<mio::UiPropertySetter*>(user_data)->SetCameraProp();
+  }
+
+  public:
+    UiPropertySetter(int id) : is_init_(false), dbg_count_(0), from_update_ui_(false), id_(id){
       layout_ = nullptr;
       label_ = nullptr;
-      adv_slider_ = nullptr;
-      dbl_adv_slider_ = nullptr;
+      val_a_slider_ = nullptr;
+      abs_val_slider_ = nullptr;
       chb_auto_ = chb_on_off_ = chb_one_push_ = nullptr;
     }
 
     ~UiPropertySetter(){
       if(layout_) delete layout_;
       if(label_) delete label_;
-      if(dbl_adv_slider_){
-        disconnect(dbl_adv_slider_, SIGNAL(valueChanged(double)), this, SLOT(SetCameraProp()));
-        delete adv_slider_;
+      if(abs_val_slider_){
+        abs_val_freq_buf_.Uninit();
+        disconnect(abs_val_slider_, SIGNAL(valueChanged(double)), this, SLOT(SetCameraProp()));
+        delete abs_val_slider_;
       }
-      if(adv_slider_){
-        disconnect(adv_slider_, SIGNAL(valueChanged(double)), this, SLOT(SetCameraProp()));
-        delete dbl_adv_slider_;
+      if(val_a_slider_){
+        val_a_freq_buf_.Uninit();
+        disconnect(val_a_slider_, SIGNAL(valueChanged(double)), this, SLOT(SetCameraProp()));
+        delete val_a_slider_;
       }
       if(chb_auto_){
         disconnect(chb_auto_, SIGNAL(clicked()), this, SLOT(SetCameraProp()));
@@ -60,6 +73,15 @@ class UiPropertySetter : public QWidget{
         disconnect(chb_one_push_, SIGNAL(clicked()), this, SLOT(SetCameraProp()));
         delete chb_one_push_;
       }
+    }
+
+    void SetCamera(FlyCapture2::Camera *cam, std::mutex *cam_mtx){
+      cam_ = cam;
+      cam_mtx_ = cam_mtx;
+    }
+
+    int GetId(){
+      return id_;
     }
 
     //TODO - each element should get linked to slot which updated prop_ and then calls cam_->setProperty(prop_)
@@ -76,19 +98,20 @@ class UiPropertySetter : public QWidget{
       layout_->addWidget(label_);
 
       if(prop_info.manualSupported){
+        const size_t kFreq = 5, kBufSize = 5, kNumDecimal = 1;
         if(prop_info.absValSupported){
-          dbl_adv_slider_ = new DblAdvSlider(prop_info.absMin, prop_info.absMax, prop.absValue,
-                                             3, prop_info.absMin, prop_info.absMax);
-          layout_->addWidget(dbl_adv_slider_);
-          dbl_freq_buf_.Init(SetCameraProp, 5);
-          connect(dbl_adv_slider_, SIGNAL(valueChanged(double)), this, SLOT(SliderValueChanged(double)));
+          abs_val_slider_ = new DblAdvSlider(prop_info.absMin, prop_info.absMax, prop.absValue,
+                                             kNumDecimal, prop_info.absMin, prop_info.absMax);
+          layout_->addWidget(abs_val_slider_);
+          abs_val_freq_buf_.Init(AbsValFreqBufCallBack, kFreq, kBufSize, static_cast<void*>(this));
+          connect(abs_val_slider_, SIGNAL(valueChanged(double)), this, SLOT(AbsValSliderValueChanged(double)));
         }
         else{
-          adv_slider_ = new AdvSlider(prop_info.min, prop_info.max, prop.valueA,
+          val_a_slider_ = new AdvSlider(prop_info.min, prop_info.max, prop.valueA,
                                       prop_info.min, prop_info.max);
-          layout_->addWidget(adv_slider_);
-          connect(adv_slider_, SIGNAL(valueChanged(int)), this, SLOT(SliderValueChanged(int)));
-          int_freq_buf_.Init(SetCameraProp, 5);
+          layout_->addWidget(val_a_slider_);
+          val_a_freq_buf_.Init(ValAFreqBufCallBack, kFreq, kBufSize, static_cast<void*>(this));
+          connect(val_a_slider_, SIGNAL(valueChanged(int)), this, SLOT(ValASliderValueChanged(int)));
         }
       }
       if(prop_info.autoSupported){
@@ -122,13 +145,17 @@ class UiPropertySetter : public QWidget{
     void UpdateUi(){
       EXP_CHK_E(is_init_, return)
       PGR_ERR_VAR
-      cam_mtx_.lock();
+      cam_mtx_->lock();
       PGR_ERR_OK(cam_->GetProperty(&prop_), return)
-      cam_mtx_.unlock();
-      if(dbl_adv_slider_)
-        dbl_adv_slider_->setValue(prop_.absValue);
-      else if(adv_slider_)
-        adv_slider_->setValue(prop_.valueA);
+      cam_mtx_->unlock();
+      if(abs_val_slider_){
+        abs_val_slider_->setValue(prop_.absValue);
+        from_update_ui_ = true;
+      }
+      else if(val_a_slider_){
+        val_a_slider_->setValue(prop_.valueA);
+        from_update_ui_ = true;
+      }
       if(chb_auto_)
         chb_auto_->setCheckState(prop_.autoManualMode ? Qt::Checked : Qt::Unchecked);
       if(chb_on_off_)
@@ -137,41 +164,43 @@ class UiPropertySetter : public QWidget{
         chb_one_push_->setCheckState(prop_.onePush ? Qt::Checked : Qt::Unchecked);
     }
 
-    static void SliderFreqBufCallBack(double value, void *user_data){
-      static_cast<mio::UiPropertySetter*>(user_data)->SetCameraProp();
-    }
-
-    static void SliderFreqBufCallBack(int value, void *user_data){
-      static_cast<mio::UiPropertySetter*>(user_data)->SetCameraProp();
-    }
-
   private slots:
-    void SliderValueChanged(double value){
-      dbl_freq_buf_.Push(value);
+    void AbsValSliderValueChanged(double value){
+      if(!from_update_ui_)
+        abs_val_freq_buf_.Push(value);
+      else
+        from_update_ui_ = false;
     }
 
-    void SliderValueChanged(int value){
-      int_freq_buf_.Push(value);
+    void ValASliderValueChanged(int value){
+      if(!from_update_ui_)
+        val_a_freq_buf_.Push(value);
+      else
+        from_update_ui_ = false;
     }
 
     void SetCameraProp(){
+      printf("%s - %d\n", CURRENT_FUNC, dbg_count_++);
       EXP_CHK_E(is_init_, return)
       PGR_ERR_VAR
-      if(dbl_adv_slider_)
-        prop_.absValue = dbl_adv_slider_->value();
-      else if(adv_slider_)
-        prop_.valueA = adv_slider_->value();
+      if(abs_val_slider_)
+        prop_.absValue = abs_val_slider_->value();
+      else if(val_a_slider_)
+        prop_.valueA = val_a_slider_->value();
       if(chb_auto_)
         prop_.autoManualMode = (chb_auto_->checkState() == Qt::Checked);
       if(chb_on_off_)
         prop_.onOff = (chb_on_off_->checkState() == Qt::Checked);
       if(chb_one_push_)
         prop_.onePush = (chb_one_push_->checkState() == Qt::Checked);
-      cam_mtx_.lock();
+      cam_mtx_->lock();
       PGR_ERR_OK(cam_->SetProperty(&prop_), return)
-      cam_mtx_.unlock();
-      UpdateUi();
+      cam_mtx_->unlock();
+      emit ControlChanged(id_);
     }
+
+  signals:
+    void ControlChanged(int id);
 };
 
 
@@ -180,6 +209,7 @@ class FlyCapControl : public QWidget{
 
   public:
     FlyCapture2::Camera *cam_;
+    std::mutex *cam_mtx_;
     std::map<FlyCapture2::PropertyType, UiPropertySetter*> ui_prop_setter_map_;
     bool absolute_mode_;
     QVBoxLayout *layout_;
@@ -192,6 +222,11 @@ class FlyCapControl : public QWidget{
 
     ~FlyCapControl(){
       if(layout_) delete layout_;
+    }
+
+    void SetCamera(FlyCapture2::Camera *cam, std::mutex *cam_mtx){
+      cam_ = cam;
+      cam_mtx_ = cam_mtx;
     }
 
     void Setup(){
@@ -247,6 +282,7 @@ class FlyCapControl : public QWidget{
 
       FlyCapture2::Property prop;
       FlyCapture2::PropertyInfo prop_info;
+      int id = 0;
       for(size_t i = 0; i < prop_type_vec.size(); ++i){
         prop_info.type = prop_type_vec[i];
         PGR_ERR_OK(cam_->GetPropertyInfo(&prop_info), continue)
@@ -254,16 +290,29 @@ class FlyCapControl : public QWidget{
         if(prop_info.present){
           prop.type = prop_type_vec[i];
           PGR_ERR_OK(cam_->GetProperty(&prop), continue)
-          ui_prop_setter_map_[ prop_type_vec[i] ] = new UiPropertySetter();
+          ui_prop_setter_map_[ prop_type_vec[i] ] = new UiPropertySetter(id);
+          ++id;
           UiPropertySetter *ui_prop_setter = ui_prop_setter_map_[ prop_type_vec[i] ];
-          ui_prop_setter->cam_ = cam_;
+          cam_mtx_->lock();
+          ui_prop_setter->SetCamera(cam_, cam_mtx_);
+          cam_mtx_->unlock();
           ui_prop_setter->Setup(QString::fromStdString(prop_type_name_vec[i]), prop_info, prop);
           layout_->addWidget(ui_prop_setter);
         }
       }
 
+      for(auto &pair : ui_prop_setter_map_)
+        connect(pair.second, SIGNAL(ControlChanged(int)), this, SLOT(UpdateUi(int)));
+
       setLayout(layout_);
       setFixedHeight( sizeHint().height() );
+    }
+
+  private slots:
+    void UpdateUi(int id){
+      for(auto &pair : ui_prop_setter_map_)
+        if(pair.second->GetId() != id)
+          pair.second->UpdateUi();
     }
 };
 
