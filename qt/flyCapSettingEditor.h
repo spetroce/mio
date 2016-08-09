@@ -7,7 +7,10 @@
 #include <QCheckBox>
 #include "mio/qt/advSliderWidget/advSliderWidget.h"
 #include "mio/altro/ptGreyFlyCap2.h"
+#include "mio/altro/freqBuffer.h"
 
+
+namespace mio{
 
 class UiPropertySetter : public QWidget{
   Q_OBJECT
@@ -19,11 +22,12 @@ class UiPropertySetter : public QWidget{
     AdvSlider *adv_slider_;
     DblAdvSlider *dbl_adv_slider_;
     QCheckBox *chb_auto_, *chb_on_off_, *chb_one_push_;
-    QFrame *line_[3];
     FlyCapture2::PropertyInfo prop_info_;
     FlyCapture2::Property prop_;
     FlyCapture2::Camera *cam_;
     std::mutex cam_mtx_;
+    mio::CFreqBuffer<double> dbl_freq_buf_;
+    mio::CFreqBuffer<int> int_freq_buf_;
 
     UiPropertySetter() : is_init_(false){
       layout_ = nullptr;
@@ -31,7 +35,6 @@ class UiPropertySetter : public QWidget{
       adv_slider_ = nullptr;
       dbl_adv_slider_ = nullptr;
       chb_auto_ = chb_on_off_ = chb_one_push_ = nullptr;
-      line_[0] = line_[1] = line_[2] = nullptr;
     }
 
     ~UiPropertySetter(){
@@ -68,12 +71,6 @@ class UiPropertySetter : public QWidget{
       prop_ = prop;
 
       layout_ = new QHBoxLayout();
-//      for(size_t i = 0; i < 3; ++i){
-//        line_[i] = new QFrame();
-//        line_[i]->setFrameShape(QFrame::VLine);
-//        line_[i]->setFrameShadow(QFrame::Sunken);
-//      }
-
       label_ = new QLabel();
       label_->setText(label);
       layout_->addWidget(label_);
@@ -108,7 +105,7 @@ class UiPropertySetter : public QWidget{
       }
       if(prop_info.onePushSupported){
         chb_one_push_ = new QCheckBox();
-        chb_one_push_->setText("prop_info");
+        chb_one_push_->setText("onePush");
         chb_one_push_->setCheckState(prop.onePush ? Qt::Checked : Qt::Unchecked);
         layout_->addWidget(chb_one_push_);
         connect(chb_one_push_, SIGNAL(clicked()), this, SLOT(SetCameraProp()));
@@ -250,6 +247,8 @@ class FlyCapControl : public QWidget{
       setFixedHeight( sizeHint().height() );
     }
 };
+
+} //namespace mio
 
 #endif //__FLY_CAP_SETTING_EDITOR_H__
 
