@@ -2,6 +2,7 @@
 #define __FLY_CAP_SETTING_EDITOR_H__
 
 #include <map>
+#include <mutex>
 #include <QLabel>
 #include <QCheckBox>
 #include "mio/qt/advSliderWidget/advSliderWidget.h"
@@ -12,6 +13,7 @@ class UiPropertySetter : public QWidget{
   Q_OBJECT
 
   public:
+    bool is_init_;
     QHBoxLayout *layout_;
     QLabel *label_;
     AdvSlider *adv_slider_;
@@ -21,8 +23,9 @@ class UiPropertySetter : public QWidget{
     FlyCapture2::PropertyInfo prop_info_;
     FlyCapture2::Property prop_;
     FlyCapture2::Camera *cam_;
+    std::mutex cam_mtx_;
 
-    UiPropertySetter(){
+    UiPropertySetter() : is_init_(false){
       layout_ = nullptr;
       label_ = nullptr;
       adv_slider_ = nullptr;
@@ -60,6 +63,7 @@ class UiPropertySetter : public QWidget{
     //TODO - all of these prop_ structs can get saved to an XML file and loaded (prop_info_ is only needed to set 
     //       up the UI, which we can get from the camera on startup)
     void Setup(const QString label, const FlyCapture2::PropertyInfo &prop_info, const FlyCapture2::Property &prop){
+      STD_LOG_ERR_EM(!is_init_, "called this function twice")
       prop_info_ = prop_info;
       prop_ = prop;
 
@@ -112,25 +116,45 @@ class UiPropertySetter : public QWidget{
 
       setLayout(layout_);
       setFixedHeight( sizeHint().height() );
+      is_init_ = true;
+    }
+
+    void UpdateUi(){
+      EXP_CHK_E(is_init_, return)
+      PGR_ERR_VAR
+      cam_mtx_.lock();
+      PGR_ERR_OK(cam_->GetProperty(&prop_), return)
+      cam_mtx_.unlock();
+      if(dbl_adv_slider_)
+        dbl_adv_slider_->setValue(prop_.absValue);
+      else if(adv_slider_)
+        adv_slider_->setValue(prop_.valueA);
+      if(chb_auto_)
+        chb_auto_->setCheckState(prop_.autoManualMode ? Qt::Checked : Qt::Unchecked);
+      if(chb_on_off_)
+        chb_on_off_->setCheckState(prop_.onOff ? Qt::Checked : Qt::Unchecked);
+      if(chb_one_push_)
+        chb_one_push_->setCheckState(prop_.onePush ? Qt::Checked : Qt::Unchecked);
     }
 
   private slots:
     void SetCameraProp(){
+      EXP_CHK_E(is_init_, return)
       PGR_ERR_VAR
-      if(prop_info_.manualSupported){
-        if(prop_info_.absValSupported)
-          prop_.absValue = dbl_adv_slider_->value();
-        else
-          prop_.valueA = adv_slider_->value();
-      }
-      if(prop_info_.autoSupported)
+      if(dbl_adv_slider_)
+        prop_.absValue = dbl_adv_slider_->value();
+      else if(adv_slider_)
+        prop_.valueA = adv_slider_->value();
+      if(chb_auto_)
         prop_.autoManualMode = (chb_auto_->checkState() == Qt::Checked);
-      if(prop_info_.onOffSupported)
+      if(chb_on_off_)
         prop_.onOff = (chb_on_off_->checkState() == Qt::Checked);
-      if(prop_info_.onePushSupported)
+      if(chb_one_push_)
         prop_.onePush = (chb_one_push_->checkState() == Qt::Checked);
-
+      cam_mtx_.lock();
       PGR_ERR_OK(cam_->SetProperty(&prop_), return)
+      cam_mtx_.unlock();
+      UpdateUi();
     }
 };
 
