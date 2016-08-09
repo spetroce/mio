@@ -80,13 +80,15 @@ class UiPropertySetter : public QWidget{
           dbl_adv_slider_ = new DblAdvSlider(prop_info.absMin, prop_info.absMax, prop.absValue,
                                              3, prop_info.absMin, prop_info.absMax);
           layout_->addWidget(dbl_adv_slider_);
-          connect(dbl_adv_slider_, SIGNAL(valueChanged(double)), this, SLOT(SetCameraProp()));
+          dbl_freq_buf_.Init(SetCameraProp, 5);
+          connect(dbl_adv_slider_, SIGNAL(valueChanged(double)), this, SLOT(SliderValueChanged(double)));
         }
         else{
           adv_slider_ = new AdvSlider(prop_info.min, prop_info.max, prop.valueA,
                                       prop_info.min, prop_info.max);
           layout_->addWidget(adv_slider_);
-          connect(adv_slider_, SIGNAL(valueChanged(int)), this, SLOT(SetCameraProp()));
+          connect(adv_slider_, SIGNAL(valueChanged(int)), this, SLOT(SliderValueChanged(int)));
+          int_freq_buf_.Init(SetCameraProp, 5);
         }
       }
       if(prop_info.autoSupported){
@@ -102,6 +104,7 @@ class UiPropertySetter : public QWidget{
         chb_on_off_->setCheckState(prop.onOff ? Qt::Checked : Qt::Unchecked);
         layout_->addWidget(chb_on_off_);
         connect(chb_on_off_, SIGNAL(clicked()), this, SLOT(SetCameraProp()));
+        
       }
       if(prop_info.onePushSupported){
         chb_one_push_ = new QCheckBox();
@@ -134,7 +137,23 @@ class UiPropertySetter : public QWidget{
         chb_one_push_->setCheckState(prop_.onePush ? Qt::Checked : Qt::Unchecked);
     }
 
+    static void SliderFreqBufCallBack(double value, void *user_data){
+      static_cast<mio::UiPropertySetter*>(user_data)->SetCameraProp();
+    }
+
+    static void SliderFreqBufCallBack(int value, void *user_data){
+      static_cast<mio::UiPropertySetter*>(user_data)->SetCameraProp();
+    }
+
   private slots:
+    void SliderValueChanged(double value){
+      dbl_freq_buf_.Push(value);
+    }
+
+    void SliderValueChanged(int value){
+      int_freq_buf_.Push(value);
+    }
+
     void SetCameraProp(){
       EXP_CHK_E(is_init_, return)
       PGR_ERR_VAR
