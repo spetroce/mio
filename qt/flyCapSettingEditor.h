@@ -5,6 +5,8 @@
 #include <QLabel>
 #include <QCheckBox>
 #include "mio/qt/advSliderWidget/advSliderWidget.h"
+#include "mio/altro/ptGreyFlyCap2.h"
+
 
 class UiPropertySetter : public QWidget{
   Q_OBJECT
@@ -18,6 +20,7 @@ class UiPropertySetter : public QWidget{
     QFrame *line_[3];
     FlyCapture2::PropertyInfo prop_info_;
     FlyCapture2::Property prop_;
+    FlyCapture2::Camera *cam_;
 
     UiPropertySetter(){
       layout_ = nullptr;
@@ -57,7 +60,7 @@ class UiPropertySetter : public QWidget{
     //TODO - all of these prop_ structs can get saved to an XML file and loaded (prop_info_ is only needed to set 
     //       up the UI, which we can get from the camera on startup)
     void Setup(const QString label, const FlyCapture2::PropertyInfo &prop_info, const FlyCapture2::Property &prop){
-      prop_info_ = prop_;
+      prop_info_ = prop_info;
       prop_ = prop;
 
       layout_ = new QHBoxLayout();
@@ -113,25 +116,28 @@ class UiPropertySetter : public QWidget{
 
   private slots:
     void SetCameraProp(){
+      PGR_ERR_VAR
       if(prop_info_.manualSupported){
         if(prop_info_.absValSupported)
-          prop_.absValue = dbl_adv_slider_.value();
+          prop_.absValue = dbl_adv_slider_->value();
         else
-          prop_.valueA = adv_silder.value();
+          prop_.valueA = adv_slider_->value();
       }
-      if(prop_info.autoSupported)
+      if(prop_info_.autoSupported)
         prop_.autoManualMode = (chb_auto_->checkState() == Qt::Checked);
-      if(prop_info.onOffSupported)
+      if(prop_info_.onOffSupported)
         prop_.onOff = (chb_on_off_->checkState() == Qt::Checked);
-      if(prop_info.onePushSupported)
+      if(prop_info_.onePushSupported)
         prop_.onePush = (chb_one_push_->checkState() == Qt::Checked);
 
-      PGR_ERR_OK(cam_->SetProperty(&prop), return)
+      PGR_ERR_OK(cam_->SetProperty(&prop_), return)
     }
 };
 
 
 class FlyCapControl : public QWidget{
+  Q_OBJECT
+
   public:
     FlyCapture2::Camera *cam_;
     std::map<FlyCapture2::PropertyType, UiPropertySetter*> ui_prop_setter_map_;
@@ -210,6 +216,7 @@ class FlyCapControl : public QWidget{
           PGR_ERR_OK(cam_->GetProperty(&prop), continue)
           ui_prop_setter_map_[ prop_type_vec[i] ] = new UiPropertySetter();
           UiPropertySetter *ui_prop_setter = ui_prop_setter_map_[ prop_type_vec[i] ];
+          ui_prop_setter->cam_ = cam_;
           ui_prop_setter->Setup(QString::fromStdString(prop_type_name_vec[i]), prop_info, prop);
           layout_->addWidget(ui_prop_setter);
         }

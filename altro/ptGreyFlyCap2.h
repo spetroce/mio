@@ -9,10 +9,11 @@
 #include <unistd.h>
 #include <time.h>
 #endif
-
-#include "FlyCapture2.h"
 #include <iostream>
 #include <sstream>
+#include "FlyCapture2.h"
+#include "opencv2/core.hpp"
+#include "mio/altro/error.h"
 
 
 namespace mio{
