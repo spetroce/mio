@@ -69,7 +69,7 @@ typedef class FileDescript{
 
     static void GetFileNameVec(const std::vector<mio::FileDescript> &fd_vec, std::vector<std::string> &fn_vec){
       fn_vec.clear();
-      fn_vec.resize(fd_vec.size());
+      fn_vec.reserve(fd_vec.size());
       for(const mio::FileDescript &fd : fd_vec)
         fn_vec.push_back(fd.file_name);
     }
