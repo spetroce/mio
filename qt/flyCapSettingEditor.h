@@ -180,7 +180,7 @@ class UiPropertySetter : public QWidget{
     }
 
     void SetCameraProp(){
-      printf("%s - %d\n", CURRENT_FUNC, dbg_count_++);
+      //printf("%s - %d\n", CURRENT_FUNC, dbg_count_++);
       EXP_CHK_E(is_init_, return)
       PGR_ERR_VAR
       if(abs_val_slider_)

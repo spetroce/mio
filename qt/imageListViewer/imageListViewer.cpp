@@ -110,6 +110,12 @@ void ImageListViewer::SetImage(const int idx){
 }
 
 
+void ImageListViewer::SetImage(const cv::Mat &img, const std::string &str){
+  adv_img_disp_->SetImage(img, true);
+  ui->lineEdit_img_name->setText(QString(str.c_str()));
+}
+
+
 void ImageListViewer::ShowEarth(){
   STD_RT_ERR_E(mio::FileExists(IMG_LIST_VIEWER_EARTH_JPEG_DIR"/earth.jpg"))
   std::vector<std::string> img_file_name_vec = {"earth.jpg"};
