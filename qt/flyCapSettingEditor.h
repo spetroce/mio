@@ -58,7 +58,7 @@ class UiPropertySetter : public QWidget{
       }
       if(val_a_slider_){
         val_a_freq_buf_.Uninit();
-        disconnect(val_a_slider_, SIGNAL(valueChanged(double)), this, SLOT(SetCameraProp()));
+        disconnect(val_a_slider_, SIGNAL(valueChanged(int)), this, SLOT(SetCameraProp()));
         delete val_a_slider_;
       }
       if(chb_auto_){
