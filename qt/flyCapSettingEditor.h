@@ -49,7 +49,6 @@ class UiPropertySetter : public QWidget{
     }
 
     ~UiPropertySetter(){
-      if(layout_) delete layout_;
       if(label_) delete label_;
       if(abs_val_slider_){
         abs_val_freq_buf_.Uninit();
@@ -73,6 +72,7 @@ class UiPropertySetter : public QWidget{
         disconnect(chb_one_push_, SIGNAL(clicked()), this, SLOT(SetCameraProp()));
         delete chb_one_push_;
       }
+      if(layout_) delete layout_;
     }
 
     void SetCamera(FlyCapture2::Camera *cam, std::mutex *cam_mtx){
@@ -216,11 +216,20 @@ class FlyCapControl : public QWidget{
 
     FlyCapControl(){
       layout_ = nullptr;
-      for(auto &elem : ui_prop_setter_map_)
-        delete elem.second;
+      Qt::WindowFlags flags = windowFlags();
+      flags |= Qt::CustomizeWindowHint;
+      flags &= ~Qt::WindowCloseButtonHint;
+      flags &= ~Qt::WindowMinimizeButtonHint;
+      flags &= ~Qt::WindowMaximizeButtonHint;
+      flags |= Qt::Tool;
+      setWindowFlags(flags);
     }
 
     ~FlyCapControl(){
+      for(auto &pair : ui_prop_setter_map_)
+        disconnect(pair.second, SIGNAL(ControlChanged(int)), this, SLOT(UpdateUi(int)));
+      for(auto &pair : ui_prop_setter_map_)
+        delete pair.second;
       if(layout_) delete layout_;
     }
 
