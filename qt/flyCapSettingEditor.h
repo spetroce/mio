@@ -5,9 +5,14 @@
 #include <mutex>
 #include <QLabel>
 #include <QCheckBox>
+#include <QMessageBox>
+#include <QXmlStreamWriter>
+#include <QFile>
 #include "mio/qt/advSliderWidget/advSliderWidget.h"
 #include "mio/altro/ptGreyFlyCap2.h"
 #include "mio/altro/freqBuffer.h"
+#include "mio/altro/io.h"
+#include "mio/qt/qtXml.h"
 
 
 namespace mio{
@@ -16,7 +21,6 @@ class UiPropertySetter : public QWidget{
   Q_OBJECT
 
   bool is_init_;
-  int id_;
   QHBoxLayout *layout_;
   QLabel *label_;
   AdvSlider *val_a_slider_;
@@ -40,7 +44,7 @@ class UiPropertySetter : public QWidget{
   }
 
   public:
-    UiPropertySetter(int id) : is_init_(false), dbg_count_(0), from_update_ui_(false), id_(id){
+    UiPropertySetter(int id) : is_init_(false), dbg_count_(0), from_update_ui_(false){
       layout_ = nullptr;
       label_ = nullptr;
       val_a_slider_ = nullptr;
@@ -80,13 +84,14 @@ class UiPropertySetter : public QWidget{
       cam_mtx_ = cam_mtx;
     }
 
-    int GetId(){
-      return id_;
+    FlyCapture2::PropertyInfo GetPropertyInfo(){
+      return prop_info_;
     }
 
-    //TODO - each element should get linked to slot which updated prop_ and then calls cam_->setProperty(prop_)
-    //TODO - all of these prop_ structs can get saved to an XML file and loaded (prop_info_ is only needed to set 
-    //       up the UI, which we can get from the camera on startup)
+    FlyCapture2::Property GetProperty(){
+      return prop_;
+    }
+
     void Setup(const QString label, const FlyCapture2::PropertyInfo &prop_info, const FlyCapture2::Property &prop){
       STD_LOG_ERR_EM(!is_init_, "called this function twice")
       prop_info_ = prop_info;
@@ -196,11 +201,11 @@ class UiPropertySetter : public QWidget{
       cam_mtx_->lock();
       PGR_ERR_OK(cam_->SetProperty(&prop_), return)
       cam_mtx_->unlock();
-      emit ControlChanged(id_);
+      emit ControlChanged(static_cast<int>(prop_.type));
     }
 
   signals:
-    void ControlChanged(int id);
+    void ControlChanged(int type);
 };
 
 
@@ -214,7 +219,53 @@ class FlyCapControl : public QWidget{
     bool absolute_mode_;
     QVBoxLayout *layout_;
 
+    const std::vector<FlyCapture2::PropertyType> kPropTypeVec_ =
+        {FlyCapture2::BRIGHTNESS,
+         FlyCapture2::AUTO_EXPOSURE,
+         FlyCapture2::SHARPNESS,
+         FlyCapture2::WHITE_BALANCE,
+         FlyCapture2::HUE,
+         FlyCapture2::SATURATION,
+         FlyCapture2::GAMMA,
+         //FlyCapture2::IRIS,
+         //FlyCapture2::FOCUS,
+         //FlyCapture2::ZOOM,
+         //FlyCapture2::PAN,
+         //FlyCapture2::TILT,
+         FlyCapture2::SHUTTER,
+         FlyCapture2::GAIN,
+         //FlyCapture2::TRIGGER_MODE,
+         //FlyCapture2::TRIGGER_DELAY,
+         FlyCapture2::FRAME_RATE};
+         //FlyCapture2::TEMPERATURE,
+         //FlyCapture2::UNSPECIFIED_PROPERTY_TYPE,
+         //FlyCapture2::PROPERTY_TYPE_FORCE_32BITS};
+
+    //TODO: the units given for some of the strings will be incorrect if absValSupported is false for a particular property
+    const std::vector<std::string> kPropTypeNameVec_ =
+        {"Brightness (%)",
+         "Auto Exposure (EV)",
+         "Sharpness",
+         "White Balance",
+         "Hue",
+         "Saturation",
+         "Gamma",
+         //"Iris",
+         //"Focus",
+         //"Zoom",
+         //"Pan",
+         //"Tilt",
+         "Shutter (ms)",
+         "Gain (dB)",
+         //"Trigger Mode",
+         //"Trigger Delay",
+         "Frame Rate"};
+         //"Temperature",
+         //"Unspecified Property Type",
+         //"Property Type Force 32bits"};
+
     FlyCapControl(){
+      STD_INVALID_ARG_E(kPropTypeVec_.size() == kPropTypeNameVec_.size())
       layout_ = nullptr;
       Qt::WindowFlags flags = windowFlags();
       flags |= Qt::CustomizeWindowHint;
@@ -242,70 +293,23 @@ class FlyCapControl : public QWidget{
       PGR_ERR_VAR
       layout_ = new QVBoxLayout();
 
-      std::vector<FlyCapture2::PropertyType> prop_type_vec =
-          {FlyCapture2::BRIGHTNESS,
-           FlyCapture2::AUTO_EXPOSURE,
-           FlyCapture2::SHARPNESS,
-           FlyCapture2::WHITE_BALANCE,
-           FlyCapture2::HUE,
-           FlyCapture2::SATURATION,
-           FlyCapture2::GAMMA,
-           //FlyCapture2::IRIS,
-           //FlyCapture2::FOCUS,
-           //FlyCapture2::ZOOM,
-           //FlyCapture2::PAN,
-           //FlyCapture2::TILT,
-           FlyCapture2::SHUTTER,
-           FlyCapture2::GAIN,
-           //FlyCapture2::TRIGGER_MODE,
-           //FlyCapture2::TRIGGER_DELAY,
-           FlyCapture2::FRAME_RATE};
-           //FlyCapture2::TEMPERATURE,
-           //FlyCapture2::UNSPECIFIED_PROPERTY_TYPE,
-           //FlyCapture2::PROPERTY_TYPE_FORCE_32BITS};
-
-      //TODO: the units given for some of the strings will be incorrect if absValSupported is false for a particular property
-      std::vector<std::string> prop_type_name_vec =
-          {"Brightness (%)",
-           "Auto Exposure (EV)",
-           "Sharpness",
-           "White Balance",
-           "Hue",
-           "Saturation",
-           "Gamma",
-           //"Iris",
-           //"Focus",
-           //"Zoom",
-           //"Pan",
-           //"Tilt",
-           "Shutter (ms)",
-           "Gain (dB)",
-           //"Trigger Mode",
-           //"Trigger Delay",
-           "Frame Rate"};
-           //"Temperature",
-           //"Unspecified Property Type",
-           //"Property Type Force 32bits"};
-
-      STD_INVALID_ARG_E(prop_type_vec.size() == prop_type_name_vec.size())
-
       FlyCapture2::Property prop;
       FlyCapture2::PropertyInfo prop_info;
       int id = 0;
-      for(size_t i = 0; i < prop_type_vec.size(); ++i){
-        prop_info.type = prop_type_vec[i];
+      for(size_t i = 0; i < kPropTypeVec_.size(); ++i){
+        prop_info.type = kPropTypeVec_[i];
         PGR_ERR_OK(cam_->GetPropertyInfo(&prop_info), continue)
 
         if(prop_info.present){
-          prop.type = prop_type_vec[i];
+          prop.type = kPropTypeVec_[i];
           PGR_ERR_OK(cam_->GetProperty(&prop), continue)
-          ui_prop_setter_map_[ prop_type_vec[i] ] = new UiPropertySetter(id);
+          ui_prop_setter_map_[ kPropTypeVec_[i] ] = new UiPropertySetter(id);
           ++id;
-          UiPropertySetter *ui_prop_setter = ui_prop_setter_map_[ prop_type_vec[i] ];
+          UiPropertySetter *ui_prop_setter = ui_prop_setter_map_[ kPropTypeVec_[i] ];
           cam_mtx_->lock();
           ui_prop_setter->SetCamera(cam_, cam_mtx_);
           cam_mtx_->unlock();
-          ui_prop_setter->Setup(QString::fromStdString(prop_type_name_vec[i]), prop_info, prop);
+          ui_prop_setter->Setup(QString::fromStdString(kPropTypeNameVec_[i]), prop_info, prop);
           layout_->addWidget(ui_prop_setter);
         }
       }
@@ -317,10 +321,125 @@ class FlyCapControl : public QWidget{
       setFixedHeight( sizeHint().height() );
     }
 
+    void SaveCameraSettings(QString file_full_qstr){
+      EXP_CHK_E(!file_full_qstr.isEmpty(), return)
+      std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
+      mio::FileNameExpand(file_full, ".", &file_path, NULL, NULL, NULL);
+      EXP_CHK_EM(mio::DirExists(file_path), return, file_path + "is not an existing directory")
+      ForceXmlExtension(file_full_qstr);
+      file_full = file_full_qstr.toStdString();
+      printf("%s - saving to %s\n", CURRENT_FUNC, file_full.c_str());
+
+      QFile file(file_full_qstr);
+      EXP_CHK_E(file.open(QIODevice::WriteOnly),
+                QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
+
+      QXmlStreamWriter xml_writer(&file);
+      xml_writer.setAutoFormatting(true);
+      xml_writer.writeStartDocument(); //write XML version number
+      xml_writer.writeStartElement("FlyCaptureProperties");
+
+      for(const auto &pair : ui_prop_setter_map_){
+        FlyCapture2::Property prop = pair.second->GetProperty();
+
+        xml_writer.writeStartElement("Property");
+          xml_writer.writeAttribute("type", INT_TO_QSTR(static_cast<int>(prop.type)));
+          xml_writer.writeAttribute("present", BOOL_TO_QSTR(prop.present));
+          xml_writer.writeAttribute("absControl", BOOL_TO_QSTR(prop.absControl));
+          xml_writer.writeAttribute("onePush", BOOL_TO_QSTR(prop.onePush));
+          xml_writer.writeAttribute("onOff", BOOL_TO_QSTR(prop.onOff));
+          xml_writer.writeAttribute("autoManualMode", BOOL_TO_QSTR(prop.autoManualMode));
+          xml_writer.writeAttribute("valueA", UINT_TO_QSTR(prop.valueA));
+          xml_writer.writeAttribute("valueB", UINT_TO_QSTR(prop.valueB));
+          xml_writer.writeAttribute("absValue", FLT_TO_QSTR(prop.absValue));
+          for(size_t i = 0; i < 8; ++i){
+            char str[16];
+            snprintf(str, 16, "reserved%lu", i);
+            xml_writer.writeAttribute(str, UINT_TO_QSTR(prop.reserved[i]));
+          }
+        xml_writer.writeEndElement(); //end Property
+      }
+
+      xml_writer.writeEndElement(); //end FlyCaptureProperties
+      xml_writer.writeEndDocument();
+      file.close();
+    }
+
+    void LoadCameraSettings(const QString file_full_qstr){
+      PGR_ERR_VAR
+      EXP_CHK_E(!file_full_qstr.isEmpty(), return)
+      std::string file_full = file_full_qstr.toStdString();
+      EXP_CHK_E(mio::FileExists(file_full), return)
+      printf("%s - loading from %s\n", CURRENT_FUNC, file_full.c_str());
+
+      QFile file(file_full_qstr);
+      EXP_CHK_E(file.open(QIODevice::ReadOnly | QIODevice::Text),
+                QMessageBox::warning(0, "FlyCapControl::LoadCameraSettings", "Couldn't open xml file");return)
+
+      QXmlStreamAttributes attr;
+      QXmlStreamReader xml_reader(&file);
+      while( !xml_reader.atEnd() && !xml_reader.hasError() ){
+        xml_reader.readNext();
+        if(xml_reader.isStartDocument()) //skip StartDocument tokens
+          continue;
+        if(xml_reader.isStartElement() && xml_reader.name() == "FlyCaptureProperties"){
+          // iterate through children of FlyCaptureProperties
+          while(!xml_reader.atEnd() && !xml_reader.hasError()){
+            xml_reader.readNext();
+            if(xml_reader.isStartElement() && xml_reader.name() == "Property"){
+              attr = xml_reader.attributes();
+              FlyCapture2::Property prop;
+              if(attr.hasAttribute("type"))
+                prop.type = static_cast<FlyCapture2::PropertyType>(ATTR_TO_INT(attr, "type"));
+              if(attr.hasAttribute("present"))
+                prop.present = ATTR_TO_BOOL(attr, "present");
+              if(attr.hasAttribute("absControl"))
+                prop.absControl = ATTR_TO_BOOL(attr, "absControl");
+              if(attr.hasAttribute("onePush"))
+                prop.onePush = ATTR_TO_BOOL(attr, "onePush");
+              if(attr.hasAttribute("onOff"))
+                prop.onOff = ATTR_TO_BOOL(attr, "onOff");
+              if(attr.hasAttribute("autoManualMode"))
+                prop.autoManualMode = ATTR_TO_BOOL(attr, "autoManualMode");
+              if(attr.hasAttribute("valueA"))
+                prop.valueA = ATTR_TO_UINT(attr, "valueA");
+              if(attr.hasAttribute("valueB"))
+                prop.valueB = ATTR_TO_UINT(attr, "valueB");
+              if(attr.hasAttribute("absValue"))
+                prop.absValue = ATTR_TO_FLT(attr, "absValue");
+              for(size_t i = 0; i < 8; ++i){
+                char str[16];
+                snprintf(str, 16, "reserved%lu", i);
+                if(attr.hasAttribute(str))
+                  prop.reserved[i] = ATTR_TO_UINT(attr, str);
+              }
+
+              auto it = ui_prop_setter_map_.find(prop.type);
+              if(it != ui_prop_setter_map_.end()){
+                mio::PrintProperty(prop);
+                cam_mtx_->lock();
+                PGR_ERR_OK(cam_->SetProperty(&prop), continue)
+                cam_mtx_->unlock();
+                (*it).second->UpdateUi();
+              }
+            }
+            else if(xml_reader.isEndElement() && xml_reader.name() == "FlyCaptureProperties")
+              break;
+          }
+        }
+      }
+
+      //error handling
+      if( xml_reader.hasError() )
+        QMessageBox::critical(this, "QXSRExample::parseXML", xml_reader.errorString(), QMessageBox::Ok);
+      xml_reader.clear(); //removes any device() or data from the reader and resets its internal state
+      file.close();
+    }
+
   private slots:
-    void UpdateUi(int id){
+    void UpdateUi(int type){
       for(auto &pair : ui_prop_setter_map_)
-        if(pair.second->GetId() != id)
+        if(static_cast<int>(pair.second->GetProperty().type) != type)
           pair.second->UpdateUi();
     }
 };

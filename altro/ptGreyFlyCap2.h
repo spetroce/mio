@@ -35,6 +35,16 @@ EXP_CHK_E(ptgrey_func_call == FlyCapture2::PGRERROR_OK, _ptgrey_error.PrintError
 EXP_CHK_E(exp, _ptgrey_error.PrintErrorTrace(); exit_function);
 
 
+inline void PrintProperty(const FlyCapture2::Property &prop){
+#define BOOL_STR(flag) flag ? "true" : "false"
+  printf("type=%d, present=%s, absControl=%s, onePush=%s, onOff=%s, "
+"autoManualMode=%s, valueA=%u, valueB=%u, absValue=%.6f\n",
+         static_cast<int>(prop.type), BOOL_STR(prop.present), BOOL_STR(prop.absControl), BOOL_STR(prop.onePush),
+         BOOL_STR(prop.onOff), BOOL_STR(prop.autoManualMode), prop.valueA, prop.valueB, prop.absValue);
+#undef BOOL_STR
+}
+
+
 inline void FC2ImageToOpenCvMat(const FlyCapture2::Image &image, cv::Mat &mat,
                          FlyCapture2::Image *rgb_img = nullptr, const bool clone_data = false){
   FlyCapture2::Image _rgb_img;

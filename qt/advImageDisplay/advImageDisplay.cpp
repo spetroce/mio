@@ -463,7 +463,7 @@ void AdvImageDisplay::UpdateRoiMask(){
 #endif
         switch(src_roi_.type){
           case Roi::ROI_RECT:
-            STD_INVALID_ARG_E(src_roi_.vertices.size() == 2)
+            EXP_CHK_E(src_roi_.vertices.size() == 2, return)
             cv::rectangle(roi_mask_, src_roi_.vertices[0], src_roi_.vertices[1], cv::Scalar(255), fill_flag);
             break;
           case Roi::ROI_POLY:
@@ -633,12 +633,14 @@ void AdvImageDisplay::SaveRoi(QString file_full_qstr){
 
   xml_writer.writeStartElement("ROI");
   xml_writer.writeAttribute("type", INT_TO_QSTR(src_roi_.type));
+  xml_writer.writeStartElement("Points");
   for(auto &pnt : src_roi_.vertices){
-    xml_writer.writeStartElement("point");
-    xml_writer.writeTextElement("x", FLT_TO_QSTR(pnt.x));
-    xml_writer.writeTextElement("y", FLT_TO_QSTR(pnt.y));
+    xml_writer.writeStartElement("Point");
+    xml_writer.writeAttribute("x", FLT_TO_QSTR(pnt.x));
+    xml_writer.writeAttribute("y", FLT_TO_QSTR(pnt.y));
     xml_writer.writeEndElement(); //end point
   }
+  xml_writer.writeEndElement(); //end Points
   xml_writer.writeEndElement(); //end ROI
 
   xml_writer.writeEndDocument();
@@ -663,35 +665,34 @@ void AdvImageDisplay::LoadRoi(const QString file_full_qstr){
     if(xml_reader.isStartDocument()) //skip StartDocument tokens
       continue;
 
-    //if token is StartElement, we'll see if we can read it
-    if(xml_reader.isStartElement()){
-      if(xml_reader.name() == "ROI"){
-        attr = xml_reader.attributes();
-        if(attr.hasAttribute("type") ){
-          disp_roi_.type = ATTR_TO_INT(attr, "type");
-          printf("roi_type=%d\n", disp_roi_.type);
-        }
-      }
-      else if(xml_reader.name() == "point"){
-        size_t num_parsed_elem = 0;
-        cv::Point2f pnt;
-        while(!xml_reader.atEnd() && !xml_reader.hasError() && num_parsed_elem < 2){
-          xml_reader.readNext();
-          if(xml_reader.isStartElement()){
-            if(xml_reader.name() == "x"){
-              pnt.x = ELEM2FLT(xml_reader);
-              ++num_parsed_elem;
+    if(xml_reader.isStartElement() && xml_reader.name() == "ROI"){
+      attr = xml_reader.attributes();
+      if(attr.hasAttribute("type") )
+        disp_roi_.type = ATTR_TO_INT(attr, "type");
+
+      // iterate through children of ROI
+      while(!xml_reader.atEnd() && !xml_reader.hasError()){
+        xml_reader.readNext();
+        if(xml_reader.isStartElement() && xml_reader.name() == "Points"){
+          // iterate through children of Points
+          while(!xml_reader.atEnd() && !xml_reader.hasError()){
+            xml_reader.readNext();
+            if(xml_reader.isStartElement() && xml_reader.name() == "Point"){
+              attr = xml_reader.attributes();
+              cv::Point2f pnt;
+              if(attr.hasAttribute("x") )
+                pnt.x = ATTR_TO_FLT(attr, "x");
+              if(attr.hasAttribute("y") )
+                pnt.y = ATTR_TO_FLT(attr, "y");
+              disp_roi_.vertices.push_back(pnt);
+              std::cout << pnt << std::endl;
             }
-            else if(xml_reader.name() == "y"){
-              pnt.y = ELEM2FLT(xml_reader);
-              ++num_parsed_elem;
-            }
+            else if(xml_reader.isEndElement() && xml_reader.name() == "Points")
+              break;
           }
-          else if(xml_reader.isEndElement() && xml_reader.name() == "point")
-            break;
         }
-        disp_roi_.vertices.push_back(pnt);
-        std::cout << pnt << std::endl;
+        else if(xml_reader.isEndElement() && xml_reader.name() == "ROI")
+          break;
       }
     }
   }
