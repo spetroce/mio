@@ -84,12 +84,12 @@ inline void PrintCameraInfo(FlyCapture2::CameraInfo *cam_info){
 }
 
 
-inline bool PollForTriggerReady(FlyCapture2::Camera *cam){
+inline bool PollForTriggerReady(FlyCapture2::Camera &cam){
   PGR_ERR_VAR
 	const unsigned int kSoftwareTrigger = 0x62C;
 	unsigned int register_val = 0;
 	do{
-    PGR_ERR_OK(cam->ReadRegister(kSoftwareTrigger, &register_val), return(false))
+    PGR_ERR_OK(cam.ReadRegister(kSoftwareTrigger, &register_val), return(false))
 	}while((register_val >> 31) != 0);
 
 	return true;
@@ -132,28 +132,26 @@ inline bool WaitForPtGreyPowerUp(FlyCapture2::Camera &cam, const unsigned int kC
 
 inline int SetTriggerMode(FlyCapture2::Camera &cam, const bool onOff){
   PGR_ERR_VAR
-	FlyCapture2::TriggerMode trigger_mode;
   // Check for external trigger support
   FlyCapture2::TriggerModeInfo trigger_mode_info;
   PGR_ERR_OK(cam.GetTriggerModeInfo(&trigger_mode_info), return(-1))
-  ERRNO_CHK_EM(trigger_mode_info.present == true, return(-1), "External trigger mode not supported")
+  ERRNO_CHK_EM(trigger_mode_info.present == true, return(-1), "trigger mode not supported")
 
   // Get current trigger settings
+	FlyCapture2::TriggerMode trigger_mode;
   PGR_ERR_OK(cam.GetTriggerMode(&trigger_mode), return(-1))
-  trigger_mode.mode = 0;
-  trigger_mode.source = 0; // GPIO 0 as trigger input
-  trigger_mode.parameter = 0;
   trigger_mode.onOff = onOff;
-  trigger_mode.polarity = 1; // Trigger on rising edge
+  if(onOff){
+    trigger_mode.mode = 0;
+    trigger_mode.source = 0; // GPIO 0 as trigger input
+    trigger_mode.parameter = 0;
+    trigger_mode.polarity = 1; // Trigger on rising edge
+    printf("rising edge trigger GPIO: %d\n", trigger_mode.source);
+  }
   PGR_ERR_OK(cam.SetTriggerMode(&trigger_mode), return(-1))
-  printf("rising edge trigger GPIO: %d\n", trigger_mode.source);
 
-  // Get the camera configuration
-  FlyCapture2::FC2Config config;
-  PGR_ERR_OK(cam.GetConfiguration(&config), return(-1))
-  config.grabTimeout = 5000;	// Set the grab timeout to 5 seconds
-  // Set the camera configuration
-  PGR_ERR_OK(cam.SetConfiguration(&config), return(-1))
+  if(onOff)
+    PollForTriggerReady(cam);
 }
 
 
@@ -161,9 +159,8 @@ inline int InitPtGreyFlyCap2Cam(FlyCapture2::PGRGuid &guid, FlyCapture2::Camera 
                                 const bool wait_for_power_up = false, const bool with_ext_trig = true){
   PGR_ERR_VAR
   PGR_ERR_OK(cam.Connect(&guid), return(-1))
-  if(wait_for_power_up){
+  if(wait_for_power_up)
     EXP_CHK_E(WaitForPtGreyPowerUp(cam), return(-1))
-  }
 
 	// Get the camera information
 	FlyCapture2::CameraInfo cam_info;
@@ -172,6 +169,12 @@ inline int InitPtGreyFlyCap2Cam(FlyCapture2::PGRGuid &guid, FlyCapture2::Camera 
 
   if(with_ext_trig)
     SetTriggerMode(cam, with_ext_trig);
+
+  // Get the camera configuration
+  FlyCapture2::FC2Config config;
+  PGR_ERR_OK(cam.GetConfiguration(&config), return(-1))
+  config.grabTimeout = 5000;	// Set the grab timeout to 5 seconds
+  PGR_ERR_OK(cam.SetConfiguration(&config), return(-1))
 
   // Camera is ready, start capturing images
   PGR_ERR_OK(cam.StartCapture(), return(-1));
