@@ -147,3 +147,11 @@ void ImageListViewer::ShowRoi(){
   adv_img_disp_->ShowRoi();
 }
 
+
+void ImageListViewer::HideShowRoiControl(){
+  if(ui->widget_roiControl->isVisible())
+    ui->widget_roiControl->hide();
+  else
+    ui->widget_roiControl->show();
+}
+

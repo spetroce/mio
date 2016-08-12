@@ -38,6 +38,9 @@ class ImageListViewer : public QWidget {
     void AddRoi();
     void RemoveRoi();
     void ShowRoi();
+
+  public slots:
+    void HideShowRoiControl();
 };
 
 #endif // IMAGELISTVIEWER_H
