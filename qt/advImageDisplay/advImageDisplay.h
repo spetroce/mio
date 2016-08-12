@@ -55,7 +55,7 @@ class AdvImageDisplay : public QWidget{
     ~AdvImageDisplay();
 
     void Init(const int id, const bool manage_layout = true);
-    void SetImage(const cv::Mat &img, const bool clone);
+    void SetImage(const cv::Mat &kImg, const bool kClone, const bool kCalledFromExternalThread = false);
     //void SetResizeScale(const float height_scale, const float width_scale);
     void BeginCreateRoi(const int roi_type);
     void AddRoi();
@@ -93,7 +93,6 @@ class AdvImageDisplay : public QWidget{
     cv::Mat src_img_, disp_img_;
     cv::Size prev_src_img_size_;
 
-    void UpdateDisplay();
     cv::Point2f View2Image(const cv::Point2f &view_coord);
     cv::Point2f Image2View(const cv::Point2f &img_coord);
     void Image2View(const std::vector<cv::Point2f> &src, std::vector<cv::Point> &dst, const bool scale_vertices);
@@ -119,6 +118,12 @@ class AdvImageDisplay : public QWidget{
     cv::Size2f zoom_region_size_;
     void UpdateZoom();
     void ResetZoom();
+
+  private slots:
+    void UpdateDisplay();
+
+  signals:
+    void ExternalDisplayUpdate(void);
 };
 
 #endif //__MIO_ADV_IMAGE_DISPLAY_H__

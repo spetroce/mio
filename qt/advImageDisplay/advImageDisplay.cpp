@@ -45,18 +45,19 @@ void AdvImageDisplay::Init(const int id, const bool manage_layout){
   label_->setFocusPolicy(Qt::StrongFocus);
 
   SetupMat2QImage();
+  connect(this, SIGNAL(ExternalDisplayUpdate()), this, SLOT(UpdateDisplay()), Qt::QueuedConnection);
   is_init_ = true;
 }
 
 
-void AdvImageDisplay::SetImage(const cv::Mat &img, const bool clone){
-  const int type = img.type();
+void AdvImageDisplay::SetImage(const cv::Mat &kImg, const bool kClone, const bool kCalledFromExternalThread){
+  const int kType = kImg.type();
   src_img_mtx_.lock();
   bool locked = true;
-  if(type == CV_8UC1 || type == CV_8UC3 || type == CV_32FC1 || type == CV_32FC3)
-    src_img_ = clone ? img.clone() : img;
+  if(kType == CV_8UC1 || kType == CV_8UC3 || kType == CV_32FC1 || kType == CV_32FC3)
+    src_img_ = kClone ? kImg.clone() : kImg;
   else if(auto_convert_img_)
-    img.convertTo(src_img_, CV_8U);
+    kImg.convertTo(src_img_, CV_8U);
   else{
     src_img_mtx_.unlock();
     locked = false;
@@ -65,7 +66,12 @@ void AdvImageDisplay::SetImage(const cv::Mat &img, const bool clone){
   if(locked)
     src_img_mtx_.unlock();
 
-  UpdateDisplay();
+  if(kCalledFromExternalThread){
+    emit ExternalDisplayUpdate();
+    QCoreApplication::processEvents();
+  }
+  else
+    UpdateDisplay();
 }
 
 
