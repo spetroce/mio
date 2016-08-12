@@ -41,30 +41,29 @@ class CFreqBuffer{
               const size_t max_buf_size = 5, void *user_data = nullptr){
       EXP_CHK_E(!is_init_, return)
 #ifdef __FREQ_BUF_DBG__
-      printf("CFreqBuffer::Init() ... ");
+      printf("%s initializing...", CURRENT_FUNC);
 #endif
       user_func_ = user_func;
       freq_ = freq;
       max_buf_size_ = max_buf_size;
       user_data_ = user_data;
       thread_ = std::thread(&CFreqBuffer::TimedPop, this);
-      is_init_ = true;
 #ifdef __FREQ_BUF_DBG__
-      printf("CFreqBuffer::Init()=success\n");
+      printf(" initialized.\n");
 #endif
     }
 
     void Uninit(){
       EXP_CHK_E(is_init_, return)
 #ifdef __FREQ_BUF_DBG__
-      printf("CFreqBuffer::Uninit() ... ");
+      printf("%s Uninitializing...", CURRENT_FUNC);
 #endif
       exit_timed_pop_flag_ = true;
       WakeUpTimedPop();
       thread_.join();
       is_init_ = false;
 #ifdef __FREQ_BUF_DBG__
-      printf("CFreqBuffer::Uninit()=success\n");
+      printf(" uninitialized.\n");
 #endif
     }
 
@@ -89,7 +88,7 @@ class CFreqBuffer{
     bool is_not_spurious_wake_up_, timed_pop_is_awake_, is_init_, exit_timed_pop_flag_;
 
     void TimedPop(){
-      assert(is_init_);
+      assert(!is_init_); // Gets set below
       const bool no_wait = (freq_ > 99);
       const size_t period = no_wait ? 0 : (1.0/freq_)*1000.0;
       const size_t max_checks = no_wait ? 1 : freq_; // When no_wait=false, we check fifo_value_buf_ for one second
@@ -110,6 +109,8 @@ class CFreqBuffer{
 #endif
                                                     return is_not_spurious_wake_up_; };
           assert( ul.owns_lock() ); // sanity check: ul must be locked before wait is called
+          if(!is_init_)
+            is_init_ = true;
           // wait() calls ul.unlock() and blocks thread until a notify func is called or a spurious signal is received.
           // We have the pred_func as a safe guard to spurious signals. After signal is received, ul.lock() is called.
           condition_var_.wait(ul, pred_func);
