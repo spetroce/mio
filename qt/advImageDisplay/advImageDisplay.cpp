@@ -68,7 +68,7 @@ void AdvImageDisplay::SetImage(const cv::Mat &kImg, const bool kClone, const boo
 
   if(kCalledFromExternalThread){
     emit ExternalDisplayUpdate();
-    QCoreApplication::processEvents();
+    //QCoreApplication::processEvents();
   }
   else
     UpdateDisplay();
