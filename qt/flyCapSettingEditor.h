@@ -272,7 +272,7 @@ class FlyCapControl : public QWidget{
       flags &= ~Qt::WindowCloseButtonHint;
       flags &= ~Qt::WindowMinimizeButtonHint;
       flags &= ~Qt::WindowMaximizeButtonHint;
-      flags |= Qt::Tool;
+      //flags |= Qt::Tool;
       setWindowFlags(flags);
     }
 
