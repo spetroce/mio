@@ -179,13 +179,23 @@ class MyGraph : public QObject{
       MARKERS = 32
     };
 
-    MyGraph(const bool magnify = true, const bool pan = false) :
+    MyGraph(const bool magnify = true, const bool pan = false, const bool with_window_controls = true) :
         m_last_set_curve_data_flags(-1), magnify_(magnify), pan_(pan) {
       qt_global_colors = {2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
       qwt_plot = new QwtPlot;
       qwt_legend = new QwtLegend;
       qwt_plot_grid = new QwtPlotGrid;
       symbol_ = new QwtSymbol( QwtSymbol::Ellipse, QBrush( Qt::yellow ), QPen( Qt::red, 2 ), QSize( 8, 8 ) );
+
+      if(!with_window_controls){
+        Qt::WindowFlags flags = qwt_plot->windowFlags();
+        flags |= Qt::CustomizeWindowHint;
+        flags &= ~Qt::WindowCloseButtonHint;
+        flags &= ~Qt::WindowMinimizeButtonHint;
+        flags &= ~Qt::WindowMaximizeButtonHint;
+        //flags |= Qt::Tool;
+        qwt_plot->setWindowFlags(flags);
+      }
 
       qwt_plot->insertLegend(qwt_legend);
       qwt_plot_grid->enableXMin(true);
