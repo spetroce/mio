@@ -23,6 +23,7 @@ class ImageListViewer : public QWidget {
                       const std::vector<cv::Mat> &img_vec, const bool clone_images = true);
     void ShowEarth();
     void SetImage(const cv::Mat &img, const std::string &str);
+    void ShowRoiControl(const bool kShow);
 
   private:
     Ui::ImageListViewer *ui;

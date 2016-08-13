@@ -231,7 +231,6 @@
        </layout>
        <zorder>lineEdit_img_name</zorder>
        <zorder>lineEdit_img_name</zorder>
-       <zorder></zorder>
        <zorder>widget_roiControl</zorder>
       </widget>
      </item>

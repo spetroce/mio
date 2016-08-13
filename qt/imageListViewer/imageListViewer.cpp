@@ -148,10 +148,15 @@ void ImageListViewer::ShowRoi(){
 }
 
 
-void ImageListViewer::HideShowRoiControl(){
-  if(ui->widget_roiControl->isVisible())
-    ui->widget_roiControl->hide();
-  else
+void ImageListViewer::ShowRoiControl(const bool kShow){
+  if(kShow)
     ui->widget_roiControl->show();
+  else
+    ui->widget_roiControl->hide();
+}
+
+
+void ImageListViewer::HideShowRoiControl(){
+  ShowRoiControl(!ui->widget_roiControl->isVisible());
 }
 
