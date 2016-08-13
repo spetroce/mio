@@ -48,16 +48,24 @@ inline void PrintProperty(const FlyCapture2::Property &prop){
 inline void FC2ImageToOpenCvMat(const FlyCapture2::Image &image, cv::Mat &mat,
                          FlyCapture2::Image *rgb_img = nullptr, const bool clone_data = false){
   FlyCapture2::Image _rgb_img;
-  if(!rgb_img)
-    rgb_img = &_rgb_img;
-	// convert to rgb
-  image.Convert(FlyCapture2::PIXEL_FORMAT_BGR, rgb_img);
-  // convert to OpenCV Mat
-	size_t row_bytes = static_cast<double>(rgb_img->GetReceivedDataSize())/static_cast<double>(rgb_img->GetRows());
-  if(clone_data)
-    mat = cv::Mat(rgb_img->GetRows(), rgb_img->GetCols(), CV_8UC3, rgb_img->GetData(), row_bytes).clone();
-  else
-    mat = cv::Mat(rgb_img->GetRows(), rgb_img->GetCols(), CV_8UC3, rgb_img->GetData(), row_bytes);
+  if(image.GetPixelFormat() == FlyCapture2::PIXEL_FORMAT_MONO8){
+    if(clone_data)
+      mat = cv::Mat(image.GetRows(), image.GetCols(), CV_8U, image.GetData()).clone();
+    else
+      mat = cv::Mat(image.GetRows(), image.GetCols(), CV_8U, image.GetData());
+  }
+  else{
+    if(!rgb_img)
+      rgb_img = &_rgb_img;
+	  // convert to rgb
+    image.Convert(FlyCapture2::PIXEL_FORMAT_BGR, rgb_img);
+    // convert to OpenCV Mat
+	  size_t row_bytes = static_cast<double>(rgb_img->GetReceivedDataSize())/static_cast<double>(rgb_img->GetRows());
+    if(clone_data)
+      mat = cv::Mat(rgb_img->GetRows(), rgb_img->GetCols(), CV_8UC3, rgb_img->GetData(), row_bytes).clone();
+    else
+      mat = cv::Mat(rgb_img->GetRows(), rgb_img->GetCols(), CV_8UC3, rgb_img->GetData(), row_bytes);
+  }
 }
 
 
