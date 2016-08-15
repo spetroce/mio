@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <semaphore.h>
 #include <string>
-#include "mio/altro/error.hpp"
+#include "mio/altro/error.h"
 
 //to remove posix semaphores and shared memory, as root, cd to /dev/shm and rm desired files.
 

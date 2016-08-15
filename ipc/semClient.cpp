@@ -6,7 +6,7 @@ sem_t *sem_open(const char *name, int oflag);
 sem_t *sem_open(const char *name, int oflag, mode_t mode, unsigned int value);
 */
 
-#include "mio/ipc/sem.hpp"
+#include "mio/ipc/sem.h"
 
 
 CSemaphoreClient::CSemaphoreClient() : m_bIsInit(false) {}

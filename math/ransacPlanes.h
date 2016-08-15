@@ -3,6 +3,10 @@
 
 //Detect Planes in 3D space via RANSAC
 
+#include "mio/math/math.h"
+#include "mio/altro/algorithm.h"
+#include "opencv2/core.hpp"
+
 template <typename PNT_T, typename MODEL_T>
 void PlaneFit(const std::vector<PNT_T> &all_data,
               const std::vector<uint32_t> &use_indices,

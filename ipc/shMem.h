@@ -7,7 +7,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <cstdint>
-#include "mio/altro/error.hpp"
+#include "mio/altro/error.h"
 
 //to remove posix semaphores and shared memory, as root, cd to /dev/shm and rm desired files.
 

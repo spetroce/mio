@@ -4,7 +4,7 @@
 #include <thread>
 #include <unordered_map>
 #include <lcm/lcm.h>
-#include "mio/ipc/shMem.hpp"
+#include "mio/ipc/shMem.h"
 #include "mio/lcm/lcmUtils.h"
 #include "lcm_types/lcm_create_shm_t.h"
 #include "lcm_types/lcm_destroy_shm_t.h"

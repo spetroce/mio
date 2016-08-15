@@ -1,4 +1,4 @@
-#include "mio/ipc/shMem.hpp"
+#include "mio/ipc/shMem.h"
 
 
 CSharedMemoryServer::CSharedMemoryServer(){

@@ -3,7 +3,7 @@
 
 #include <lcm/lcm.h>
 #include <thread>
-#include "mio/altro/error.hpp"
+#include "mio/altro/error.h"
 
 
 #define CV_MAT_TO_LCM_FRAME(mat, frame)          \

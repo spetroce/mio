@@ -15,7 +15,7 @@
    +---------------------------------------------------------------------------+
 */
 
-#include "mio/math/ransac.hpp"
+#include "mio/math/ransac.h"
 #include "mio/math/ransacPlanes.h"
 #include "mio/math/ransacLines.h"
 

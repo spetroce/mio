@@ -4,7 +4,7 @@
 #include <functional>
 #include <lcm/lcm.h>
 #include "mio/lcm/lcmUtils.h"
-#include "mio/ipc/shMem.hpp"
+#include "mio/ipc/shMem.h"
 #include "lcm_types/lcm_create_shm_t.h"
 
 
