@@ -158,8 +158,8 @@ inline int SetTriggerMode(FlyCapture2::Camera &cam, const bool onOff){
   }
   PGR_ERR_OK(cam.SetTriggerMode(&trigger_mode), return(-1))
 
-  if(onOff)
-    PollForTriggerReady(cam);
+  //if(onOff)
+    //PollForTriggerReady(cam);
 }
 
 
