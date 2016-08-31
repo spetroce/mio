@@ -475,7 +475,12 @@ namespace sm{
 
   template<typename PointType, typename LINE_T>
   inline PointType SolveLineEqn2(const LINE_T &line, const double x){
-    return PointType( x, (-line.c - line.a*x) / line.b); //y = (-line.c - line.a*x) / line.b)
+    return PointType(x, (-line.c - line.a*x) / line.b); //y = (-line.c - line.a*x) / line.b)
+  }
+
+  template<typename PointType, typename LINE_T>
+  inline PointType SolveXLineEqn2(const LINE_T &line, const double y){
+    return PointType((-line.c - line.b*y) / line.a, y); //x = (-line.c - line.b*x) / line.a)
   }
 
 } //namespace sm
