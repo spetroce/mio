@@ -61,17 +61,18 @@ namespace sm{
 
 //RansacDetect...() are defined here. They are implemented in their respective headers, with explicit instantiations.
 //Explicit instantiations needed when a templated function is implemented in the source file instead of the header.
+//TODO: redundant information - detected_<obj_type>[0].first = number best inliers = line_inliers[0].size()
 template <typename PNT_T>
 void RansacDetectLines(const std::vector<PNT_T> &pnt,
                        std::vector< std::pair<uint32_t, line3d_t> > &detected_lines,
-                       const double threshold,
+                       const double dist_thresh,
                        const uint32_t min_inliers,
                        std::vector< std::vector<uint32_t> > &line_inliers);
 
 template <typename PNT_T>
 void RansacDetectPlanes(const std::vector<PNT_T> &pnt,
                         std::vector< std::pair<uint32_t, plane4d_t> > &detected_planes,
-                        const double threshold,
+                        const double dist_thresh,
                         const uint32_t min_inliers,
                         std::vector< std::vector<uint32_t> > &plane_inliers);
 

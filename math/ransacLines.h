@@ -23,7 +23,7 @@ void LineDistance(const std::vector<PNT_T> &all_data,
   if( test_model.empty() || all_data.empty() )
     return;
   inlier_indices.reserve(100);
-  for(uint32_t i = 0, allDataSize = all_data.size(); i < allDataSize; ++i){
+  for(size_t i = 0, allDataSize = all_data.size(); i < allDataSize; ++i){
     const double d = sm::DistToLine2<MODEL_T, PNT_T>(test_model[0], all_data[i]);
     if(d < dist_thresh)
       inlier_indices.push_back(i);
@@ -44,7 +44,7 @@ namespace sm{
 template <typename PNT_T>
 void RansacDetectLines(const std::vector<PNT_T> &pnt,
                        std::vector< std::pair<uint32_t, line3d_t> > &detected_lines,
-                       const double threshold,
+                       const double dist_thresh,
                        const uint32_t min_inliers,
                        std::vector< std::vector<uint32_t> > &line_inliers){
   detected_lines.clear();
@@ -54,7 +54,7 @@ void RansacDetectLines(const std::vector<PNT_T> &pnt,
   std::vector<PNT_T> remaining_pnts = pnt;
   line_inliers.clear();
   std::vector<uint32_t> indices( pnt.size() );
-  for(uint32_t i = 0, indicesSize = indices.size(); i < indicesSize; ++i)
+  for(size_t i = 0, indicesSize = indices.size(); i < indicesSize; ++i)
     indices[i] = i;
   bool first_iter_flag = true;
 
@@ -67,7 +67,7 @@ void RansacDetectLines(const std::vector<PNT_T> &pnt,
                                       LineFit,
                                       LineDistance,
                                       LineDegenerate,
-                                      threshold,
+                                      dist_thresh,
                                       2, //minimum set of points
                                       best_inliers,
                                       best_model,
@@ -84,7 +84,8 @@ void RansacDetectLines(const std::vector<PNT_T> &pnt,
       }
       else{
         std::vector<uint32_t> temp( best_inliers.size() );
-        for(uint32_t i = 0, tempSize = temp.size(); i < tempSize; ++i)
+        const size_t kTempSize = temp.size();
+        for(size_t i = 0; i < kTempSize; ++i)
           temp[i] = indices[ best_inliers[i] ];
         line_inliers.push_back(temp);
       }
@@ -108,7 +109,7 @@ void RansacDetectLines(const std::vector<PNT_T> &pnt,
 #define RansacDetectLines_EXPLICIT_INST(_TYPE_) \
 template void RansacDetectLines<_TYPE_>(const std::vector<_TYPE_> &pnt, \
                                         std::vector< std::pair<uint32_t, line3d_t> > &detected_lines, \
-                                        const double threshold, \
+                                        const double dist_thresh, \
                                         const uint32_t min_inliers, \
                                         std::vector< std::vector<uint32_t> > &line_inliers);
 RansacDetectLines_EXPLICIT_INST(vertex2f_t)

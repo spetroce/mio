@@ -113,7 +113,7 @@ bool CRansac<DATA_T, MODEL_T>::execute(const std::vector<DATA_T> &data,
       //update estimate of N, the number of trials to ensure we pick,
       //with probability p, a data set with no outliers.
       double fracinliers =  num_inliers / static_cast<double>(data_size);
-      double prob_no_outliers = 1 - pow( fracinliers, static_cast<double>(min_samples_thresh) );
+      double prob_no_outliers = 1 - std::pow( fracinliers, static_cast<double>(min_samples_thresh) );
 
       prob_no_outliers = std::max(std::numeric_limits<double>::epsilon(), prob_no_outliers); //avoid division by -Inf
       prob_no_outliers = std::min(1.0 - std::numeric_limits<double>::epsilon(), prob_no_outliers); //avoid division by 0
