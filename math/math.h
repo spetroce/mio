@@ -66,19 +66,43 @@ namespace sm{
             (b.z - a.z) * (b.z - a.z) );
   }
 
+  // pnt is a point with origin (0, 0)
   template <typename T> 
-  inline void VerNormalize2(const T &src, T &dst){
-    const float mag_inv = 1.0f / sm::VerL2Norm2<T>(src);
-    dst.x = src.x * mag_inv;
-    dst.y = src.y * mag_inv;
+  inline void VerNormalize2(const T &pnt, T &pnt_norm){
+    const float mag_inv = 1.0f / sm::VerL2Norm2<T>(pnt);
+    pnt_norm.x = pnt.x * mag_inv;
+    pnt_norm.y = pnt.y * mag_inv;
+  }
+
+  // pnt is a point with origin (0, 0)
+  template <typename T> 
+  inline void VerNormalize3(const T &pnt, T &pnt_norm){
+    const float mag_inv = 1.0f / sm::VerL2Norm3<T>(pnt);
+    pnt_norm.x = pnt.x * mag_inv;
+    pnt_norm.y = pnt.y * mag_inv;
+    pnt_norm.z = pnt.z * mag_inv;
   }
 
   template <typename T> 
-  inline void VerNormalize3(const T &src, T &dst){
-    const float mag_inv = 1.0f / sm::VerL2Norm3<T>(src);
-    dst.x = src.x * mag_inv;
-    dst.y = src.y * mag_inv;
-    dst.z = src.z * mag_inv;
+  inline void VerNormalize2(const T &origin, const T &pnt, T &pnt_norm){
+    T delta;
+    delta.x = pnt.x-origin.x;
+    delta.y = pnt.y-origin.y;
+    const float mag_inv = 1.0f / sm::VerL2Norm2<T>(delta);
+    pnt_norm.x = delta.x * mag_inv;
+    pnt_norm.y = delta.y * mag_inv;
+  }
+
+  template <typename T> 
+  inline void VerNormalize3(const T &origin, const T &pnt, T &pnt_norm){
+    T delta;
+    delta.x = pnt.x-origin.x;
+    delta.y = pnt.y-origin.y;
+    delta.z = pnt.z-origin.z;
+    const float mag_inv = 1.0f / sm::VerL2Norm3<T>(delta);
+    pnt_norm.x = delta.x * mag_inv;
+    pnt_norm.y = delta.y * mag_inv;
+    pnt_norm.z = delta.z * mag_inv;
   }
 
   //rotate a vertex about the origin by theta radians (postive theta rotates clockwise)
@@ -416,6 +440,21 @@ namespace sm{
 
     //translate the discovered position to line ab in the original coordinate system.
     return T(a.x + pos_ab * cos_val, a.y + pos_ab * sin_val);
+  }
+
+
+  // Given two pnts p1 and p2 that define a line and a third point p3, the function finds and
+  // returns a point p4 on the line p1p2 such that p1p2 and p3p4 are perpendicular.
+  template <typename PNT_T>
+  inline PNT_T PntToLineNormalProject(const PNT_T &p1, const PNT_T &p2, const PNT_T &p3){
+    // convert line to normalized unit vector
+    PNT_T n, p4;
+    sm::VerNormalize2(p1, p2, n);
+    // translate the point and compute the dot product
+    const double lambda = (n.x * (p3.x - p1.x)) + (n.y * (p3.y - p1.y));
+    p4.x = (n.x * lambda) + p1.x;
+    p4.y = (n.y * lambda) + p1.y;
+    return p4;
   }
 
 
