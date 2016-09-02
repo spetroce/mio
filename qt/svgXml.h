@@ -2,8 +2,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QString>
-#include "mio/altro/io.hpp"
-#include "mio/altro/types.hpp"
+#include "mio/altro/io.h"
+#include "mio/altro/types.h"
 
 
 class SvgPrimitive{
@@ -156,7 +156,7 @@ class SvgSimpleText : public SvgPrimitive{
 
 void SaveSvg(std::string file_full_, SvgGroup &svg_grp, size2f_t doc_size){
   EXP_CHK_E(!file_full_.empty(), return)
-  ForceFileExtension(file_full_, "svg");
+  mio::ForceFileExtension(file_full_, "svg");
 
   QString file_full = QString::fromStdString(file_full_);
   QFile file(file_full);
