@@ -1,5 +1,5 @@
-#ifndef __MIO_MACROS_H__
-#define __MIO_MACROS_H__
+//#ifndef __MIO_MACROS_H__
+//#define __MIO_MACROS_H__
 
 //checks if a pointer is valid (not nullptr), dynmaically creates pointer data (if necessary), and
 //sets a flag indicating if memory was or was not allocated.
@@ -35,5 +35,5 @@
       return(var_a.var_name > var_b.var_name);\
     }\
 
-#endif //__MIO_MACROS_H__
+//#endif //__MIO_MACROS_H__
 
