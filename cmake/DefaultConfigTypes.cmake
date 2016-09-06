@@ -4,10 +4,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE Release)
 endif()
 
-set(FOAM_CXX_FLAGS "-std=c++11" CACHE STRING "Foam default CXX flags" FORCE) #-pedantic
-set(CMAKE_CXX_FLAGS_RELEASE "${FOAM_CXX_FLAGS} -O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -pedantic -O2")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
-set(CMAKE_CXX_FLAGS_DEBUG "${FOAM_CXX_FLAGS} -g")
+set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -pedantic -g")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 # Handle some compile flag options
 option(DEBUG_FLAG_GLIBCXX_DEBUG "use gcc flag -D_GLIBCXX_DEBUG when CMAKE_BUILD_TYPE is Debug" OFF)
