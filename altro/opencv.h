@@ -396,6 +396,15 @@ inline void UnsharpMask(const cv::Mat &src_img_in, cv::Mat &dst_img_out, const c
   temp.convertTo(dst_img_out, orig_depth);
 }
 
+inline void ShowRoi(cv::Mat &img, const cv::Mat &roi_mask){
+  if(img.empty() || roi_mask.empty())
+    return;
+  cv::Mat tmp_img(img.size(), img.type());
+  img.copyTo(tmp_img, roi_mask);
+  img *= 0.4;
+  tmp_img.copyTo(img, roi_mask);
+}
+
 
 //the input cv::Mat name is src
 #define CV_FUNC_TEMPLATE(func_name, template_func_name, func_param_default, func_param)\
