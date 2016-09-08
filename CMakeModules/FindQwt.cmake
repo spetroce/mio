@@ -10,9 +10,10 @@ pkg_check_modules(PC_QWT QUIET Qt5Qwt6)
 set(QWT_DEFINITIONS ${PC_QWT_CFLAGS_OTHER})
 
 find_path(QWT_INCLUDE_DIR qwt_plot.h
-          HINTS ${PC_QWT_INCLUDEDIR} ${PC_QWT_INCLUDE_DIRS})
+          HINTS ${PC_QWT_INCLUDEDIR} ${PC_QWT_INCLUDE_DIRS}
+          PATH_SUFFIXES qwt)
 
-find_library(QWT_LIBRARY NAMES qwt libqwt
+find_library(QWT_LIBRARY NAMES qwt libqwt qwt-qt5
              HINTS ${PC_QWT_LIBDIR} ${PC_QWT_LIBRARY_DIRS})
 
 include(FindPackageHandleStandardArgs)
