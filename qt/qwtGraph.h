@@ -9,12 +9,14 @@
 #include <qwt_plot_magnifier.h>
 #include <qwt_symbol.h>
 #include <qwt_legend.h>
+#include <qwt_curve_fitter.h>
+#ifdef WITH_QWT_SPLINE
+#include <qwt_spline_curve_fitter.h>
 #include <qwt_spline_local.h>
 #include <qwt_spline_cubic.h>
 #include <qwt_spline_pleasing.h>
 #include <qwt_spline_parametrization.h>
-#include <qwt_curve_fitter.h>
-#include <qwt_spline_curve_fitter.h>
+#endif
 
 #include <QPrinter>
 #include <QPrintDialog>
@@ -27,6 +29,7 @@
 #endif
 
 
+#ifdef WITH_QWT_SPLINE
 class MySplineFitter: public QwtCurveFitter{
   QwtSpline *m_qwt_spline;
 
@@ -150,6 +153,7 @@ class MySplineFitter: public QwtCurveFitter{
       return m_qwt_spline->painterPath(points);
     }
 };
+#endif
 
 
 class MyGraph : public QObject{
@@ -157,7 +161,9 @@ class MyGraph : public QObject{
 
   private:
     std::vector<QwtPlotCurve*> qwt_plot_curve_vec;
+#ifdef WITH_QWT_SPLINE
     std::vector<MySplineFitter*> spline_fitter_vec;
+#endif
     int m_last_set_curve_data_flags;
     bool magnify_, pan_;
 
@@ -245,10 +251,14 @@ class MyGraph : public QObject{
       ClearPlot();
       for(size_t i = 0; i < qwt_plot_curve_vec.size(); ++i){
         delete qwt_plot_curve_vec[i];
+#ifdef WITH_QWT_SPLINE
         delete spline_fitter_vec[i];
+#endif
       }
       qwt_plot_curve_vec.clear();
+#ifdef WITH_QWT_SPLINE
       spline_fitter_vec.clear();
+#endif
       m_last_set_curve_data_flags = -1;
     }
 
@@ -257,10 +267,14 @@ class MyGraph : public QObject{
       STD_INVALID_ARG_E(size > 0 && size < 1000)
       DeleteCurves();
       qwt_plot_curve_vec.resize(size);
+#ifdef WITH_QWT_SPLINE
       spline_fitter_vec.resize(size);
+#endif
       for(size_t i = 0; i < qwt_plot_curve_vec.size(); ++i){
         qwt_plot_curve_vec[i] = new QwtPlotCurve();
+#ifdef WITH_QWT_SPLINE
         spline_fitter_vec[i] = new MySplineFitter();
+#endif
         if(attach_plots)
           qwt_plot_curve_vec[i]->attach(qwt_plot);
       }
@@ -282,9 +296,11 @@ class MyGraph : public QObject{
 
       //if(m_last_set_curve_data_flags != flags){
         if(flags & FIT_SPLINE){
+#ifdef WITH_QWT_SPLINE
           qwt_plot_curve->setStyle(QwtPlotCurve::Lines);
           qwt_plot_curve->setCurveFitter(spline_fitter_vec[curve_idx]);
           qwt_plot_curve->setCurveAttribute(QwtPlotCurve::Fitted, true);
+#endif
         }
         else{
           qwt_plot_curve->setCurveAttribute(QwtPlotCurve::Fitted, false);
