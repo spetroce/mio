@@ -17,35 +17,45 @@ template <typename DATA_T>
 class CFreqBuffer{
   public:
     CFreqBuffer(){
-      is_not_spurious_wake_up_[0] = is_not_spurious_wake_up_[1] = false;
-      is_init_ = timed_pop_is_awake_ = exit_timed_pop_flag_ = false;
+      SetDefaultValues();
     }
 
+
     CFreqBuffer(std::function<void(DATA_T, void*)> user_func, const size_t freq = 10,
-                const size_t max_buf_size = 5, void *user_data = nullptr){
-      is_not_spurious_wake_up_[0] = is_not_spurious_wake_up_[1] = false;
-      is_init_ = exit_timed_pop_flag_ = false;
-      Init(user_func, freq, max_buf_size);
+                const size_t max_buf_size = 5, const bool with_fifo_checking = false,
+                void *user_data = nullptr){
+      SetDefaultValues();
+      Init(user_func, freq, max_buf_size, with_fifo_checking);
     }
+
 
     ~CFreqBuffer(){
 #ifdef __FREQ_BUF_DBG__
-      printf("%s : called\n", CURRENT_FUNC);
+      printf("%s - called\n", CURRENT_FUNC);
 #endif
       EXP_CHK_EM(!is_init_, Uninit(), "user should be calling CFreqBuffer::Uninit()")
 #ifdef __FREQ_BUF_DBG__
-      printf("%s : destroyed\n", CURRENT_FUNC);
+      printf("%s - destroyed\n", CURRENT_FUNC);
 #endif
     }
 
+
+    void SetDefaultValues(){
+      is_not_spurious_wake_up_[0] = is_not_spurious_wake_up_[1] = false;
+      is_init_ = timed_pop_is_awake_ = exit_timed_pop_flag_ = with_fifo_checking_ = false;
+    }
+
+
     // A frequency of more than 99 issues a "no wait" policy (ie. frequency = infinity)
     void Init(std::function<void(DATA_T, void*)> user_func, const size_t freq = 10,
-              const size_t max_buf_size = 5, void *user_data = nullptr){
+              const size_t max_buf_size = 5, const bool with_fifo_checking = false,
+              void *user_data = nullptr){
       EXP_CHK_E(!is_init_, return)
-      printf("%s - initializing...", CURRENT_FUNC);
+      printf("%s - Initializing...\n", CURRENT_FUNC);
       user_func_ = user_func;
       freq_ = freq;
       max_buf_size_ = max_buf_size;
+      with_fifo_checking_ = with_fifo_checking;
       user_data_ = user_data;
       thread_ = std::thread(&CFreqBuffer::TimedPop, this);
       //wait for startup
@@ -57,22 +67,24 @@ class CFreqBuffer{
       assert( ul.owns_lock() );
       condition_var_[1].wait(ul, pred_func);
 
-      printf(" initialized.\n");
+      printf("%s - Initialized.\n", CURRENT_FUNC);
     }
+
 
     void Uninit(){
       EXP_CHK_E(is_init_, return)
 #ifdef __FREQ_BUF_DBG__
-      printf("%s Uninitializing...", CURRENT_FUNC);
+      printf("%s - Uninitializing...\n", CURRENT_FUNC);
 #endif
       exit_timed_pop_flag_ = true;
       WakeUpTimedPop();
       thread_.join();
       is_init_ = false;
 #ifdef __FREQ_BUF_DBG__
-      printf(" uninitialized.\n");
+      printf("%s - Uninitialized\n", CURRENT_FUNC);
 #endif
     }
+
 
     void Push(const DATA_T value){
       EXP_CHK_E(is_init_, return)
@@ -84,35 +96,50 @@ class CFreqBuffer{
       WakeUpTimedPop();
     }
 
+
   private:
     size_t max_buf_size_ = 4, freq_ = 5;
     std::function<void(DATA_T, void*)> user_func_;
     void *user_data_;
     std::queue<DATA_T> fifo_value_buf_;
     std::thread thread_;
+    //condition_var_[0] is used to 'wake up' TimedPop()
+    //condition_var_[1] is used to in Init() to wait for TimedPop to start. After, it is used to signal
+    //WakeUpTimedPop() that TimedPop has in fact woken up. This is necessary because should WakeUpTimedPop() be
+    //called many times in an instant, timed_pop_is_awake_ will not have updated yet causing WakeUpTimedPop() to
+    //try and wake up TimedPop() many times.
     std::condition_variable condition_var_[2];
     std::mutex buf_mtx_, cond_mtx_[2];
-    bool is_not_spurious_wake_up_[2], timed_pop_is_awake_, is_init_, exit_timed_pop_flag_;
+    bool is_not_spurious_wake_up_[2], timed_pop_is_awake_, is_init_, exit_timed_pop_flag_, with_fifo_checking_;
+
 
     void TimedPop(){
       assert(!is_init_); // Gets set below
-      const bool no_wait = (freq_ > 99);
-      const size_t period = no_wait ? 0 : (1.0/freq_)*1000.0;
-      const size_t max_checks = no_wait ? 1 : freq_; // When no_wait=false, we check fifo_value_buf_ for one second
-      size_t num_check = 0; // Count var for number of times the buffer was checked for a value (done for good measure)
+      const size_t kPeriod = (1.0/freq_)*1000.0; // Period in milliseconds
+      size_t i = 0;
+      float max_check_time;
+      do{
+        ++i;
+        max_check_time = i*kPeriod;
+      }while(max_check_time < 100 && i <= 3);
+      const size_t kMaxNumChecks = i; //maximum number of fifo checks
+      size_t num_check = 0; // Number of times the buffer was checked for a value
+
       for(;;){
         if(exit_timed_pop_flag_)
           break;
         buf_mtx_.lock();
-        num_check = (fifo_value_buf_.size() == 0) ? num_check+1 : 0;
+        const bool fifo_is_empty = (fifo_value_buf_.size() == 0);
+        num_check = fifo_is_empty ? num_check+1 : 0;
         buf_mtx_.unlock();
-        if(num_check > max_checks){
+        // if initializing, set with_fifo_checking to false, or exceeded 1 sec of checking, put thread to sleep
+        if(!is_init_ || (!with_fifo_checking_ && fifo_is_empty) || num_check > kMaxNumChecks){
           std::unique_lock<std::mutex> ul(cond_mtx_[0]); // Wraps mutex in a unique_lock and calls lock()
           is_not_spurious_wake_up_[0] = false;
           timed_pop_is_awake_ = false;
           std::function<bool()> pred_func = [this]{ timed_pop_is_awake_ = is_not_spurious_wake_up_[0];
 #ifdef __FREQ_BUF_DBG__
-                                                    printf("pred_func called\n");
+                                                    printf("%s - pred_func called\n", CURRENT_FUNC);
 #endif
                                                     return is_not_spurious_wake_up_[0]; };
           assert( ul.owns_lock() ); // sanity check: ul must be locked before wait is called
@@ -122,10 +149,17 @@ class CFreqBuffer{
             is_not_spurious_wake_up_[1] = true;
             is_init_ul.unlock();
             condition_var_[1].notify_one();
-          } 
+          }
           // wait() calls ul.unlock() and blocks thread until a notify func is called or a spurious signal is received.
           // We have the pred_func as a safe guard to spurious signals. After signal is received, ul.lock() is called.
           condition_var_[0].wait(ul, pred_func);
+
+          // signal WakeUpTimedPop() that TimedPop() woke up
+          std::unique_lock<std::mutex> is_awake_ul(cond_mtx_[1]);
+          is_not_spurious_wake_up_[1] = true;
+          is_awake_ul.unlock();
+          condition_var_[1].notify_one();
+
           num_check = 0;
           // ul destructor calls ul.unlock()
         }
@@ -141,18 +175,19 @@ class CFreqBuffer{
         }
         buf_mtx_.unlock();
         if(got_value){
-          user_func_(value, user_data_);
 #ifdef __FREQ_BUF_DBG__
         std::cout << CURRENT_FUNC << " : " << "calling user_func with value " << value << std::endl;
 #endif
+          user_func_(value, user_data_);
         }
 #ifdef __FREQ_BUF_DBG__
         else
-          std::cout << CURRENT_FUNC << " : " << "checking for new value: " << num_check << std::endl;
+          printf("%s - fifo check count: %d\n", CURRENT_FUNC, num_check);
 #endif
-        std::this_thread::sleep_for( std::chrono::milliseconds(period) );
+        std::this_thread::sleep_for( std::chrono::milliseconds(kPeriod) );
       }
     }
+
 
     void WakeUpTimedPop(){
       assert(is_init_);
@@ -160,10 +195,16 @@ class CFreqBuffer{
       is_not_spurious_wake_up_[0] = true;
       if(!timed_pop_is_awake_){
 #ifdef __FREQ_BUF_DBG__
-        printf("%s : waking up TimedPop()\n", CURRENT_FUNC);
+        printf("%s - waking up TimedPop()\n", CURRENT_FUNC);
 #endif
         ul.unlock();
         condition_var_[0].notify_one();
+
+        //wait for TimedPop() to wake up
+        std::unique_lock<std::mutex> ul(cond_mtx_[1]);
+        std::function<bool()> pred_func = [this]{return timed_pop_is_awake_;};
+        assert( ul.owns_lock() );
+        condition_var_[1].wait(ul, pred_func);
       }
     }
 };
