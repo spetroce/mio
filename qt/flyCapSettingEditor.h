@@ -108,14 +108,14 @@ class UiPropertySetter : public QWidget{
           abs_val_slider_ = new DblAdvSlider(prop_info.absMin, prop_info.absMax, prop.absValue,
                                              kNumDecimal, prop_info.absMin, prop_info.absMax);
           layout_->addWidget(abs_val_slider_);
-          abs_val_freq_buf_.Init(AbsValFreqBufCallBack, kFreq, kBufSize, static_cast<void*>(this));
+          abs_val_freq_buf_.Init(AbsValFreqBufCallBack, kFreq, kBufSize, false, static_cast<void*>(this));
           connect(abs_val_slider_, SIGNAL(valueChanged(double)), this, SLOT(AbsValSliderValueChanged(double)));
         }
         else{
           val_a_slider_ = new AdvSlider(prop_info.min, prop_info.max, prop.valueA,
                                       prop_info.min, prop_info.max);
           layout_->addWidget(val_a_slider_);
-          val_a_freq_buf_.Init(ValAFreqBufCallBack, kFreq, kBufSize, static_cast<void*>(this));
+          val_a_freq_buf_.Init(ValAFreqBufCallBack, kFreq, kBufSize, false, static_cast<void*>(this));
           connect(val_a_slider_, SIGNAL(valueChanged(int)), this, SLOT(ValASliderValueChanged(int)));
         }
       }
