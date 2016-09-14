@@ -181,22 +181,28 @@ namespace sm{
     return T( (a.x+b.x)*0.5, (a.y+b.y)*0.5, (a.z+b.z)*0.5 );
   }
 
+  /*
+    returns angle in radians of vector drawn from point a to b point
+  */
   template <typename T> 
-  inline T VerAngleRad2(const T &a, const T &b){
-    return std::atan2( b.y - a.y, b.x - a.x );
+  inline float VerAngleRad2(const T &a, const T &b){
+    return std::atan2(b.y - a.y, b.x - a.x);
   }
 
-  template <typename T> 
-  inline T VerAngleRad2(const float &x1, const float &y1, const float &x2, const float &y2){
-    return std::atan2( y2 - y1, x2 - x1 );
+  inline float VerAngleRad2(const float &x1, const float &y1, const float &x2, const float &y2){
+    return std::atan2(y2 - y1, x2 - x1);
   }
 
   /*
     returns angle in degrees of vector drawn from point a to b point
   */
   template <typename T> 
-  inline T VerAngleDeg2(const T &a, const T &b){
-    return cvFastArctan( b.y - a.y, b.x - a.x );
+  inline float VerAngleDeg2(const T &a, const T &b){
+    return sm::RadToDeg(sm::VerAngleRad2(a, b));
+  }
+
+  inline float VerAngleDeg2(const float &x1, const float &y1, const float &x2, const float &y2){
+    return sm::RadToDeg(sm::VerAngleRad2(x1, y1, x2, y2));
   }
 
   /*
@@ -212,13 +218,6 @@ namespace sm{
   }
 
   /*
-    returns difference in moving from angle1 to angle2, CLOCKWISE rotations are NEGATIVE valued
-  */
-//  inline int angleDiff(const int nAngle1, const int nAngle2){
-//    return( ( (nAngle2 - nAngle1 + 180) % 360 ) - 180 );
-//  }
-
-  /*
     given two vectors drawn from the vertex origin to there respective ends (vertices 'a' and 'b'),
     returns NEGATIVE value if rotation from vector 'a' to vector 'b' is CLOCKWISE
   */
@@ -226,21 +225,6 @@ namespace sm{
   inline T VerDir2(const T &origin, const T &a, const T &b){
     return( ( (a.x - origin.x) * (b.y - origin.y) ) - ( (a.y - origin.y) * (b.x - origin.x) ) );
   }
-
-  /*
-    given two vectors drawn from the vertex origin to there respective ends (vertices 'a' and 'b'),
-    returns magnitude of the angle (in radians) between two vectors
-  */
-  template <typename T> 
-  inline T VerAngle2(const T &origin, const T &a, const T &b){
-    a.x -= origin.x;
-    a.y -= origin.y;
-    b.x -= origin.x;
-    b.y -= origin.y;
-    return std::acos( (a.x*b.x + a.y*b.y) /
-                      ( std::sqrt(a.x*a.x + a.y*a.y) * std::sqrt(b.x*b.x + b.y*b.y) ) );
-  }
-
 
   /*
     given three vertices a, b, and c, the functions returns the radius of a circle that lies on the vertices.
