@@ -104,7 +104,7 @@ class CFreqBuffer{
     std::queue<DATA_T> fifo_value_buf_;
     std::thread thread_;
     //condition_var_[0] is used to 'wake up' TimedPop()
-    //condition_var_[1] is used to in Init() to wait for TimedPop to start. After, it is used to signal
+    //condition_var_[1] is used in Init() to wait for TimedPop to start. After, it is used to signal
     //WakeUpTimedPop() that TimedPop has in fact woken up. This is necessary because should WakeUpTimedPop() be
     //called many times in an instant, timed_pop_is_awake_ will not have updated yet causing WakeUpTimedPop() to
     //try and wake up TimedPop() many times.
