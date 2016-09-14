@@ -181,64 +181,14 @@ namespace sm{
     return T( (a.x+b.x)*0.5, (a.y+b.y)*0.5, (a.z+b.z)*0.5 );
   }
 
-
-  /*
-    returns an angle translated from a rotated-inversed system to the standard right-handed cartesian system
-    angle - the angle in secondary system to be converted
-    phase - angle from the right-handed cartesian frames positive x-axis
-            to the secondary systems zero-degrees angle
-    inverse - true if secondary cooridinate system rotates clockwise from 0 to 360 degrees
-  */
-  template <typename T> 
-  inline T SysRotDeg(T angle, T phase, const bool inverse){
-    while( angle < 0 ) angle += 360;
-    while( angle > 360 ) angle -= 360;
-
-    while( phase < 0 ) phase += 360;
-    while( phase > 360 ) phase -= 360;
-
-    if(inverse)
-      return( ( (360 + phase - angle) < 360 ) ? (360 + phase - angle) : (phase - angle) );
-    return( ( (phase + angle) > 360 ) ? (phase + angle - 360) : (phase + angle) );
-  }
-
-  /*
-    same as above, but in radians
-  */
-  template <typename T> 
-  inline T SysRotRad(T angle, T phase, const bool inverse){
-    float temp = 2.0f * PI;
-    while( angle < 0 ) angle += temp;
-    while( angle > temp ) angle -= temp;
-
-    while( phase < 0 ) phase += temp;
-    while( phase > temp ) phase -= temp;
-
-    if(inverse)
-      return( ( (temp + phase - angle) < temp ) ? (temp + phase - angle) : (phase - angle) );
-    return( ( (phase + angle) > temp ) ? (phase + angle - temp) : (phase + angle) );
-  }
-
-  /*
-    returns angle in radians of vector drawn from point a to point b.
-    from PI to 2PI values returned by atan2 actually run from -PI to 0.
-    this is changed to standard PI to 2PI (personnal preference)
-  */
   template <typename T> 
   inline T VerAngleRad2(const T &a, const T &b){
-    float theta = std::atan2( b.y - a.y, b.x - a.x );
-    return( (theta < 0) ? ( (2.0f * PI) + theta ) : theta );
+    return std::atan2( b.y - a.y, b.x - a.x );
   }
 
-  /*
-    returns angle in radians of vector drawn from point a to point b.
-    from PI to 2PI values returned by atan2 actually run from -PI to 0.
-    this is changed to standard PI to 2PI (personnal preference)
-  */
   template <typename T> 
   inline T VerAngleRad2(const float &x1, const float &y1, const float &x2, const float &y2){
-    float theta = std::atan2( y2 - y1, x2 - x1 );
-    return( (theta < 0) ? ( (2.0f * PI) + theta ) : theta );
+    return std::atan2( y2 - y1, x2 - x1 );
   }
 
   /*
@@ -248,7 +198,6 @@ namespace sm{
   inline T VerAngleDeg2(const T &a, const T &b){
     return cvFastArctan( b.y - a.y, b.x - a.x );
   }
-
 
   /*
     returns difference in moving from angle_1 to angle_2, CLOCKWISE rotations are NEGATIVE valued
@@ -442,21 +391,18 @@ namespace sm{
     return T(a.x + pos_ab * cos_val, a.y + pos_ab * sin_val);
   }
 
-
   // Given two pnts p1 and p2 that define a line and a third point p3, the function finds and
   // returns a point p4 on the line p1p2 such that p1p2 and p3p4 are perpendicular.
   template <typename PNT_T>
   inline PNT_T PntToLineNormalProject(const PNT_T &p1, const PNT_T &p2, const PNT_T &p3){
+    PNT_T n;
     // convert line to normalized unit vector
-    PNT_T n, p4;
     sm::VerNormalize2(p1, p2, n);
-    // translate the point and compute the dot product
+    // take the dot product of the translated p3 and n vectors
     const double lambda = (n.x * (p3.x - p1.x)) + (n.y * (p3.y - p1.y));
-    p4.x = (n.x * lambda) + p1.x;
-    p4.y = (n.y * lambda) + p1.y;
-    return p4;
+    //scale n and translate it
+    return PNT_T((n.x * lambda) + p1.x, (n.y * lambda) + p1.y);
   }
-
 
   template <typename T>
   inline T MidPoint2(const T &a, const T &b){
