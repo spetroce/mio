@@ -11,6 +11,7 @@
 #include <unistd.h> // readlkink()
 #include <sys/stat.h> // lstat()
 #include <time.h>
+#include <iomanip>
 #include "mio/altro/error.h"
 #include "mio/altro/macros.h"
 
@@ -37,6 +38,21 @@ struct TimeStamp{
 
 inline time_t GetEpochTime(const TimeStamp ts){
   return GetEpochTime(ts.year, ts.month, ts.day, ts.hour, ts.min, ts.sec);
+}
+
+
+//d - day, range [01,31])
+//m - month, range [01,12]
+//Y - year as a 4 digit decimal number
+//H - hour, range [00-23]
+//M - minute, range [00,59]
+//S - second, range [00,60]
+inline std::string GetDateString(){
+  std::time_t t = std::time(nullptr);
+  std::tm *tm = std::localtime(&t);
+  std::ostringstream oss;
+  oss << std::put_time(tm, "%d-%m-%Y_%H-%M-%S");
+  return oss.str();
 }
 
 
@@ -128,12 +144,17 @@ inline bool FileExists(const std::string &file_full){
 }
 
 
-inline bool DirExists(const char *dir_path){
-  return (PathType(dir_path) == 0);
+inline bool DirExists(const std::string &dir_path, const bool create = false, const mode_t mkdir_mode = 0777){
+  const bool exists = (PathType(dir_path) == 0);
+  if(!exists && create){
+    printf("%s - creating directory: %s\n", CURRENT_FUNC, dir_path.c_str());
+    mkdir(dir_path.c_str(), mkdir_mode);
+  }
+  return exists;
 }
 
-inline bool DirExists(const std::string &dir_path){
-  return (PathType(dir_path) == 0);
+inline bool DirExists(const char *dir_path, const bool create = false, const mode_t mkdir_mode = 0777){
+  return DirExists(std::string(dir_path), create, mkdir_mode);
 }
 
 
