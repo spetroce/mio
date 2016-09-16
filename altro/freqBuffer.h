@@ -8,7 +8,9 @@
 #include <thread>
 #include "mio/altro/error.h"
 
-//#define __FREQ_BUF_DBG__
+#ifndef NDEBUG
+#define __FREQ_BUF_DBG__
+#endif
 
 
 namespace mio{
