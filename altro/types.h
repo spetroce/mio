@@ -232,10 +232,9 @@ THREE_VAL_STRUCT(CDimension3f, dimension3f_t, float, 0.0f, x, y, z)
 THREE_VAL_STRUCT(CPanTiltTranslate, ptt_t, int32_t, 0, pan, tilt, trans)
 TWO_VAL_STRUCT(CSize2f, size2f_t, float, 0.0f, height, width)
 TWO_VAL_STRUCT(CSize2n, size2n_t, int32_t, 0, height, width)
+THREE_VAL_STRUCT(CKeyPoint3f, keyPoint3f_t, float, 0.0f, x, y, size)
 
 
-#undef COMPARE_VAL_LESS_THAN
-#undef COMPARE_VAL_GREATER_THAN
 #undef CHECK_VECTOR_SIZE
 #undef TWO_VAL_STRUCT
 #undef THREE_VAL_STRUCT
