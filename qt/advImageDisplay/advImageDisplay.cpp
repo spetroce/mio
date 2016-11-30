@@ -8,13 +8,18 @@ constexpr std::array<const char*, 4> Roi::roi_type_str;
 
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
-    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false){
+    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true){
   prev_src_img_size_ = cv::Point(-1, -1);
   ResetZoom();
 }
 
 
 AdvImageDisplay::~AdvImageDisplay(){
+#ifdef HAVE_LCM
+  disconnect(AdvImageDisplay::socket_notifier_, SIGNAL(activated(int)), this, SLOT(DataReady(int)));
+  delete AdvImageDisplay::socket_notifier_;
+  lcm_destroy(AdvImageDisplay::lcm_);
+#endif
   src_img_ = cv::Mat();
   UpdateDisplay();
   delete label_;
@@ -173,7 +178,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         }
         break;
       case QEvent::Wheel:
-        if(!show_roi_){
+        if(!show_roi_ && zooming_enabled_){
           QWheelEvent *wheel_event = mio::StaticCastPtr<QWheelEvent>(event);
           scroll_wheel_count_ += wheel_event->delta()/120;
           if(scroll_wheel_count_ < 0)
@@ -618,6 +623,11 @@ bool AdvImageDisplay::GetConvertToFalseColors(){
   return convert_to_false_colors_;
 }
 
+bool AdvImageDisplay::SetZoomingEnabled(const bool kEnabled){
+  zooming_enabled_ = kEnabled;
+  ResetZoom();
+}
+
 
 void AdvImageDisplay::SaveRoi(QString file_full_qstr){
   EXP_CHK_E(src_roi_.vertices.size() >= 2, return)
@@ -712,3 +722,30 @@ void AdvImageDisplay::LoadRoi(const QString file_full_qstr){
   AddRoi();
   UpdateDisplay();
 }
+
+
+void AdvImageDisplay::SetupLcm(const std::string kNewFrameLcmChanNamePrefix){
+#ifdef HAVE_LCM
+  std::string new_frame_lcm_chan_name = kNewFrameLcmChanNamePrefix + "_" + std::to_string(id_);
+  if(AdvImageDisplay::lcm_ == NULL)
+    AdvImageDisplay::lcm_ = lcm_create(NULL);
+  EXP_CHK_EM(AdvImageDisplay::lcm_ != NULL, return, std::string("id=") + std::to_string(id_));
+  AdvImageDisplay::lcm_fd_ = lcm_get_fileno(AdvImageDisplay::lcm_);
+  AdvImageDisplay::socket_notifier_ = new QSocketNotifier(AdvImageDisplay::lcm_fd_, QSocketNotifier::Read, this);
+  connect(AdvImageDisplay::socket_notifier_, SIGNAL(activated(int)), this, SLOT(DataReady(int)));
+  new_frame_lcm_sub_ = lcm_opencv_mat_t_subscribe(AdvImageDisplay::lcm_, new_frame_lcm_chan_name.c_str(),
+                                                  &NewFrameLCM, (void *)this);
+  lcm_opencv_mat_t_subscription_set_queue_capacity(new_frame_lcm_sub_, 2);
+#endif
+}
+
+
+#ifdef HAVE_LCM
+void AdvImageDisplay::NewFrameLCM(const lcm_recv_buf_t *rbuf, const char *channel, 
+                                  const lcm_opencv_mat_t *msg, void *userdata){
+  CVideoDisplayWidget *w = mio::StaticCastPtr<AdvImageDisplay>(userdata);
+  const cv::Mat kImg(msg->rows, msg->cols, msg->openCvType, msg->data);
+  w->SetImage(kImg, true);
+}
+#endif
+

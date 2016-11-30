@@ -27,6 +27,9 @@
 #include "mio/altro/thread.h"
 #include "mio/qt/cvMatToQImage.h"
 #include "mio/qt/qtMetaTypes.h" //zoomInfo_t
+#ifdef HAVE_LCM
+#include "mio/lcm/lcmTypes.h"
+#endif
 
 #include "opencv2/highgui.hpp"
 #include "opencv2/core.hpp"
@@ -79,6 +82,7 @@ class AdvImageDisplay : public QWidget{
     bool GetAutoConvertImage();
     void SaveRoi(QString file_full_qstr);
     void LoadRoi(const QString file_full_qstr);
+    void SetZoomingEnabled(const bool kEnabled);
 
   protected:
     bool eventFilter(QObject *target, QEvent *event);
@@ -92,6 +96,12 @@ class AdvImageDisplay : public QWidget{
     QImage qt_src_img_;
     cv::Mat src_img_, disp_img_;
     cv::Size prev_src_img_size_;
+#ifdef HAVE_LCM
+    lcm_t *lcm_;
+    lcm_opencv_mat_t_subscription_t *new_frame_lcm_sub_;
+    QSocketNotifier *socket_notifier_;
+    int lcm_fd_;
+#endif
 
     cv::Point2f View2Image(const cv::Point2f &view_coord);
     cv::Point2f Image2View(const cv::Point2f &img_coord);
@@ -118,9 +128,16 @@ class AdvImageDisplay : public QWidget{
     cv::Size2f zoom_region_size_;
     void UpdateZoom();
     void ResetZoom();
+#ifdef HAVE_LCM
+    static void NewFrameLCM(const lcm_recv_buf_t *rbuf, const char * channel, 
+                            const lcm_opencv_mat_t * msg, void * userdata);
+#endif
 
   private slots:
     void UpdateDisplay();
+#ifdef HAVE_LCM
+    void DataReady(int fd){ lcm_handle(AdvImageDisplay::lcm_); }
+#endif
 
   signals:
     void ExternalDisplayUpdate(void);
