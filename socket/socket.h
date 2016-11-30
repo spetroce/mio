@@ -13,7 +13,7 @@
 
 namespace mio{
 
-//For coonect mode sockets (eg. TCP sockets), dest_addr and dest_addr_len are ignored, therefore, not needed
+//For connect mode sockets (eg. TCP sockets), dest_addr and dest_addr_len are ignored, therefore, not needed
 inline int SendTo(const int sock_fd, const void *data_buf, const size_t data_buf_len, const size_t packet_size = 0,
                   const int flags = 0, const struct sockaddr *dest_addr = NULL, socklen_t dest_addr_len = 0,
                   const unsigned int timeout_len_sec = 2, const unsigned int num_timeout_limit = 3,
