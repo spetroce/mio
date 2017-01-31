@@ -47,6 +47,10 @@ if( !!(exp) ) ; else{                                               \
   throw exception_type( stream.str() );                             \
 }
 
+//TODO: update all messages to follow this format
+#define DBG_MSG(msg) \
+  std::cout << __FILE__ << ":" __LINE__ << " " << CURRENT_FUNC << ": " << msg << "\n";
+
 //Expression checking macros
 #define EXP_CHK_E(exp, exit_function)                                  \
 if( !!(exp) ) ; else{                                                  \
