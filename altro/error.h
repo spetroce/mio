@@ -47,11 +47,21 @@ if( !!(exp) ) ; else{                                               \
   throw exception_type( stream.str() );                             \
 }
 
+//Put this macro in a c++ stream to print the current function name and line number
+//eg. std::cout << LF_STRM << "there was an error\n";
 #define LF_STRM CURRENT_FUNC << ":" << __LINE__ << ": "
 
+//Put this macro in a c++ stream to print the current file name, function name, and line number
 #define FLF_STRM __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": "
 
-//Expression checking macros
+/*
+Use to check boolean expression that should normally evaluate as true.
+Prints a formatted message that includes file name, function name, line number, and the expression.
+Exit function can be any code you want to execute if the expression evaluates as false.
+For example:
+EXP_CHK_E(value > 0, return(false))
+The above line will print the formatted message and call return if value is <= 0
+*/
 #define EXP_CHK_E(exp, exit_function)                                  \
 if( !!(exp) ) ; else{                                                  \
   std::cout << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << \
@@ -59,6 +69,11 @@ if( !!(exp) ) ; else{                                                  \
   exit_function;                                                       \
 }
 
+/*
+Same as EXP_CHK_EM, but includes a user message
+For example:
+EXP_CHK_E(value > 0, return(false), "you entered an incorrect value")
+*/
 #define EXP_CHK_EM(exp, exit_function, opt_msg)                        \
 if( !!(exp) ) ; else{                                                  \
   std::cout << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << \
