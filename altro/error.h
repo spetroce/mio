@@ -20,7 +20,7 @@
 #endif
 
 #define FRIENDLY_RETHROW(exception_){                                                                     \
-  std::cout << "Exception caught here: " << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << "\n"; \
+  std::cout << "Exception caught here: " << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << "\n"; \
   throw exception_;                                                                                       \
 }
 
@@ -28,22 +28,22 @@
 #define EXCEPTION_MACRO_E(exp, exception_type)                                                         \
 if( !!(exp) ) ; else{                                                                                  \
   std::ostringstream stream;                                                                           \
-  stream << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << " - (" << #exp << ") is false.\n"; \
+  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": (" << #exp << ") is false.\n"; \
   throw exception_type( stream.str() );                                                                \
 }
 
 #define EXCEPTION_MACRO_M(msg, exception_type)                                            \
 {                                                                                         \
   std::ostringstream stream;                                                              \
-  stream << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << " - " << msg << "\n"; \
+  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ":" << msg << "\n"; \
   throw exception_type( stream.str() );                                                   \
 }
 
 #define EXCEPTION_MACRO_EM(exp, exception_type, opt_msg)            \
 if( !!(exp) ) ; else{                                               \
   std::ostringstream stream;                                        \
-  stream << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << \
-            " - (" << #exp << ") is false. " << opt_msg << "\n";    \
+  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << \
+            ": (" << #exp << ") is false. " << opt_msg << "\n";    \
   throw exception_type( stream.str() );                             \
 }
 
@@ -53,6 +53,8 @@ if( !!(exp) ) ; else{                                               \
 
 //Put this macro in a c++ stream to print the current file name, function name, and line number
 #define FLF_STRM __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": "
+
+#define ERRNO_STRM "errno message: " << std::strerror(errno)
 
 /*
 Use to check boolean expression that should normally evaluate as true.
@@ -64,8 +66,8 @@ The above line will print the formatted message and call return if value is <= 0
 */
 #define EXP_CHK_E(exp, exit_function)                                  \
 if( !!(exp) ) ; else{                                                  \
-  std::cout << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << \
-               " - (" << #exp << ") is false.\n";                      \
+  std::cout << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << \
+               ": (" << #exp << ") is false.\n";                      \
   exit_function;                                                       \
 }
 
@@ -76,8 +78,8 @@ EXP_CHK_E(value > 0, return(false), "you entered an incorrect value")
 */
 #define EXP_CHK_EM(exp, exit_function, opt_msg)                        \
 if( !!(exp) ) ; else{                                                  \
-  std::cout << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << \
-               " - (" << #exp << ") is false. " << opt_msg << "\n";    \
+  std::cout << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << \
+               ": (" << #exp << ") is false. " << opt_msg << "\n";    \
   exit_function;                                                       \
 }
 
@@ -85,15 +87,15 @@ if( !!(exp) ) ; else{                                                  \
 #define STD_SYSTEM_ERROR_E(exp)                                                                                     \
 if( !!(exp) ) ; else{                                                                                               \
   std::ostringstream stream;                                                                                        \
-  stream << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << " - (" << #exp << ") is false. System message"; \
+  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": (" << #exp << ") is false. System message"; \
   throw std::system_error( errno, std::system_category(), stream.str() );                                           \
 }
 
 #define STD_SYSTEM_ERROR_EM(exp, opt_msg)                                      \
 if( !!(exp) ) ; else{                                                          \
   std::ostringstream stream;                                                   \
-  stream << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ <<            \
-            " - (" << #exp << ") is false. " << opt_msg << ". System message"; \
+  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ <<            \
+            ": (" << #exp << ") is false. " << opt_msg << ". System message"; \
   throw std::system_error( errno, std::system_category(), stream.str() );      \
 }
 
@@ -120,15 +122,15 @@ if( !!(exp) ) ; else{                                                          \
 //Expression checking macros with errno evaluation
 #define ERRNO_CHK_E(exp, exit_function)                                                         \
 if( !!(exp) ) ; else{                                                                           \
-  std::cout << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ <<                          \
-               " - (" << #exp << ") is false. errno string: " << std::strerror(errno) << "\n";  \
+  std::cout << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ <<                          \
+               ": (" << #exp << ") is false. errno message: " << std::strerror(errno) << "\n";  \
   exit_function;                                                                                \
 }
 
 #define ERRNO_CHK_EM(exp, exit_function, opt_msg)                                                          \
 if( !!(exp) ) ; else{                                                                                      \
-  std::cout << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << " - (" << #exp << ") is false. " << \
-               opt_msg << " - errno string: " << std::strerror(errno) << "\n";                             \
+  std::cout << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << " - (" << #exp << ") is false. " << \
+               opt_msg << ": errno message: " << std::strerror(errno) << "\n";                             \
   exit_function;                                                                                           \
 }
 
