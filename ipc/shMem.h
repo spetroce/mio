@@ -94,15 +94,17 @@ class SharedMemory{
     }
 
     //NOTE: proj_id is an int, but still only the 8 least significant bits are used to generate the key
-    bool Init(const char *kFileName, const int kProjId, const size_t kShmSize){
+    bool Init(const char *kFileName, const int kProjId, const size_t kShmSize,
+              const bool kTryCreate = true, const bool kMustCreate = false){
       key_t key;
       EXP_CHK_E(kProjId > 0, return(false))
       ERRNO_CHK_E((key = ftok(kFileName, kProjId)) != -1, return(false))
-      return Init(key, kShmSize);
+      return Init(key, kShmSize, kTryCreate, kMustCreate);
     }
 
-    bool Init(const std::string &kFileName, const int kProjId, const size_t kShmSize){
-      return Init(kFileName.c_str(), kProjId, kShmSize);
+    bool Init(const std::string &kFileName, const int kProjId, const size_t kShmSize,
+              const bool kTryCreate = true, const bool kMustCreate = false){
+      return Init(kFileName.c_str(), kProjId, kShmSize, kTryCreate, kMustCreate);
     }
 
     bool Uninit(){
