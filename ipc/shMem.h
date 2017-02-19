@@ -44,7 +44,7 @@ class SharedMemory{
     bool Init(const key_t kShmKey, const size_t kShmSize,
               const bool kTryCreate = true, const bool kMustCreate = false){
       EXP_CHK_E(!is_init_, return(true))
-      EXP_CHK_EM(kShmKey > 0, return(false), "invalied shared memory key value")
+      EXP_CHK_EM(kShmKey > 0, return(false), "invalid shared memory key value")
       EXP_CHK_EM(kShmSize > 0, return(false), "invalid shared memory size")
 
       created_ = kTryCreate;
