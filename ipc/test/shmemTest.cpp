@@ -8,9 +8,10 @@ int main(int argc, char *argv[]){
   mio::SharedMemory<int> shmem;
   shmem.Init(std::string(__FILE__), 33, sizeof(int));
 
+  mio::Semaphore sem;
+  sem.Init("/sem_test");
+
   if(atoi(argv[1]) == 0){
-    mio::Semaphore sem;
-    sem.Init("/sem_test");
     for(;;){
       int num;
       std::cout << "enter a number\n";
@@ -20,11 +21,8 @@ int main(int argc, char *argv[]){
       if(num == 0)
         break;
     }
-    sem.Uninit();
   }
   else{
-    mio::Semaphore sem;
-    sem.Init("/sem_test");
     for(;;){
       sem.Wait(); //decrement semaphore
       int num = shmem.shm_addr_[0];
@@ -32,10 +30,10 @@ int main(int argc, char *argv[]){
       if(num == 0)
         break;
     }
-    sem.Uninit();
   }
 
   shmem.Uninit();
+  sem.Uninit();
 
   return 0;
 }
