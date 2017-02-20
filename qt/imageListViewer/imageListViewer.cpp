@@ -32,12 +32,13 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
 
 
 ImageListViewer::~ImageListViewer(){
+  delete adv_img_disp_;
   delete ui;
 }
 
 
 void ImageListViewer::SetImageList(std::string file_path, const std::vector<std::string> &img_file_name_vec){
-  EXP_CHK_E(img_file_name_vec.size() > 0, adv_img_disp_->ShowStripes();return)
+  EXP_CHK(img_file_name_vec.size() > 0, adv_img_disp_->ShowStripes();return)
   const size_t img_file_name_vec_size = img_file_name_vec.size();
   img_vec_.resize(img_file_name_vec_size);
   img_file_name_vec_.resize(img_file_name_vec_size);
@@ -48,7 +49,7 @@ void ImageListViewer::SetImageList(std::string file_path, const std::vector<std:
     if(file_name.empty())
       continue;
     file_full = file_path + "/" + file_name;
-    EXP_CHK_EM(mio::FileExists(file_full), continue, "file_full=" + file_full)
+    EXP_CHK_M(mio::FileExists(file_full), continue, "file_full=" + file_full)
     try{
       img_vec_[num_valid_img] = cv::imread(file_full);
       img_file_name_vec_[num_valid_img] = file_name;
@@ -68,8 +69,8 @@ void ImageListViewer::SetImageList(std::string file_path, const std::vector<std:
 
 void ImageListViewer::SetImageList(const std::vector<std::string> &img_file_name_vec,
                                    const std::vector<cv::Mat> &img_vec, const bool clone_images){
-  EXP_CHK_E(img_file_name_vec.size() > 0, return)
-  EXP_CHK_E(img_file_name_vec.size() == img_vec.size(), return)
+  EXP_CHK(img_file_name_vec.size() > 0, return)
+  EXP_CHK(img_file_name_vec.size() == img_vec.size(), return)
 
   img_file_name_vec_ = img_file_name_vec;
   if(clone_images){
@@ -104,7 +105,7 @@ void ImageListViewer::SetImgIdxGui(){
 
 
 void ImageListViewer::SetImage(const int idx){
-  EXP_CHK_E(idx >= 0 && idx < img_vec_.size(), return)
+  EXP_CHK(idx >= 0 && idx < img_vec_.size(), return)
   adv_img_disp_->SetImage(img_vec_[idx], true);
   ui->lineEdit_img_name->setText(QString(img_file_name_vec_[idx].c_str()));
 }

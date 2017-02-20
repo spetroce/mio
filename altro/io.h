@@ -20,7 +20,7 @@ namespace mio{
 
 inline time_t GetEpochTime(const uint32_t year, const uint8_t month, const uint8_t day,
                     const uint8_t hour, const uint8_t min, const uint8_t sec){
-  EXP_CHK_E(year >= 1900, return(0))
+  EXP_CHK(year >= 1900, return(0))
   struct tm t = {0};
   t.tm_year = year-1900;
   t.tm_mon = month;
@@ -161,7 +161,7 @@ inline bool DirExists(const char *dir_path, const bool create = false, const mod
 inline long long int GetFileSize(const std::string file_full){
   struct stat stbuf;
   long long int llnSize = 0;
-  ERRNO_CHK_E(stat(file_full.c_str(), &stbuf) == 0, return(-1))
+  EXP_CHK_ERRNO(stat(file_full.c_str(), &stbuf) == 0, return(-1))
   //get the size of all files in a directory
 //  if( (stbuf.st_mode & S_IFMT) == S_IFDIR )
 //    lintsize = dirwalk(name, fsize);
@@ -195,7 +195,7 @@ inline int GetDirList(const std::string dir_path, std::vector<std::string> &dir_
   unsigned int dir_list_size = 0, idx;
   std::string name;
 
-  ERRNO_CHK_E((dp = opendir(dir_path.c_str())) != NULL, return(-1))
+  EXP_CHK_ERRNO((dp = opendir(dir_path.c_str())) != NULL, return(-1))
 
   while( ( entry = readdir(dp) ) != 0 )
     dir_list_size++;
@@ -211,7 +211,7 @@ inline int GetDirList(const std::string dir_path, std::vector<std::string> &dir_
     idx++;
   }
 
-  ERRNO_CHK_E(closedir(dp) == 0, return(-1));
+  EXP_CHK_ERRNO(closedir(dp) == 0, return(-1));
 
   std::sort(dir_list_vec.begin(), dir_list_vec.end());
   if(print_flag)
@@ -234,14 +234,14 @@ inline size_t GetDirList(std::string file_path, const std::vector<std::string> &
                          std::string file_ext, std::vector<std::string> &filt_dir_list_vec){
   mio::FormatFilePath(file_path);
   mio::FormatFileExt(file_ext);
-  EXP_CHK_E(mio::FileExists(file_path), return(0))
+  EXP_CHK(mio::FileExists(file_path), return(0))
   // must be filtering by extension and/or prefix
-  EXP_CHK_E(file_prefix_vec.size() > 0 || file_ext.size() > 0, return(0))
+  EXP_CHK(file_prefix_vec.size() > 0 || file_ext.size() > 0, return(0))
   const bool check_ext = file_ext.size() > 0,
              check_prefix = file_prefix_vec.size() > 0;
   if(check_prefix)
     for(size_t i = 0; i < file_prefix_vec.size(); ++i){
-      EXP_CHK_EM(file_prefix_vec[i].size() > 0, return(0), "occured at i=" + std::to_string(i))
+      EXP_CHK_M(file_prefix_vec[i].size() > 0, return(0), "occured at i=" + std::to_string(i))
     }
 
   const size_t file_ext_size = file_ext.size();
@@ -264,7 +264,7 @@ inline size_t GetDirList(std::string file_path, const std::vector<std::string> &
       filt_dir_list_vec.push_back(file_name);
   }
 
-  EXP_CHK_E(filt_dir_list_vec.size() > 0, return(0))
+  EXP_CHK(filt_dir_list_vec.size() > 0, return(0))
   return filt_dir_list_vec.size();
 }
 
@@ -404,7 +404,7 @@ inline int ResolveSymlink(const char *symlink, char *&resolved_symlink){
 inline void ResolveSymlink(const std::string symlink, std::string &resolved_symlink){
   resolved_symlink.clear();
   char *resolved_symlink_c;
-  EXP_CHK_E(ResolveSymlink(symlink.c_str(), resolved_symlink_c) != -1, return)
+  EXP_CHK(ResolveSymlink(symlink.c_str(), resolved_symlink_c) != -1, return)
   resolved_symlink = std::string(resolved_symlink_c);
   free(resolved_symlink_c);
 }

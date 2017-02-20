@@ -20,8 +20,8 @@ namespace mio{
 
 #define PGR_ERR_VAR FlyCapture2::Error _ptgrey_error;
 
-#undef EXP_CHK_E
-#define EXP_CHK_E(exp, exit_function)                                  \
+#undef EXP_CHK
+#define EXP_CHK(exp, exit_function)                                  \
 if( !!(exp) ) ; else{                                                  \
   std::cout << __FILE__ << " - " << CURRENT_FUNC << ":" << __LINE__ << \
                " - (" << #exp << ") is false.\n";                      \
@@ -29,10 +29,10 @@ if( !!(exp) ) ; else{                                                  \
 }
 
 #define PGR_ERR_OK(ptgrey_func_call, exit_function)\
-EXP_CHK_E(ptgrey_func_call == FlyCapture2::PGRERROR_OK, _ptgrey_error.PrintErrorTrace(); exit_function)
+EXP_CHK(ptgrey_func_call == FlyCapture2::PGRERROR_OK, _ptgrey_error.PrintErrorTrace(); exit_function)
 
 #define PGR_EXP_CHK(exp, exit_function)\
-EXP_CHK_E(exp, _ptgrey_error.PrintErrorTrace(); exit_function);
+EXP_CHK(exp, _ptgrey_error.PrintErrorTrace(); exit_function);
 
 
 inline void PrintProperty(const FlyCapture2::Property &prop){
@@ -143,7 +143,7 @@ inline int SetTriggerMode(FlyCapture2::Camera &cam, const bool onOff){
   // Check for external trigger support
   FlyCapture2::TriggerModeInfo trigger_mode_info;
   PGR_ERR_OK(cam.GetTriggerModeInfo(&trigger_mode_info), return(-1))
-  ERRNO_CHK_EM(trigger_mode_info.present == true, return(-1), "trigger mode not supported")
+  EXP_CHK_ERRNO_M(trigger_mode_info.present == true, return(-1), "trigger mode not supported")
 
   // Get current trigger settings
 	FlyCapture2::TriggerMode trigger_mode;
@@ -168,7 +168,7 @@ inline int InitPtGreyFlyCap2Cam(FlyCapture2::PGRGuid &guid, FlyCapture2::Camera 
   PGR_ERR_VAR
   PGR_ERR_OK(cam.Connect(&guid), return(-1))
   if(wait_for_power_up)
-    EXP_CHK_E(WaitForPtGreyPowerUp(cam), return(-1))
+    EXP_CHK(WaitForPtGreyPowerUp(cam), return(-1))
 
 	// Get the camera information
 	FlyCapture2::CameraInfo cam_info;

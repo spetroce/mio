@@ -35,7 +35,7 @@ class CFreqBuffer{
 #ifdef __FREQ_BUF_DBG__
       printf("%s - called\n", CURRENT_FUNC);
 #endif
-      EXP_CHK_EM(!is_init_, Uninit(), "user should be calling CFreqBuffer::Uninit()")
+      EXP_CHK_M(!is_init_, Uninit(), "user should be calling CFreqBuffer::Uninit()")
 #ifdef __FREQ_BUF_DBG__
       printf("%s - destroyed\n", CURRENT_FUNC);
 #endif
@@ -52,7 +52,7 @@ class CFreqBuffer{
     void Init(std::function<void(DATA_T, void*)> user_func, const size_t freq = 10,
               const size_t max_buf_size = 5, const bool with_fifo_checking = false,
               void *user_data = nullptr){
-      EXP_CHK_E(!is_init_, return)
+      EXP_CHK(!is_init_, return)
       printf("%s - Initializing...\n", CURRENT_FUNC);
       user_func_ = user_func;
       freq_ = freq;
@@ -74,7 +74,7 @@ class CFreqBuffer{
 
 
     void Uninit(){
-      EXP_CHK_E(is_init_, return)
+      EXP_CHK(is_init_, return)
 #ifdef __FREQ_BUF_DBG__
       printf("%s - Uninitializing...\n", CURRENT_FUNC);
 #endif
@@ -89,7 +89,7 @@ class CFreqBuffer{
 
 
     void Push(const DATA_T value){
-      EXP_CHK_E(is_init_, return)
+      EXP_CHK(is_init_, return)
       buf_mtx_.lock();
       if(fifo_value_buf_.size() > max_buf_size_)
         fifo_value_buf_.pop();

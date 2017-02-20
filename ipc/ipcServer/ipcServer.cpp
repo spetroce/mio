@@ -7,8 +7,8 @@ namespace mio{
 void CIpcServer::CreateShm(const lcm_recv_buf_t *rbuf, const char *channel,
                            const lcm_create_shm_t *msg, void *userdata){
   std::string shm_name(msg->shm_name);
-  EXP_CHK_E(!shm_name.empty(), return)
-  EXP_CHK_EM(msg->shm_size > 0, return, std::string("shm_name: ") + shm_name);
+  EXP_CHK(!shm_name.empty(), return)
+  EXP_CHK_M(msg->shm_size > 0, return, std::string("shm_name: ") + shm_name);
   printf("request to create shared memory segment %s with size %d\n", msg->shm_name, msg->shm_size);
 
   CIpcServer *ipcs = static_cast<CIpcServer*>(userdata);
@@ -25,7 +25,7 @@ void CIpcServer::CreateShm(const lcm_recv_buf_t *rbuf, const char *channel,
     std::string error_str = std::string("a memory segment with the name ") + shm_name +
                             "exists, but with a different size. Existing size: " + std::to_string(existing_shm_size) +
                             ", Requested size: " + std::to_string(msg->shm_size);
-    EXP_CHK_EM(existing_shm_size == msg->shm_size, return, error_str)
+    EXP_CHK_M(existing_shm_size == msg->shm_size, return, error_str)
   }
 
   lcm_create_shm_t response_msg;
@@ -39,7 +39,7 @@ void CIpcServer::CreateShm(const lcm_recv_buf_t *rbuf, const char *channel,
 void CIpcServerShmClient::CreateShmResponse(const lcm_recv_buf_t *rbuf, const char *channel,
                                             const lcm_create_shm_t *msg, void *userdata){
   std::string shm_name(msg->shm_name);
-  EXP_CHK_E(!shm_name.empty(), return)
+  EXP_CHK(!shm_name.empty(), return)
   std::hash<std::string> hash_func;
   size_t name_hash_key = hash_func(shm_name);
   CIpcServerShmClient *shm_client = static_cast<CIpcServerShmClient*>(userdata);

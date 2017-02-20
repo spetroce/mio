@@ -44,7 +44,7 @@ class GalilException : std::exception {
 
 
 inline void OpenGalil(GCon &galil_con, std::string dev_str){
-  EXP_CHK_E(galil_con == 0, return)
+  EXP_CHK(galil_con == 0, return)
   char buf[1024];
   std::string cmd_str, res_symlink;
   ResolveUdevSymlink(dev_str, res_symlink);
@@ -63,7 +63,7 @@ inline void OpenGalil(GCon &galil_con, std::string dev_str){
 
 
 inline void CloseGalil(GCon &galil_con){
-  EXP_CHK_E(galil_con != 0, return)
+  EXP_CHK(galil_con != 0, return)
   try{
     G_ERR( GCmd(galil_con, "MO") );
     G_ERR( GClose(galil_con) );
@@ -193,7 +193,7 @@ class TriggerCamLoop{
     }
 
     void Start(){
-      EXP_CHK_E(started_ == false, return)
+      EXP_CHK(started_ == false, return)
       exit_thread_ = false;
       thread_ = std::thread(&TriggerCamLoop::Thread, this);
       printf("%s - started\n", CURRENT_FUNC);
@@ -201,7 +201,7 @@ class TriggerCamLoop{
     }
 
     void Stop(){
-      EXP_CHK_E(started_ == true, return)
+      EXP_CHK(started_ == true, return)
       exit_thread_ = true;
       thread_.join();
       printf("%s - stopped\n", CURRENT_FUNC);
@@ -213,7 +213,7 @@ class TriggerCamLoop{
 /*
 //jogs motor at 1/4 rotation per second for driver tuning
 void CRobot::TuneMotor(){
-  EXP_CHK_E(m_gc != 0, return)
+  EXP_CHK(m_gc != 0, return)
 
   G_ERR( GCmd(m_gc, "SH C") );
   G_ERR( GCmd(m_gc, "JG ,,500") );

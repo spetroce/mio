@@ -349,7 +349,7 @@ class MyGraph : public QObject{
 
       if(show_dialog){
         QPrintDialog dialog(&printer);
-        EXP_CHK_E(dialog.exec(), return)
+        EXP_CHK(dialog.exec(), return)
       }
 
       QwtPlotRenderer renderer;

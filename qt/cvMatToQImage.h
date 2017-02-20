@@ -26,8 +26,8 @@ inline void SetupMat2QImage(){
 inline bool OpenCVMat2QImage(const cv::Mat &src_img, QImage &dst_img, const bool copy_flag){
   const int channels = src_img.channels(),
             depth = src_img.depth();
-  EXP_CHK_E( channels == 1 || channels == 3, return(false) )
-  EXP_CHK_E( depth == CV_8U || depth == CV_32F || depth == CV_64F, return(false) )
+  EXP_CHK( channels == 1 || channels == 3, return(false) )
+  EXP_CHK( depth == CV_8U || depth == CV_32F || depth == CV_64F, return(false) )
 
   cv::Mat img;
   if(depth == CV_8U)

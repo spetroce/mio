@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QLayout>
 #include <QMouseEvent>
+#include <QSocketNotifier> //need to link against Qt5::Core
 //#include <QMessageBox>
 //#include <QFileDialog>
 //#include <QScrollBar>
@@ -82,7 +83,8 @@ class AdvImageDisplay : public QWidget{
     bool GetAutoConvertImage();
     void SaveRoi(QString file_full_qstr);
     void LoadRoi(const QString file_full_qstr);
-    void SetZoomingEnabled(const bool kEnabled);
+    bool SetZoomingEnabled(const bool kEnabled);
+    void SetupLcm(const std::string kNewFrameLcmChanNamePrefix);
 
   protected:
     bool eventFilter(QObject *target, QEvent *event);
@@ -101,6 +103,7 @@ class AdvImageDisplay : public QWidget{
     lcm_opencv_mat_t_subscription_t *new_frame_lcm_sub_;
     QSocketNotifier *socket_notifier_;
     int lcm_fd_;
+    bool lcm_is_init_;
 #endif
 
     cv::Point2f View2Image(const cv::Point2f &view_coord);
@@ -120,7 +123,7 @@ class AdvImageDisplay : public QWidget{
     void UpdateRoiMask();
     void ResetResizeTotal();
 
-    bool is_zoom_;
+    bool is_zoom_, zooming_enabled_;
     int scroll_wheel_count_;
     float zoom_scaler_, prev_zoom_, max_disp_img_dim_scale_inv_;
     cv::Mat zoom_img_;

@@ -148,7 +148,7 @@ class UiPropertySetter : public QWidget{
     }
 
     void UpdateUi(){
-      EXP_CHK_E(is_init_, return)
+      EXP_CHK(is_init_, return)
       PGR_ERR_VAR
       cam_mtx_->lock();
       PGR_ERR_OK(cam_->GetProperty(&prop_), return)
@@ -186,7 +186,7 @@ class UiPropertySetter : public QWidget{
 
     void SetCameraProp(){
       //printf("%s - %d\n", CURRENT_FUNC, dbg_count_++);
-      EXP_CHK_E(is_init_, return)
+      EXP_CHK(is_init_, return)
       PGR_ERR_VAR
       if(abs_val_slider_)
         prop_.absValue = abs_val_slider_->value();
@@ -322,16 +322,16 @@ class FlyCapControl : public QWidget{
     }
 
     void SaveCameraSettings(QString file_full_qstr){
-      EXP_CHK_E(!file_full_qstr.isEmpty(), return)
+      EXP_CHK(!file_full_qstr.isEmpty(), return)
       std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
       mio::FileNameExpand(file_full, ".", &file_path, NULL, NULL, NULL);
-      EXP_CHK_EM(mio::DirExists(file_path), return, file_path + "is not an existing directory")
+      EXP_CHK_M(mio::DirExists(file_path), return, file_path + "is not an existing directory")
       ForceXmlExtension(file_full_qstr);
       file_full = file_full_qstr.toStdString();
       printf("%s - saving to %s\n", CURRENT_FUNC, file_full.c_str());
 
       QFile file(file_full_qstr);
-      EXP_CHK_E(file.open(QIODevice::WriteOnly),
+      EXP_CHK(file.open(QIODevice::WriteOnly),
                 QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
 
       QXmlStreamWriter xml_writer(&file);
@@ -367,13 +367,13 @@ class FlyCapControl : public QWidget{
 
     void LoadCameraSettings(const QString file_full_qstr){
       PGR_ERR_VAR
-      EXP_CHK_E(!file_full_qstr.isEmpty(), return)
+      EXP_CHK(!file_full_qstr.isEmpty(), return)
       std::string file_full = file_full_qstr.toStdString();
-      EXP_CHK_E(mio::FileExists(file_full), return)
+      EXP_CHK(mio::FileExists(file_full), return)
       printf("%s - loading from %s\n", CURRENT_FUNC, file_full.c_str());
 
       QFile file(file_full_qstr);
-      EXP_CHK_E(file.open(QIODevice::ReadOnly | QIODevice::Text),
+      EXP_CHK(file.open(QIODevice::ReadOnly | QIODevice::Text),
                 QMessageBox::warning(0, "FlyCapControl::LoadCameraSettings", "Couldn't open xml file");return)
 
       QXmlStreamAttributes attr;

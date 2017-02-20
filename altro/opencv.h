@@ -245,19 +245,19 @@ inline int SaveOpenCVMat(const std::string file_full, const cv::Mat &mat, bool p
     mio::PrintMatProp(mat);
   FILE *fd;
 
-  EXP_CHK_E(mat.isContinuous(), return(-1))
-  ERRNO_CHK_E(fd = fopen(file_full.c_str(), "wb"), return(-1))
+  EXP_CHK(mat.isContinuous(), return(-1))
+  EXP_CHK_ERRNO(fd = fopen(file_full.c_str(), "wb"), return(-1))
   const int rows = mat.rows,
             cols = mat.cols,
             type = mat.type();
-  ERRNO_CHK_E(fwrite(&rows, sizeof(int), 1, fd) == 1, return(-1))
-  ERRNO_CHK_E(fwrite(&cols, sizeof(int), 1, fd) == 1, return(-1))
-  ERRNO_CHK_E(fwrite(&type, sizeof(int), 1, fd) == 1, return(-1))
+  EXP_CHK_ERRNO(fwrite(&rows, sizeof(int), 1, fd) == 1, return(-1))
+  EXP_CHK_ERRNO(fwrite(&cols, sizeof(int), 1, fd) == 1, return(-1))
+  EXP_CHK_ERRNO(fwrite(&type, sizeof(int), 1, fd) == 1, return(-1))
 
   const size_t data_length = rows * cols * mat.channels(),
                data_size = mat.elemSize1();
   const void *mat_data = mio::StaticCastPtr<void*>(mat.data);
-  ERRNO_CHK_E(fwrite(mat_data, data_size, data_length, fd) == data_length, return(-1))
+  EXP_CHK_ERRNO(fwrite(mat_data, data_size, data_length, fd) == data_length, return(-1))
 
   fclose(fd);
   return 0;
@@ -270,16 +270,16 @@ inline int ReadOpenCVMat(const std::string file_full, cv::Mat &mat, bool print_f
   int rows, cols, type;
   FILE *fd;
 
-  ERRNO_CHK_E(fd = fopen(file_full.c_str(), "rb"), return(-1))
-  ERRNO_CHK_E(fread(&rows, sizeof(int), 1, fd) == 1, return(-1))
-  ERRNO_CHK_E(fread(&cols, sizeof(int), 1, fd) == 1, return(-1))
-  ERRNO_CHK_E(fread(&type, sizeof(int), 1, fd) == 1, return(-1))
+  EXP_CHK_ERRNO(fd = fopen(file_full.c_str(), "rb"), return(-1))
+  EXP_CHK_ERRNO(fread(&rows, sizeof(int), 1, fd) == 1, return(-1))
+  EXP_CHK_ERRNO(fread(&cols, sizeof(int), 1, fd) == 1, return(-1))
+  EXP_CHK_ERRNO(fread(&type, sizeof(int), 1, fd) == 1, return(-1))
   mat = cv::Mat(rows, cols, type);
 
   const size_t data_length = rows * cols * mat.channels(),
                data_size = mat.elemSize1();
   void *mat_data = mio::StaticCastPtr<void*>(mat.data);
-  ERRNO_CHK_E(fread(mat_data, data_size, data_length, fd) == data_length, return(-1))
+  EXP_CHK_ERRNO(fread(mat_data, data_size, data_length, fd) == data_length, return(-1))
   if(print_flag)
     mio::PrintMatProp(mat);
 

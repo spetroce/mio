@@ -158,7 +158,7 @@ class CMultiVarPoly{
     }
 
     void InsertConstantCoeff(){
-      EXP_CHK_EM(m_coeff_idx > 0 && m_coeff_idx < A.cols, return, "probably exceeded the initialized number of coeff\n")
+      EXP_CHK_M(m_coeff_idx > 0 && m_coeff_idx < A.cols, return, "probably exceeded the initialized number of coeff\n")
       A.col(m_coeff_idx).setTo(1.0);
       m_coeff_idx++;
     }
@@ -172,7 +172,7 @@ class CMultiVarPoly{
       const cv::Mat x_data_col = (x_data.rows == 1) ? x_data.t() : x_data; //make sure data is a column vector
 
       for(auto &expo : exponent_vec){
-        EXP_CHK_EM(m_coeff_idx > 0 && m_coeff_idx < A.cols, return, "probably exceeded the initialized number of coeff\n")
+        EXP_CHK_M(m_coeff_idx > 0 && m_coeff_idx < A.cols, return, "probably exceeded the initialized number of coeff\n")
         cv::pow( x_data_col, expo, A.col(m_coeff_idx) );
         m_coeff_idx++;
       }

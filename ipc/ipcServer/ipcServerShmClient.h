@@ -52,7 +52,7 @@ class CIpcServerShmClient{
 
     void init(const std::string shm_name, const size_t shm_size, const size_t numeric_id){
       m_lcm = lcm_create(NULL);
-      EXP_CHK_EM(m_lcm != NULL, return, std::string("lcm_create() error, shm_name: ") + shm_name)
+      EXP_CHK_M(m_lcm != NULL, return, std::string("lcm_create() error, shm_name: ") + shm_name)
       m_lcm_fd = lcm_get_fileno(m_lcm);
 
       m_response_sub = lcm_create_shm_t_subscribe(m_lcm, "ipcs_create_shm_response", &CreateShmResponse, this);
@@ -71,13 +71,13 @@ class CIpcServerShmClient{
             printf("received a message with wrong id\n");
             continue;
           }
-          EXP_CHK_EM(m_init_success, return, "critical error - IPC Server could not create shared memory segment")
+          EXP_CHK_M(m_init_success, return, "critical error - IPC Server could not create shared memory segment")
           break;
         }
         else{
           time_out++;
           lcm_create_shm_t_publish(m_lcm, "ipcs_create_shm", &msg);
-          EXP_CHK_EM(time_out > 2, return, "critical error - didn't receive response from IPC Server")
+          EXP_CHK_M(time_out > 2, return, "critical error - didn't receive response from IPC Server")
         }
 
       printf("successful init of mem segment - name: %s, size: %d\n", shm_name_c_str, shm_size);

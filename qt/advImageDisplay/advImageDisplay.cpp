@@ -8,7 +8,8 @@ constexpr std::array<const char*, 4> Roi::roi_type_str;
 
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
-    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true){
+    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true),
+    lcm_is_init_(false){
   prev_src_img_size_ = cv::Point(-1, -1);
   ResetZoom();
 }
@@ -16,9 +17,11 @@ AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), nor
 
 AdvImageDisplay::~AdvImageDisplay(){
 #ifdef HAVE_LCM
-  disconnect(AdvImageDisplay::socket_notifier_, SIGNAL(activated(int)), this, SLOT(DataReady(int)));
-  delete AdvImageDisplay::socket_notifier_;
-  lcm_destroy(AdvImageDisplay::lcm_);
+  if(lcm_is_init_){
+    disconnect(AdvImageDisplay::socket_notifier_, SIGNAL(activated(int)), this, SLOT(DataReady(int)));
+    delete AdvImageDisplay::socket_notifier_;
+    lcm_destroy(AdvImageDisplay::lcm_);
+  }
 #endif
   src_img_ = cv::Mat();
   UpdateDisplay();
@@ -31,7 +34,7 @@ AdvImageDisplay::~AdvImageDisplay(){
 
 
 void AdvImageDisplay::Init(const int id, const bool manage_layout){
-  EXP_CHK_E(!is_init_, return)
+  EXP_CHK(!is_init_, return)
   id_ = id;
 
   qRegisterMetaType< cv::Mat >("cv::Mat");
@@ -474,7 +477,7 @@ void AdvImageDisplay::UpdateRoiMask(){
 #endif
         switch(src_roi_.type){
           case Roi::ROI_RECT:
-            EXP_CHK_E(src_roi_.vertices.size() == 2, return)
+            EXP_CHK(src_roi_.vertices.size() == 2, return)
             cv::rectangle(roi_mask_, src_roi_.vertices[0], src_roi_.vertices[1], cv::Scalar(255), fill_flag);
             break;
           case Roi::ROI_POLY:
@@ -518,7 +521,7 @@ void AdvImageDisplay::UpdateRoiMask(){
 
 void AdvImageDisplay::GetRoiMask(cv::Mat &roi, cv::Size resize_to){
   roi_mask_mtx_.lock();
-  EXP_CHK_E(!roi_mask_.empty(), roi_mask_mtx_.unlock();return)
+  EXP_CHK(!roi_mask_.empty(), roi_mask_mtx_.unlock();return)
   if(resize_to == cv::Size())
     roi = roi_mask_.clone();
   else
@@ -544,9 +547,9 @@ void AdvImageDisplay::ShowStripes(){
 
 
 void AdvImageDisplay::ShowRoi(){
-  EXP_CHK_EM(!create_roi_, return, "cannot modify 'show ROI' state while a ROI is being created")
+  EXP_CHK_M(!create_roi_, return, "cannot modify 'show ROI' state while a ROI is being created")
   roi_mask_mtx_.lock();
-  EXP_CHK_E(!roi_mask_.empty(), roi_mask_mtx_.unlock();return)
+  EXP_CHK(!roi_mask_.empty(), roi_mask_mtx_.unlock();return)
   roi_mask_mtx_.unlock();
   show_roi_ = !show_roi_;
   ResetZoom();
@@ -630,17 +633,17 @@ bool AdvImageDisplay::SetZoomingEnabled(const bool kEnabled){
 
 
 void AdvImageDisplay::SaveRoi(QString file_full_qstr){
-  EXP_CHK_E(src_roi_.vertices.size() >= 2, return)
-  EXP_CHK_E(!file_full_qstr.isEmpty(), return)
+  EXP_CHK(src_roi_.vertices.size() >= 2, return)
+  EXP_CHK(!file_full_qstr.isEmpty(), return)
   std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
   mio::FileNameExpand(file_full, ".", &file_path, NULL, NULL, NULL);
-  EXP_CHK_EM(mio::DirExists(file_path), return, file_path + "is not an existing directory")
+  EXP_CHK_M(mio::DirExists(file_path), return, file_path + "is not an existing directory")
   ForceXmlExtension(file_full_qstr);
   file_full = file_full_qstr.toStdString();
   printf("%s - saving ROI to %s\n", CURRENT_FUNC, file_full.c_str());
 
   QFile file(file_full_qstr);
-  EXP_CHK_E(file.open(QIODevice::WriteOnly),
+  EXP_CHK(file.open(QIODevice::WriteOnly),
             QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
 
   QXmlStreamWriter xml_writer(&file);
@@ -665,13 +668,13 @@ void AdvImageDisplay::SaveRoi(QString file_full_qstr){
 
 
 void AdvImageDisplay::LoadRoi(const QString file_full_qstr){
-  EXP_CHK_E(!file_full_qstr.isEmpty(), return)
+  EXP_CHK(!file_full_qstr.isEmpty(), return)
   std::string file_full = file_full_qstr.toStdString();
-  EXP_CHK_E(mio::FileExists(file_full), return)
+  EXP_CHK(mio::FileExists(file_full), return)
   printf("%s - loading ROI from %s\n", CURRENT_FUNC, file_full.c_str());
 
   QFile file(file_full_qstr);
-  EXP_CHK_E(file.open(QIODevice::ReadOnly | QIODevice::Text),
+  EXP_CHK(file.open(QIODevice::ReadOnly | QIODevice::Text),
             QMessageBox::warning(0, "AdvImageDisplay::LoadRoi", "Couldn't open xml file");return)
 
   QXmlStreamAttributes attr;
@@ -726,16 +729,18 @@ void AdvImageDisplay::LoadRoi(const QString file_full_qstr){
 
 void AdvImageDisplay::SetupLcm(const std::string kNewFrameLcmChanNamePrefix){
 #ifdef HAVE_LCM
-  std::string new_frame_lcm_chan_name = kNewFrameLcmChanNamePrefix + "_" + std::to_string(id_);
   if(AdvImageDisplay::lcm_ == NULL)
     AdvImageDisplay::lcm_ = lcm_create(NULL);
-  EXP_CHK_EM(AdvImageDisplay::lcm_ != NULL, return, std::string("id=") + std::to_string(id_));
+  EXP_CHK_M(AdvImageDisplay::lcm_ != NULL, return, std::string("id=") + std::to_string(id_));
   AdvImageDisplay::lcm_fd_ = lcm_get_fileno(AdvImageDisplay::lcm_);
   AdvImageDisplay::socket_notifier_ = new QSocketNotifier(AdvImageDisplay::lcm_fd_, QSocketNotifier::Read, this);
   connect(AdvImageDisplay::socket_notifier_, SIGNAL(activated(int)), this, SLOT(DataReady(int)));
+
+  std::string new_frame_lcm_chan_name = kNewFrameLcmChanNamePrefix + "_" + std::to_string(id_);
   new_frame_lcm_sub_ = lcm_opencv_mat_t_subscribe(AdvImageDisplay::lcm_, new_frame_lcm_chan_name.c_str(),
                                                   &NewFrameLCM, (void *)this);
   lcm_opencv_mat_t_subscription_set_queue_capacity(new_frame_lcm_sub_, 2);
+  lcm_is_init_ = true;
 #endif
 }
 
@@ -743,7 +748,7 @@ void AdvImageDisplay::SetupLcm(const std::string kNewFrameLcmChanNamePrefix){
 #ifdef HAVE_LCM
 void AdvImageDisplay::NewFrameLCM(const lcm_recv_buf_t *rbuf, const char *channel, 
                                   const lcm_opencv_mat_t *msg, void *userdata){
-  CVideoDisplayWidget *w = mio::StaticCastPtr<AdvImageDisplay>(userdata);
+  AdvImageDisplay *w = mio::StaticCastPtr<AdvImageDisplay>(userdata);
   const cv::Mat kImg(msg->rows, msg->cols, msg->openCvType, msg->data);
   w->SetImage(kImg, true);
 }

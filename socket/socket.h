@@ -18,9 +18,9 @@ inline int SendTo(const int sock_fd, const void *data_buf, const size_t data_buf
                   const int flags = 0, const struct sockaddr *dest_addr = NULL, socklen_t dest_addr_len = 0,
                   const unsigned int timeout_len_sec = 2, const unsigned int num_timeout_limit = 3,
                   const bool suppress_timeout_error = false){
-  EXP_CHK_E(sock_fd > 0, return(-1))
-  EXP_CHK_E(data_buf != nullptr, return(-1))
-  EXP_CHK_E(data_buf_len > 0, return(0))
+  EXP_CHK(sock_fd > 0, return(-1))
+  EXP_CHK(data_buf != nullptr, return(-1))
+  EXP_CHK(data_buf_len > 0, return(0))
             
   int num_byte_sent, num_active_fd;
   unsigned int num_timeout = 0, total_num_byte_sent = 0;
@@ -35,12 +35,12 @@ inline int SendTo(const int sock_fd, const void *data_buf, const size_t data_buf
     do{
       tv_temp = tv; // Select may be modifying tv_temp so reset
       num_active_fd = select(sock_fd + 1, NULL, &writefds, NULL, &tv_temp); //getdtablesize()
-      ERRNO_CHK_E(num_active_fd != -1, return(-1));
+      EXP_CHK_ERRNO(num_active_fd != -1, return(-1));
       if(num_active_fd == 0){
         num_timeout++;
         if(!suppress_timeout_error){
           printf("%s - timeout occurence %d\n", CURRENT_FUNC, num_timeout);
-          EXP_CHK_E(num_timeout < num_timeout_limit, return(-3));
+          EXP_CHK(num_timeout < num_timeout_limit, return(-3));
         }
         else if(num_timeout >= num_timeout_limit)
           return 0;
@@ -48,9 +48,9 @@ inline int SendTo(const int sock_fd, const void *data_buf, const size_t data_buf
       else{
         const size_t num_bytes_to_send = (packet_size == 0) ? (data_buf_len-total_num_byte_sent) :
                                                               std::min(data_buf_len-total_num_byte_sent, packet_size);
-        ERRNO_CHK_E(( num_byte_sent = sendto(sock_fd, (uint8_t *)data_buf + total_num_byte_sent, 
+        EXP_CHK_ERRNO(( num_byte_sent = sendto(sock_fd, (uint8_t *)data_buf + total_num_byte_sent, 
                     num_bytes_to_send, flags, dest_addr, dest_addr_len) ) != -1, return(-1))
-        EXP_CHK_EM(!(num_byte_sent == 0 && num_active_fd == 1), return(-1), "connection was lost");
+        EXP_CHK_M(!(num_byte_sent == 0 && num_active_fd == 1), return(-1), "connection was lost");
         //printf("sent out %d bytes\n", num_byte_sent);
       }
     } while(num_active_fd == 0); // Loop for timeout check instances
@@ -66,9 +66,9 @@ inline int RecvFrom(const int sock_fd, void *data_buf, const size_t data_buf_len
                     const int flags = 0, struct sockaddr *src_addr = NULL, socklen_t *src_addr_len = NULL,
                     const unsigned int timeout_len_sec = 2, const unsigned int num_timeout_limit = 3,
                     const bool suppress_timeout_error = false){
-  EXP_CHK_E(sock_fd > 0, return(-1))
-  EXP_CHK_E(data_buf != nullptr, return(-1))
-  EXP_CHK_E(data_buf_len > 0, return(0))
+  EXP_CHK(sock_fd > 0, return(-1))
+  EXP_CHK(data_buf != nullptr, return(-1))
+  EXP_CHK(data_buf_len > 0, return(0))
   
   int num_byte_recv, num_active_fd;
   unsigned int num_timeout = 0, total_num_byte_recv = 0;
@@ -83,12 +83,12 @@ inline int RecvFrom(const int sock_fd, void *data_buf, const size_t data_buf_len
     do{
       tv_temp = tv; //select may be modifying tv_temp so reset
       num_active_fd = select(sock_fd + 1, &readfds, NULL, NULL, &tv_temp); //getdtablesize()
-      ERRNO_CHK_E(num_active_fd != -1, return(-1));
+      EXP_CHK_ERRNO(num_active_fd != -1, return(-1));
       if(num_active_fd == 0){
         num_timeout++;
         if(!suppress_timeout_error){
           printf("%s - timeout occurence %d\n", CURRENT_FUNC, num_timeout);
-          EXP_CHK_E(num_timeout < num_timeout_limit, return(-3));
+          EXP_CHK(num_timeout < num_timeout_limit, return(-3));
         }
         else if(num_timeout >= num_timeout_limit)
           return 0;
@@ -96,9 +96,9 @@ inline int RecvFrom(const int sock_fd, void *data_buf, const size_t data_buf_len
       else{
         const size_t num_bytes_to_get = (packet_size == 0) ? (data_buf_len-total_num_byte_recv) :
                                                              std::min(data_buf_len-total_num_byte_recv, packet_size);
-        ERRNO_CHK_E(( num_byte_recv = recvfrom(sock_fd, (uint8_t *)data_buf + total_num_byte_recv, 
+        EXP_CHK_ERRNO(( num_byte_recv = recvfrom(sock_fd, (uint8_t *)data_buf + total_num_byte_recv, 
                     num_bytes_to_get, flags, src_addr, src_addr_len) ) != -1, return(-1))
-        EXP_CHK_EM(!(num_byte_recv == 0 && num_active_fd == 1), return(-1), "connection was lost");
+        EXP_CHK_M(!(num_byte_recv == 0 && num_active_fd == 1), return(-1), "connection was lost");
         //printf("read in %d bytes\n", num_byte_recv);
       }
     } while(num_active_fd == 0); //loop for timeout check instances
@@ -192,41 +192,41 @@ class CServerTCP{
 
     // interface_ip_addr_str is optional, port_num_str must be provided
     int Init(const std::string interface_ip_addr_str, const std::string port_num_str){
-      EXP_CHK_E(!is_init_, return(0))
+      EXP_CHK(!is_init_, return(0))
 	    struct addrinfo hints;
 	    memset(&hints, 0, sizeof hints);
 	    hints.ai_family = AF_UNSPEC;
 	    hints.ai_socktype = SOCK_STREAM;
       hints.ai_flags = interface_ip_addr_str.empty() ? AI_PASSIVE : 0; // AI_PASSIVE = Fill in IP for me
       int rv;
-      EXP_CHK_EM((rv = getaddrinfo(interface_ip_addr_str.empty() ? NULL : interface_ip_addr_str.c_str(),
+      EXP_CHK_M((rv = getaddrinfo(interface_ip_addr_str.empty() ? NULL : interface_ip_addr_str.c_str(),
                                    port_num_str.c_str(), &hints, &result_)) == 0, return(-1), gai_strerror(rv))
 
 	    // loop through all the results and bind to the first we can
 	    for(p_ = result_; p_ != NULL; p_ = p_->ai_next) {
         // Create an endpoint for communication; get socket fd.
-        ERRNO_CHK_E((sock_fd_ = socket(p_->ai_family, p_->ai_socktype, p_->ai_protocol)) != -1, continue)
+        EXP_CHK_ERRNO((sock_fd_ = socket(p_->ai_family, p_->ai_socktype, p_->ai_protocol)) != -1, continue)
         // Set some options
 	      int yes = 1;
-        ERRNO_CHK_E(setsockopt(sock_fd_, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) != -1, return(-1))
+        EXP_CHK_ERRNO(setsockopt(sock_fd_, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) != -1, return(-1))
         // Assign the address p_->ai_addr to the socket referred to by sock_fd_
-        ERRNO_CHK_E(bind(sock_fd_, p_->ai_addr, p_->ai_addrlen) != -1, continue)
+        EXP_CHK_ERRNO(bind(sock_fd_, p_->ai_addr, p_->ai_addrlen) != -1, continue)
 		    break;
 	    }
-      EXP_CHK_EM(p_ != NULL, return(-1), "failed to bind socket");
+      EXP_CHK_M(p_ != NULL, return(-1), "failed to bind socket");
 
       is_init_ = true;
       return 0;
     }
 
     int ListenAccept(const int backlog = 10){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       printf("%s - listening...\n", CURRENT_FUNC);
       // Mark sock_fd as a passive socket (ie. a socket that will be used to accept incoming connection requests)
-      ERRNO_CHK_E(listen(sock_fd_, backlog) != -1, return(-1))
+      EXP_CHK_ERRNO(listen(sock_fd_, backlog) != -1, return(-1))
       socklen_t client_addr_len = sizeof client_addr_;
       // Accept an incoming connection
-      ERRNO_CHK_E((accept_sock_fd_ = accept(sock_fd_, (struct sockaddr *)&client_addr_,
+      EXP_CHK_ERRNO((accept_sock_fd_ = accept(sock_fd_, (struct sockaddr *)&client_addr_,
                                             &client_addr_len)) != -1, return(-1))
 	    char cstr[INET6_ADDRSTRLEN];
       inet_ntop_sin(&client_addr_, cstr, sizeof cstr);
@@ -235,12 +235,12 @@ class CServerTCP{
     }
 
     int Uninit(){
-      EXP_CHK_E(is_init_, return(0))
+      EXP_CHK(is_init_, return(0))
       printf("%s: closing TCP socket...\n", CURRENT_FUNC);
       if(sock_fd_ > 0)
-        ERRNO_CHK_E(close(sock_fd_) != -1, return(-1))
+        EXP_CHK_ERRNO(close(sock_fd_) != -1, return(-1))
       if(accept_sock_fd_ > 0)
-        ERRNO_CHK_E(close(accept_sock_fd_) != -1, return(-1))
+        EXP_CHK_ERRNO(close(accept_sock_fd_) != -1, return(-1))
       printf("%s: TCP socket closed.\n", CURRENT_FUNC);
       freeaddrinfo(result_);
       is_init_ = false;
@@ -248,7 +248,7 @@ class CServerTCP{
     }
 
     int accept_sock_fd(){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       return accept_sock_fd_;
     }
 
@@ -291,24 +291,24 @@ class CClientTCP{
 
     // server_ip_str and port_num_str must be provided
     int Init(const std::string server_ip_str, const std::string port_num_str){
-      EXP_CHK_E(!is_init_, return(0))
+      EXP_CHK(!is_init_, return(0))
 	    struct addrinfo hints;
 	    memset(&hints, 0, sizeof hints);
 	    hints.ai_family = AF_UNSPEC;
 	    hints.ai_socktype = SOCK_STREAM;
       int rv;
-      EXP_CHK_EM((rv = getaddrinfo(server_ip_str.c_str(), port_num_str.c_str(), &hints, &result_)) == 0,
+      EXP_CHK_M((rv = getaddrinfo(server_ip_str.c_str(), port_num_str.c_str(), &hints, &result_)) == 0,
                  return(-1), gai_strerror(rv))
 
 	    // loop through all the results and connect to the first we can
 	    for(p_ = result_; p_ != NULL; p_ = p_->ai_next) {
         // Create an endpoint for communication; get socket fd.
-        ERRNO_CHK_E((sock_fd_ = socket(p_->ai_family, p_->ai_socktype, p_->ai_protocol)) != -1, continue)
+        EXP_CHK_ERRNO((sock_fd_ = socket(p_->ai_family, p_->ai_socktype, p_->ai_protocol)) != -1, continue)
         // Connect the socket referred to by sock_fd to the address specified by p->ai_addr
-        ERRNO_CHK_E(connect(sock_fd_, p_->ai_addr, p_->ai_addrlen) != -1, continue)
+        EXP_CHK_ERRNO(connect(sock_fd_, p_->ai_addr, p_->ai_addrlen) != -1, continue)
 		    break;
 	    }
-      EXP_CHK_EM(p_ != NULL, return(-1), "failed to connect socket");
+      EXP_CHK_M(p_ != NULL, return(-1), "failed to connect socket");
 
 	    char cstr[INET6_ADDRSTRLEN];
       inet_ntop_sin(p_, cstr, sizeof cstr);
@@ -319,10 +319,10 @@ class CClientTCP{
     }
 
     int Uninit(){
-      EXP_CHK_E(is_init_, return(0))
+      EXP_CHK(is_init_, return(0))
       printf("%s: closing TCP socket...\n", CURRENT_FUNC);
       if(sock_fd_ > 0)
-        ERRNO_CHK_E(close(sock_fd_) != -1, return(-1))
+        EXP_CHK_ERRNO(close(sock_fd_) != -1, return(-1))
       printf("%s: TCP socket closed.\n", CURRENT_FUNC);
       freeaddrinfo(result_);
       is_init_ = false;
@@ -330,17 +330,17 @@ class CClientTCP{
     }
 
     int server_sock_fd(){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       return sock_fd_;
     }
 
     struct sockaddr* server_ai_addr(){ // not necessary for com.
-      EXP_CHK_E(is_init_, return(NULL))
+      EXP_CHK(is_init_, return(NULL))
       return p_->ai_addr;
     }
 
     socklen_t server_ai_addrlen(){ // not necessary for com.
-      EXP_CHK_E(is_init_, return(0))
+      EXP_CHK(is_init_, return(0))
       return p_->ai_addrlen;
     }
 
@@ -385,28 +385,28 @@ class CServerUDP{ // "listener"
 	    hints.ai_socktype = SOCK_DGRAM;
 	    hints.ai_flags = AI_PASSIVE; // use my IP
       int rv;
-      EXP_CHK_EM((rv = getaddrinfo(interface_ip_addr_str.empty() ? NULL : interface_ip_addr_str.c_str(),
+      EXP_CHK_M((rv = getaddrinfo(interface_ip_addr_str.empty() ? NULL : interface_ip_addr_str.c_str(),
                                    port_num_str.c_str(), &hints, &result_)) == 0, return(-1), gai_strerror(rv))
 
 	    // Loop through all the results and bind to the first we can
 	    for(p_ = result_; p_ != NULL; p_ = p_->ai_next){
         // Create an endpoint for communication; get socket fd.
-        ERRNO_CHK_E((sock_fd_ = socket(p_->ai_family, p_->ai_socktype, p_->ai_protocol)) != -1, continue)
+        EXP_CHK_ERRNO((sock_fd_ = socket(p_->ai_family, p_->ai_socktype, p_->ai_protocol)) != -1, continue)
         // Assign the address p_->ai_addr to the socket referred to by sock_fd_
-        ERRNO_CHK_E(bind(sock_fd_, p_->ai_addr, p_->ai_addrlen) != -1, continue)
+        EXP_CHK_ERRNO(bind(sock_fd_, p_->ai_addr, p_->ai_addrlen) != -1, continue)
 		    break;
 	    }
-      EXP_CHK_EM(p_ != NULL, return(-1), "failed to bind socket");
+      EXP_CHK_M(p_ != NULL, return(-1), "failed to bind socket");
 
       is_init_ = true;
       return 0;
     }
 
     int Uninit(){
-      EXP_CHK_E(is_init_, return(0))
+      EXP_CHK(is_init_, return(0))
       printf("%s: closing UDP socket...\n", CURRENT_FUNC);
       if(sock_fd_ > 0)
-        ERRNO_CHK_E(close(sock_fd_) != -1, return(-1))
+        EXP_CHK_ERRNO(close(sock_fd_) != -1, return(-1))
       printf("%s: UDP socket closed.\n", CURRENT_FUNC);
       freeaddrinfo(result_);
       is_init_ = false;
@@ -414,16 +414,16 @@ class CServerUDP{ // "listener"
     }
 
     int interface_sock_fd(){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       return sock_fd_;
     }
 
     // client_addr and addr_len get filled in
     int RecvFromClient(void *data_buf, const size_t data_buf_len, const int flags = 0,
                        struct sockaddr_storage *client_addr = NULL, socklen_t *addr_len = NULL){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       int num_byte;
-      ERRNO_CHK_E((num_byte = recvfrom(sock_fd_, data_buf, data_buf_len, flags,
+      EXP_CHK_ERRNO((num_byte = recvfrom(sock_fd_, data_buf, data_buf_len, flags,
                   (struct sockaddr *)client_addr, addr_len)) != -1, return(-1));
       return num_byte;
     }
@@ -432,7 +432,7 @@ class CServerUDP{ // "listener"
                           const int flags = 0, struct sockaddr *src_addr = NULL, socklen_t *src_addr_len = NULL,
                           const unsigned int timeout_len_sec = 2, const unsigned int num_timeout_limit = 3,
                           const bool suppress_timeout_error = false){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       return mio::RecvFrom(sock_fd_, data_buf, data_buf_len, packet_size, flags, src_addr, src_addr_len,
                            timeout_len_sec, num_timeout_limit, suppress_timeout_error);
     }
@@ -459,16 +459,16 @@ class CClientUDP{ // "talker"
 	    hints.ai_family = AF_UNSPEC;
 	    hints.ai_socktype = SOCK_DGRAM;
       int rv;
-      EXP_CHK_EM((rv = getaddrinfo(server_ip_str.c_str(), server_port_num.c_str(), &hints, &result_)) == 0,
+      EXP_CHK_M((rv = getaddrinfo(server_ip_str.c_str(), server_port_num.c_str(), &hints, &result_)) == 0,
                   return(-1), gai_strerror(rv))
 
 	    // loop through all the results and make a socket
 	    for(p_ = result_; p_ != NULL; p_ = p_->ai_next) {
           // Create an endpoint for communication; get socket fd.
-          ERRNO_CHK_E((sock_fd_ = socket(p_->ai_family, p_->ai_socktype, p_->ai_protocol)) != -1, continue)
+          EXP_CHK_ERRNO((sock_fd_ = socket(p_->ai_family, p_->ai_socktype, p_->ai_protocol)) != -1, continue)
 		    break;
 	    }
-      EXP_CHK_EM(p_ != NULL, return(-1), "failed to bind socket");
+      EXP_CHK_M(p_ != NULL, return(-1), "failed to bind socket");
 
 	    char cstr[INET6_ADDRSTRLEN];
       inet_ntop_sin(p_, cstr, sizeof cstr);
@@ -479,10 +479,10 @@ class CClientUDP{ // "talker"
     }
 
     int Uninit(){
-      EXP_CHK_E(is_init_, return(0))
+      EXP_CHK(is_init_, return(0))
       printf("%s: closing UDP socket...\n", CURRENT_FUNC);
       if(sock_fd_ > 0)
-        ERRNO_CHK_E(close(sock_fd_) != -1, return(-1))
+        EXP_CHK_ERRNO(close(sock_fd_) != -1, return(-1))
       printf("%s: UDP socket closed.\n", CURRENT_FUNC);
       freeaddrinfo(result_);
       is_init_ = false;
@@ -490,24 +490,24 @@ class CClientUDP{ // "talker"
     }
 
     int server_sock_fd(){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       return sock_fd_;
     }
 
     struct sockaddr* server_ai_addr(){
-      EXP_CHK_E(is_init_, return(NULL))
+      EXP_CHK(is_init_, return(NULL))
       return p_->ai_addr;
     }
 
     socklen_t server_ai_addrlen(){
-      EXP_CHK_E(is_init_, return(0))
+      EXP_CHK(is_init_, return(0))
       return p_->ai_addrlen;
     }
 
     int SendToServer(const void *data_buf, const size_t data_buf_len, const int flags = 0,
                      const unsigned int timeout_len_sec = 2, const unsigned int num_timeout_limit = 3,
                      const bool suppress_timeout_error = false){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       return SendTo(sock_fd_, data_buf, data_buf_len, 0, flags, p_->ai_addr, p_->ai_addrlen,
                     timeout_len_sec, num_timeout_limit, suppress_timeout_error);
     }
@@ -515,7 +515,7 @@ class CClientUDP{ // "talker"
     int SendToServerAdv(const void *data_buf, const size_t data_buf_len, const size_t packet_size = 0,
                         const int flags = 0, const unsigned int timeout_len_sec = 2,
                         const unsigned int num_timeout_limit = 3, const bool suppress_timeout_error = false){
-      EXP_CHK_E(is_init_, return(-1))
+      EXP_CHK(is_init_, return(-1))
       return mio::SendTo(sock_fd_, data_buf, data_buf_len, packet_size, flags, p_->ai_addr, p_->ai_addrlen,
                          timeout_len_sec, num_timeout_limit, suppress_timeout_error);
     }
@@ -537,13 +537,13 @@ class TCPHandlerThread{
         if(exit_thread_)
           break;
         uint32_t number;
-        EXP_CHK_E(tcp_sock_->RecvFromServer(&number, sizeof(uint32_t), 0) == -1, break);
+        EXP_CHK(tcp_sock_->RecvFromServer(&number, sizeof(uint32_t), 0) == -1, break);
         printf("received number %d\n", number);
       }
     }
 
     void Start(){
-      EXP_CHK_E(started_ == false, return)
+      EXP_CHK(started_ == false, return)
       exit_thread_ = false;
       thread_ = std::thread(&TCPHandlerThread::Thread, this);
       printf("%s - started\n", CURRENT_FUNC);
@@ -551,7 +551,7 @@ class TCPHandlerThread{
     }
 
     void Stop(){
-      EXP_CHK_E(started_ == true, return)
+      EXP_CHK(started_ == true, return)
       exit_thread_ = true;
       thread_.join();
       printf("%s - stopped\n", CURRENT_FUNC);

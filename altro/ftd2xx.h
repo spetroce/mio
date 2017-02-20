@@ -7,7 +7,7 @@
 namespace mio{
 
 inline std::string ftd2xx_err_str(const int err_idx){
-  EXP_CHK_E(err_idx >= 0 && err_idx <= 18, return(std::string("d2xx_err_str() - invalid error index")))
+  EXP_CHK(err_idx >= 0 && err_idx <= 18, return(std::string("d2xx_err_str() - invalid error index")))
   const char *error_string[] = {"FT_OK",
                                 "FT_INVALID_HANDLE",
                                 "FT_DEVICE_NOT_FOUND",

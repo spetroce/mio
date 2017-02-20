@@ -9,7 +9,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 if(BUILD_ADV_IMG_DISP_SELF)
   ## User defined library/include paths
   include(PkgConfigPath.cmake)
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${MIO_INCLUDE_DIR}/mio/CMakeModules")
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${MIO_INCLUDE_DIR}/mio/cmake/Modules")
 
   ## mio
   include_directories(${MIO_INCLUDE_DIR})
@@ -31,7 +31,7 @@ endif()
 add_definitions(-DADV_IMG_DISP_STRIPES_JPEG="${CMAKE_CURRENT_SOURCE_DIR}/stripes.jpg")
 
 add_library(mio_advImageDisplay advImageDisplay.cpp)
-target_link_libraries(mio_advImageDisplay Qt5::Widgets ${OpenCV_LIBS})
+target_link_libraries(mio_advImageDisplay Qt5::Widgets Qt5::Core ${OpenCV_LIBS})
 
 if(BUILD_ADV_IMG_DISP_TEST)
   add_executable(adv_img_disp_test test/main.cpp)

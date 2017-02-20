@@ -4,7 +4,7 @@
 
 
 int main(int argc, char *argv[]){
-  EXP_CHK_E(argc == 2, return(-1))
+  EXP_CHK(argc == 2, return(-1))
 
   mio::SharedMemory<int> shmem;
   shmem.Init(std::string(__FILE__), 33, sizeof(int));

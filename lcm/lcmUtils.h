@@ -62,7 +62,7 @@ class LCMHandlerThread{
     }
 
     void Start(){
-      EXP_CHK_E(started_ == false, return)
+      EXP_CHK(started_ == false, return)
       exit_thread_ = false;
       thread_ = std::thread(&LCMHandlerThread::Thread, this);
       printf("%s - started\n", CURRENT_FUNC);
@@ -70,7 +70,7 @@ class LCMHandlerThread{
     }
 
     void Stop(){
-      EXP_CHK_E(started_ == true, return)
+      EXP_CHK(started_ == true, return)
       exit_thread_ = true;
       thread_.join();
       printf("%s - stopped\n", CURRENT_FUNC);

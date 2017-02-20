@@ -92,7 +92,7 @@ bool CRansac<DATA_T, MODEL_T>::execute(const std::vector<DATA_T> &data,
     std::vector<uint32_t> inliers;
     if(!degenerate){
       dist_func(data, models, dist_thresh, best_model_idx, inliers);
-      EXP_CHK_EM(best_model_idx < models.size(), return(false), "invalid model index")
+      EXP_CHK_M(best_model_idx < models.size(), return(false), "invalid model index")
     }
 
     //find the number of inliers to this model

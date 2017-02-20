@@ -27,7 +27,7 @@ class CIpcServer{
   static void DestroyShm(const lcm_recv_buf_t *rbuf, const char *channel,
                          const lcm_destroy_shm_t *msg, void *userdata){
     std::string shm_name(msg->shm_name);
-    EXP_CHK_E(!shm_name.empty(), return)
+    EXP_CHK(!shm_name.empty(), return)
 
     CIpcServer *ipcs = static_cast<CIpcServer*>(userdata);
 
@@ -35,13 +35,13 @@ class CIpcServer{
     if( item_it == ipcs->m_shared_memory_map.end() )
       printf("CIpcServer::DestroyShm() - the shared memory segment %s does not exist\n", msg->shm_name);
     else
-      EXP_CHK_EM(ipcs->m_shared_memory_map.erase(shm_name) == 1, return, "serious internal error");
+      EXP_CHK_M(ipcs->m_shared_memory_map.erase(shm_name) == 1, return, "serious internal error");
   }
 
   public:
     CIpcServer() : m_lcm(NULL), m_exit_flag(false){
       m_lcm = lcm_create(NULL);
-      EXP_CHK_EM(m_lcm != NULL, return, "lcm_create() error")
+      EXP_CHK_M(m_lcm != NULL, return, "lcm_create() error")
       m_lcm_fd = lcm_get_fileno(m_lcm);
 
       m_create_sub = lcm_create_shm_t_subscribe(m_lcm, "ipcs_create_shm", &CreateShm, this);

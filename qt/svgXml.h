@@ -155,12 +155,12 @@ class SvgSimpleText : public SvgPrimitive{
 
 
 void SaveSvg(std::string file_full_, SvgGroup &svg_grp, size2f_t doc_size){
-  EXP_CHK_E(!file_full_.empty(), return)
+  EXP_CHK(!file_full_.empty(), return)
   mio::ForceFileExtension(file_full_, "svg");
 
   QString file_full = QString::fromStdString(file_full_);
   QFile file(file_full);
-  EXP_CHK_EM(file.open(QIODevice::WriteOnly), return, "File is read only. Need permission to write.")
+  EXP_CHK_M(file.open(QIODevice::WriteOnly), return, "File is read only. Need permission to write.")
 
   QXmlStreamWriter xml_writer;
   xml_writer.setDevice(&file); //set device (here file)to streamwriter

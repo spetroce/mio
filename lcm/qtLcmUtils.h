@@ -17,7 +17,7 @@
 #define INIT_QT_LCM_SOCKET_NOTIFIER(class, lcm_object, lcm_fd, socket_notifier, numeric_id)       \
 if(class::lcm_object == NULL)                                                                     \
   class::lcm_object = lcm_create(NULL);                                                           \
-EXP_CHK_EM( class::lcm_object != NULL, return, std::string("id=") + std::to_string(numeric_id) ); \
+EXP_CHK_M( class::lcm_object != NULL, return, std::string("id=") + std::to_string(numeric_id) ); \
 class::lcm_fd = lcm_get_fileno(class::lcm_object);                                                \
 class::socket_notifier = new QSocketNotifier(class::lcm_fd, QSocketNotifier::Read, this);         \
 connect( class::socket_notifier, SIGNAL( activated(int) ), this, SLOT( DataReady(int) ) );
