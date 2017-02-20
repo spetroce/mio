@@ -12,4 +12,5 @@ include(${MIO_INCLUDE_DIR}/mio/cmake/DefaultConfigTypes.cmake)
 include_directories(${MIO_INCLUDE_DIR})
 
 add_executable(shmem_test shmemTest.cpp)
+target_link_libraries(shmem_test pthread) #pthread needed for semaphore functions
 
