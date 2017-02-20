@@ -10,7 +10,7 @@ int main(int argc, char *argv[]){
 
   if(atoi(argv[1]) == 0){
     mio::Semaphore sem;
-    sem.Init("/sem_test", 0); //initial semaphore value is 1 (server side)
+    sem.Init("/sem_test");
     for(;;){
       int num;
       std::cout << "enter a number\n";
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
   }
   else{
     mio::Semaphore sem;
-    sem.Init("/sem_test", 0, false); //don't try to create semaphore (client side)
+    sem.Init("/sem_test");
     for(;;){
       sem.Wait(); //decrement semaphore
       int num = shmem.shm_addr_[0];
