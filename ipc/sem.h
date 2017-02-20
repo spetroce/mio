@@ -8,7 +8,7 @@
 #include <linux/limits.h> //NAME_MAX
 #include "mio/altro/error.h"
 
-//to remove posix semaphores and shared memory, as root, cd to /dev/shm and rm desired files.
+//to remove posix semaphores, as root, cd to /dev/shm and rm desired files.
 
 
 namespace mio{
@@ -25,7 +25,7 @@ class Semaphore{
 
     ~Semaphore(){
       if(is_init_)
-        EXP_CHK(Uninit() == 0, return)
+        EXP_CHK(Uninit() == true, return)
     }
 
     bool Init(const std::string kSemName, const unsigned int kInitialSemValue = 0,
@@ -78,23 +78,71 @@ class Semaphore{
       return true;
     }
 
+    /*
+    sem_post() increments (unlocks) the semaphore pointed to by sem.  If
+    the semaphore's value consequently becomes greater than zero, then
+    another process or thread blocked in a sem_wait(3) call will be woken
+    up and proceed to lock the semaphore.
+    */
     bool Post(){
       EXP_CHK(is_init_, return(false))
       EXP_CHK_ERRNO(sem_post(sem_addr_) == 0, return(false))
       return true;
     }
 
+    /*
+    sem_wait() decrements (locks) the semaphore pointed to by sem.  If
+    the semaphore's value is greater than zero, then the decrement
+    proceeds, and the function returns, immediately.  If the semaphore
+    currently has the value zero, then the call blocks until either it
+    becomes possible to perform the decrement (i.e., the semaphore value
+    rises above zero), or a signal handler interrupts the call.
+    */
     bool Wait(){
       EXP_CHK(is_init_, return(false))
       EXP_CHK_ERRNO(sem_wait(sem_addr_) == 0, return(false))
       return true;
     }
 
-    //The semaphore will be decremented if its value is greater than zero. If the value of the semaphore is zero, 
-    //then sem_trywait() will return -1 and set errno to EAGAIN.
+    /*
+    sem_trywait() is the same as sem_wait(), except that if the decrement
+    cannot be immediately performed, then call returns an error (errno
+    set to EAGAIN) instead of blocking.
+    */
     bool TryWait(){
       EXP_CHK(is_init_, return(false))
       EXP_CHK_ERRNO(sem_trywait(sem_addr_) == 0, return(false))
+      return true;
+    }
+
+    /*
+    sem_timedwait() is the same as sem_wait(), except that abs_timeout
+    specifies a limit on the amount of time that the call should block if
+    the decrement cannot be immediately performed.  The abs_timeout
+    argument points to a structure that specifies an absolute timeout in
+    seconds and nanoseconds since the Epoch, 1970-01-01 00:00:00 +0000
+    (UTC).  This structure is defined as follows:
+
+       struct timespec {
+           time_t tv_sec;      // Seconds
+           long   tv_nsec;     // Nanoseconds [0 .. 999999999]
+       };
+
+    If the timeout has already expired by the time of the call, and the
+    semaphore could not be locked immediately, then sem_timedwait() fails
+    with a timeout error (errno set to ETIMEDOUT).
+
+    If the operation can be performed immediately, then sem_timedwait()
+    never fails with a timeout error, regardless of the value of
+    abs_timeout.  Furthermore, the validity of abs_timeout is not checked
+    in this case.
+    */
+    bool TimedWait(const time_t kSec, const long kNanosec){
+      EXP_CHK(is_init_, return(false))
+      timespec abs_timeout;
+      abs_timeout.tv_sec = kSec;
+      abs_timeout.tv_nsec = kNanosec;
+      EXP_CHK_ERRNO(sem_timedwait(sem_addr_, &abs_timeout) == 0, return(false))
       return true;
     }
 

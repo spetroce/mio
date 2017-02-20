@@ -9,7 +9,7 @@
 #include <cstdint>
 #include "mio/altro/error.h"
 
-//to remove posix semaphores and shared memory, as root, cd to /dev/shm and rm desired files.
+//to list and remove shared memory, use ipcs and ipcrm, respectively
 
 
 namespace mio{
