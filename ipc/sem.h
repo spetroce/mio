@@ -28,6 +28,9 @@ class Semaphore{
         EXP_CHK(Uninit() == true, return)
     }
 
+    //If kTryCreate is true and kMustCreate is false, Init will attempt
+    //to create the semaphore (no error thrown if it already exists).
+    //If kTryCreate and kMustCreate are true, Init will throw an error if the semaphore already exists in the system.
     bool Init(const std::string kSemName, const unsigned int kInitialSemValue = 0,
               const bool kTryCreate = true, const bool kMustCreate = false){
       EXP_CHK(!is_init_, return(true))
