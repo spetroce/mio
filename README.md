@@ -1,3 +1,5 @@
+https://github.com/spetroce/mio
+
 # mio
 
 mio is a collection of code that I have added to over several years while working on scientific projects.
