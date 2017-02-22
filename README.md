@@ -2,7 +2,7 @@ https://github.com/spetroce/mio
 
 # mio
 
-mio is a collection of code that I have added to over several years while working on scientific projects.
+mio is a collection of various code pieces that I (sam petrocelli) have added to over the years while working on scientific projects.
 
 ##altro
   A set of header files that provide functionality for error handling, random number gerneation, file handling, etc.
