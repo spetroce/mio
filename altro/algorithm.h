@@ -99,36 +99,37 @@ void FilterArray(std::vector<T> &array, bool (*func)(T, float), float func_param
 }
 
 
-//bounds 'value' to go no less than 'lower' and no greater than 'upper'
-//returns true if number was within bounds, false otherwise
-template <typename T> 
-inline bool SetBound(T &value, const T &lower, const T &upper){ //FIXME: change to [lower, upper)
-  if(value < lower){
-    value = lower;
+// If val compares less than high, returns the larger of val and low, otherwise returns the smaller of val and high.
+template <typename T>
+T GetClamp(const T val, const T low, const T high){
+  EXP_CHK(low <= high, return(val))
+  if(val < low)
+    return low;
+  else if(val > high)
+    return high;
+  return val;
+}
+
+
+// Returns true if the value was within the set [lo, hi]
+template <typename T>
+bool SetClamp(T &val, const T low, const T high){
+  EXP_CHK(low <= high, return(false))
+  if(val < low){
+    val = low;
     return false;
   }
-  else if(value > upper){
-    value = upper;
+  else if(val > high){
+    val = high;
     return false;
   }
   return true;
 }
 
 
-//returned value belongs in set [lower, upper)
-template <typename T> 
-inline T GetBounded(T value, const T lower, const T upper){
-  if(value < lower)
-    value = lower;
-  else if(value >= upper)
-    value = upper;
-  return value;
-}
-
-
 //checks if value is in the range [low, high]
 template <typename T>
-bool IsInBounds(const T &value, const T &low, const T &high){
+bool IsClamped(const T &value, const T &low, const T &high){
   return( !(value < low) && !(high < value) );
 }
 

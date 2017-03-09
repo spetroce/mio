@@ -2,13 +2,8 @@
 #define __CV_MAT_TO_QIMAGE_H__
 
 #include <QImage>
-#if ICV_OPENCV_VERSION_MAJOR < 3
-#include "opencv2/core/core.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#else
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
-#endif
 #include "mio/altro/error.h"
 
 static QVector<QRgb> OpenCVMat2QImageColorTable;

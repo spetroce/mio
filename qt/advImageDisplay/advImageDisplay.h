@@ -22,12 +22,8 @@
 #include "mio/altro/algorithm.h"
 #include "mio/altro/opencv.h"
 #include "mio/math/math.h"
-#include "mio/altro/io.h"
-#include "mio/altro/casting.h"
 #include "mio/altro/error.h"
-#include "mio/altro/thread.h"
 #include "mio/qt/cvMatToQImage.h"
-#include "mio/qt/qtMetaTypes.h" //zoomInfo_t
 #ifdef HAVE_LCM
 #include "mio/lcm/lcmTypes.h"
 #endif

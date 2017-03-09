@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include "mio/altro/error.h"
 #include "mio/altro/io.h"
-#include "mio/altro/casting.h"
 
 namespace mio{
 
@@ -256,7 +255,7 @@ inline int SaveOpenCVMat(const std::string file_full, const cv::Mat &mat, bool p
 
   const size_t data_length = rows * cols * mat.channels(),
                data_size = mat.elemSize1();
-  const void *mat_data = mio::StaticCastPtr<void*>(mat.data);
+  const void *mat_data = static_cast<void*>(mat.data);
   EXP_CHK_ERRNO(fwrite(mat_data, data_size, data_length, fd) == data_length, return(-1))
 
   fclose(fd);
@@ -278,7 +277,7 @@ inline int ReadOpenCVMat(const std::string file_full, cv::Mat &mat, bool print_f
 
   const size_t data_length = rows * cols * mat.channels(),
                data_size = mat.elemSize1();
-  void *mat_data = mio::StaticCastPtr<void*>(mat.data);
+  void *mat_data = static_cast<void*>(mat.data);
   EXP_CHK_ERRNO(fread(mat_data, data_size, data_length, fd) == data_length, return(-1))
   if(print_flag)
     mio::PrintMatProp(mat);
@@ -497,10 +496,10 @@ inline void StatOutRemTemplate(cv::Mat &src, const double std_dev_coef, const do
                thresh_lower = thresh_lower_ >= type_min ? thresh_lower_ : type_min;
 
   const T set_val_ = (set_val == nullptr) ? mean_.val[0] : *set_val;
-  T *data = mio::StaticCastPtr<T>(src.data);
+  T *data = reinterpret_cast<T*>(src.data);
   if(mask != nullptr){
     *mask = cv::Mat::zeros(src.size(), CV_8U);
-    uint8_t *mask_data = mio::StaticCastPtr<uint8_t>(mask->data);
+    auto *mask_data = mask->data;
     for(size_t i = 0, data_len = src.cols * src.rows; i < data_len; ++i)
       if(data[i] > thresh_upper || data[i] < thresh_lower){
         data[i] = set_val_;

@@ -1,15 +1,19 @@
 #include "advImageDisplay.h"
 #include <QMessageBox>
+#ifdef HAVE_QT_XML
 #include <QXmlStreamWriter>
 #include "mio/qt/qtXml.h"
+#endif
 
 constexpr std::array<const char*, 4> Roi::roi_type_str;
 
 
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
-    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true),
-    lcm_is_init_(false){
+    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true){
+#ifdef HAVE_LCM
+  lcm_is_init_ = false;
+#endif
   prev_src_img_size_ = cv::Point(-1, -1);
   ResetZoom();
 }
@@ -93,7 +97,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
     switch( event->type() ){
       case QEvent::MouseMove:
         {
-          QMouseEvent *mouseEvent = mio::StaticCastPtr<QMouseEvent>(event);
+          QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
           int x = mouseEvent->pos().x(),
               y = mouseEvent->pos().y();
           cv::Point2f processed_img_mouse_pos = View2Image( cv::Point2f(x, y) );
@@ -119,7 +123,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         {
           bool update_display = false;
           if(create_roi_){
-            QMouseEvent *mouseEvent = mio::StaticCastPtr<QMouseEvent>(event);
+            QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
             const cv::Point2f mouse_pos = cv::Point2f( mouseEvent->pos().x(), mouseEvent->pos().y() );
             disp_roi_.mutex.lock();
             if(disp_roi_.type == Roi::ROI_RECT ||
@@ -146,7 +150,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
               disp_roi_.mutex.lock();
             }
             else if(disp_roi_.type == Roi::ROI_POLY){
-              QMouseEvent *mouseEvent = mio::StaticCastPtr<QMouseEvent>(event);
+              QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
               const cv::Point2f mouse_pos = cv::Point2f( mouseEvent->pos().x(), mouseEvent->pos().y() );
               if( disp_roi_.vertices.empty() ){
                 disp_roi_.vertices.push_back( View2Image(mouse_pos) );
@@ -164,7 +168,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         }
       case QEvent::KeyPress:
         if(create_roi_){
-          QKeyEvent *keyEvent = mio::StaticCastPtr<QKeyEvent>(event);
+          QKeyEvent *keyEvent = dynamic_cast<QKeyEvent*>(event);
           const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
           disp_roi_.mutex.lock();
           if(disp_roi_.type == Roi::ROI_POLY && disp_roi_.vertices.size() > 3 &&
@@ -182,7 +186,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         break;
       case QEvent::Wheel:
         if(!show_roi_ && zooming_enabled_){
-          QWheelEvent *wheel_event = mio::StaticCastPtr<QWheelEvent>(event);
+          QWheelEvent *wheel_event = dynamic_cast<QWheelEvent*>(event);
           scroll_wheel_count_ += wheel_event->delta()/120;
           if(scroll_wheel_count_ < 0)
             scroll_wheel_count_ = 0;
@@ -331,10 +335,10 @@ void AdvImageDisplay::UpdateDisplay(){
                       p2 = Image2View( cv::Point2f(src_roi_.vertices[1].x * resize_fx_total_,
                                                    src_roi_.vertices[1].y * resize_fy_total_) );
           resize_total_mtx_.unlock();
-          mio::SetBound<float>(p1.x, 0, disp_img_.cols);
-          mio::SetBound<float>(p1.y, 0, disp_img_.rows);
-          mio::SetBound<float>(p2.x, 0, disp_img_.cols);
-          mio::SetBound<float>(p2.y, 0, disp_img_.rows);
+          mio::SetClamp<float>(p1.x, 0, disp_img_.cols-1);
+          mio::SetClamp<float>(p1.y, 0, disp_img_.rows-1);
+          mio::SetClamp<float>(p2.x, 0, disp_img_.cols-1);
+          mio::SetClamp<float>(p2.y, 0, disp_img_.rows-1);
           if(fabs(p1.x - p2.x) > 2 && fabs(p1.y - p2.y) > 2){
             cv::Mat roi = cv::Mat( disp_img_, cv::Rect(p1, p2) );
             cv::normalize(roi, roi, 0, 255, cv::NORM_MINMAX);
@@ -538,7 +542,6 @@ void AdvImageDisplay::ResetResizeTotal(){
 
 
 void AdvImageDisplay::ShowStripes(){
-  STD_RT_ERR_E(mio::FileExists(ADV_IMG_DISP_STRIPES_JPEG))
   src_img_mtx_.lock();
   src_img_ = cv::imread(ADV_IMG_DISP_STRIPES_JPEG);
   src_img_mtx_.unlock();
@@ -633,6 +636,7 @@ bool AdvImageDisplay::SetZoomingEnabled(const bool kEnabled){
 
 
 void AdvImageDisplay::SaveRoi(QString file_full_qstr){
+#ifdef HAVE_QT_XML
   EXP_CHK(src_roi_.vertices.size() >= 2, return)
   EXP_CHK(!file_full_qstr.isEmpty(), return)
   std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
@@ -664,10 +668,12 @@ void AdvImageDisplay::SaveRoi(QString file_full_qstr){
 
   xml_writer.writeEndDocument();
   file.close();
+#endif
 }
 
 
 void AdvImageDisplay::LoadRoi(const QString file_full_qstr){
+#ifdef HAVE_QT_XML
   EXP_CHK(!file_full_qstr.isEmpty(), return)
   std::string file_full = file_full_qstr.toStdString();
   EXP_CHK(mio::FileExists(file_full), return)
@@ -724,6 +730,7 @@ void AdvImageDisplay::LoadRoi(const QString file_full_qstr){
   file.close();
   AddRoi();
   UpdateDisplay();
+#endif
 }
 
 
@@ -748,7 +755,7 @@ void AdvImageDisplay::SetupLcm(const std::string kNewFrameLcmChanNamePrefix){
 #ifdef HAVE_LCM
 void AdvImageDisplay::NewFrameLCM(const lcm_recv_buf_t *rbuf, const char *channel, 
                                   const lcm_opencv_mat_t *msg, void *userdata){
-  AdvImageDisplay *w = mio::StaticCastPtr<AdvImageDisplay>(userdata);
+  AdvImageDisplay *w = static_cast<AdvImageDisplay*>(userdata);
   const cv::Mat kImg(msg->rows, msg->cols, msg->openCvType, msg->data);
   w->SetImage(kImg, true);
 }
