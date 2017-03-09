@@ -15,9 +15,6 @@
 #include <array>
 #include <unistd.h>
 #include <mutex>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 
 #include "mio/altro/algorithm.h"
 #include "mio/altro/opencv.h"
