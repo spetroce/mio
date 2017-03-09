@@ -111,7 +111,7 @@ if( !!(exp) ) ; else{                                                  \
 }
 
 /*
-Same as EXP_CHK_M, but includes a user message
+Same as EXP_CHK, but includes a user message
 For example:
 EXP_CHK(value > 0, return(false), "you entered an incorrect value")
 */
