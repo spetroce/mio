@@ -51,7 +51,9 @@ inline std::string GetDateString(){
   std::time_t t = std::time(nullptr);
   std::tm *tm = std::localtime(&t);
   std::ostringstream oss;
+#if __GNUC__ >= 5
   oss << std::put_time(tm, "%d-%m-%Y_%H-%M-%S");
+#endif
   return oss.str();
 }
 
