@@ -25,10 +25,13 @@
 #include "mio/lcm/lcmTypes.h"
 #endif
 
+#if CV_MAJOR_VERSION < 3
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/contrib/contrib.hpp" //applyColorMap()
+#else
 #include "opencv2/highgui.hpp"
 #include "opencv2/core.hpp"
-#if CV_MAJOR_VERSION < 3
-#include "opencv2/contrib/contrib.hpp" //applyColorMap()
 #endif
 
 
