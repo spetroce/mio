@@ -10,7 +10,8 @@ constexpr std::array<const char*, 4> Roi::roi_type_str;
 
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
-    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true){
+    is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true),
+    draw_mouse_clicks_(true){
 #ifdef HAVE_LCM
   lcm_is_init_ = false;
 #endif
@@ -90,7 +91,7 @@ void AdvImageDisplay::SetImage(const cv::Mat &kImg, const bool kClone, const boo
 /*
 All ROI vertices are saved in pixel coordinates in reference to the original unprocessed image.
 The parameter mouse_pos is a pixel map coordinate and is repective to the final image displayed to the screen.
-View2Image() removes effects caused by imgProcQueue resizing, view size limiting, and zooming.
+ViewToImage() removes effects caused by imgProcQueue resizing, view size limiting, and zooming.
 */
 bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
   if(target == label_){
@@ -100,7 +101,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
           QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
           int x = mouseEvent->pos().x(),
               y = mouseEvent->pos().y();
-          cv::Point2f processed_img_mouse_pos = View2Image( cv::Point2f(x, y) );
+          cv::Point2f processed_img_mouse_pos = ViewToImage( cv::Point2f(x, y) );
           bool update_display = false;
           disp_roi_.mutex.lock();
           const size_t roi_vertices_size = disp_roi_.vertices.size();
@@ -122,19 +123,21 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
       case QEvent::MouseButtonPress:
         {
           bool update_display = false;
+          QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
+          const cv::Point2f mouse_pos = cv::Point2f( mouseEvent->pos().x(), mouseEvent->pos().y() );
           if(create_roi_){
-            QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
-            const cv::Point2f mouse_pos = cv::Point2f( mouseEvent->pos().x(), mouseEvent->pos().y() );
             disp_roi_.mutex.lock();
             if(disp_roi_.type == Roi::ROI_RECT ||
                disp_roi_.type == Roi::ROI_CENTER_CIRCLE || disp_roi_.type == Roi::ROI_DRAG_CIRCLE){
               disp_roi_.vertices.resize(2);
-              disp_roi_.vertices[0] = disp_roi_.vertices[1] = View2Image(mouse_pos);
+              disp_roi_.vertices[0] = disp_roi_.vertices[1] = ViewToImage(mouse_pos);
               update_display = true;
             }
             disp_roi_.mutex.unlock();
           }
-          if(update_display)
+          mouse_click_pnt_vec_.resize(1);
+          mouse_click_pnt_vec_[0] = ViewToImage(mouse_pos);
+          if(update_display || draw_mouse_clicks_)
             UpdateDisplay();
           break;
         }
@@ -153,11 +156,11 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
               QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
               const cv::Point2f mouse_pos = cv::Point2f( mouseEvent->pos().x(), mouseEvent->pos().y() );
               if( disp_roi_.vertices.empty() ){
-                disp_roi_.vertices.push_back( View2Image(mouse_pos) );
-                disp_roi_.vertices.push_back( View2Image(mouse_pos) );
+                disp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
+                disp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
               }
               else
-                disp_roi_.vertices.push_back( View2Image(mouse_pos) );
+                disp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
               update_display = true;
             }
             disp_roi_.mutex.unlock();
@@ -256,14 +259,14 @@ void AdvImageDisplay::ResetZoom(){
 
 
 // label_ to src_img_ coordinates
-cv::Point2f AdvImageDisplay::View2Image(const cv::Point2f &view_pnt){
+cv::Point2f AdvImageDisplay::ViewToImage(const cv::Point2f &view_pnt){
   return cv::Point2f((view_pnt.x*prev_zoom_ + origin_.x) * max_disp_img_dim_scale_inv_,
                      (view_pnt.y*prev_zoom_ + origin_.y) * max_disp_img_dim_scale_inv_ );
 }
 
 
 //src_img_ to label_ coordinates
-cv::Point2f AdvImageDisplay::Image2View(const cv::Point2f &img_pnt){
+cv::Point2f AdvImageDisplay::ImageToView(const cv::Point2f &img_pnt){
   return cv::Point2f( (img_pnt.x - origin_bounded_.x) / zoom_scaler_ / max_disp_img_dim_scale_inv_,
                       (img_pnt.y - origin_bounded_.y) / zoom_scaler_ / max_disp_img_dim_scale_inv_ );
 }
@@ -330,9 +333,9 @@ void AdvImageDisplay::UpdateDisplay(){
       if(src_roi_.vertices.size() > 0 && !create_roi_){
         if(src_roi_.vertices.size() > 1 && src_roi_.type == Roi::ROI_RECT){
           resize_total_mtx_.lock();
-          cv::Point2f p1 = Image2View( cv::Point2f(src_roi_.vertices[0].x * resize_fx_total_,
+          cv::Point2f p1 = ImageToView( cv::Point2f(src_roi_.vertices[0].x * resize_fx_total_,
                                                    src_roi_.vertices[0].y * resize_fy_total_) ),
-                      p2 = Image2View( cv::Point2f(src_roi_.vertices[1].x * resize_fx_total_,
+                      p2 = ImageToView( cv::Point2f(src_roi_.vertices[1].x * resize_fx_total_,
                                                    src_roi_.vertices[1].y * resize_fy_total_) );
           resize_total_mtx_.unlock();
           mio::SetClamp<float>(p1.x, 0, disp_img_.cols-1);
@@ -362,7 +365,13 @@ void AdvImageDisplay::UpdateDisplay(){
       disp_img_ *= 0.4;
       tmp_img.copyTo(disp_img_, disp_roi_mask_);
     }
-    DrawRoi(disp_img_); //draw the ROI if it exists and display the image
+
+    DrawRoi(disp_img_); //draw the ROI if it exists
+
+    if(draw_mouse_clicks_){
+      for(const auto &pnt : mouse_click_pnt_vec_)
+        cv::drawMarker(disp_img_, ImageToView(pnt), cv::Scalar::all(255), cv::MARKER_CROSS, 10);
+    }
 
     OpenCVMat2QImage(disp_img_, qt_src_img_, true); //TODO - check for error here
     label_->setPixmap( QPixmap::fromImage(qt_src_img_) );
@@ -375,19 +384,19 @@ void AdvImageDisplay::UpdateDisplay(){
 }
 
 
-void AdvImageDisplay::Image2View(const std::vector<cv::Point2f> &src, std::vector<cv::Point> &dst, const bool scale_vertices){
+void AdvImageDisplay::ImageToView(const std::vector<cv::Point2f> &src, std::vector<cv::Point> &dst, const bool scale_vertices){
   const size_t src_size = src.size();
   dst.resize( src.size() );
   if(src_size > 0){
     if(scale_vertices){
       resize_total_mtx_.lock();
       for(size_t i = 0; i < src_size; ++i)
-        dst[i] = Image2View( cv::Point2f(src[i].x * resize_fx_total_, src[i].y * resize_fy_total_) );
+        dst[i] = ImageToView( cv::Point2f(src[i].x * resize_fx_total_, src[i].y * resize_fy_total_) );
       resize_total_mtx_.unlock();
     }
     else
       for(size_t i = 0; i < src_size; ++i)
-        dst[i] = Image2View(src[i]);
+        dst[i] = ImageToView(src[i]);
   }
 }
 
@@ -404,7 +413,7 @@ void AdvImageDisplay::DrawRoi(cv::Mat &img){
     const bool scale_vertices = std::fabs(resize_fx_total_ - 1.0f) > 0.00001f &&
                                 std::fabs(resize_fy_total_ - 1.0f) > 0.00001f;
     resize_total_mtx_.unlock();
-    Image2View(disp_roi_.vertices, vertices, scale_vertices);
+    ImageToView(disp_roi_.vertices, vertices, scale_vertices);
 
     switch(disp_roi_.type){
       case Roi::ROI_RECT:
@@ -634,6 +643,22 @@ bool AdvImageDisplay::SetZoomingEnabled(const bool kEnabled){
   ResetZoom();
 }
 
+void AdvImageDisplay::SetDrawClicks(const bool kSet){
+  draw_mouse_clicks_ = kSet;
+}
+
+bool AdvImageDisplay::GetDrawClicks(){
+  return draw_mouse_clicks_;
+}
+
+void AdvImageDisplay::GetClickPnts(std::vector<cv::Point2f> &pnt_vec){
+  pnt_vec = mouse_click_pnt_vec_;
+}
+
+void AdvImageDisplay::ClearClickPntBuffer(){
+  mouse_click_pnt_vec_.clear();
+}
+
 
 void AdvImageDisplay::SaveRoi(QString file_full_qstr){
 #ifdef HAVE_QT_XML
@@ -681,7 +706,7 @@ void AdvImageDisplay::LoadRoi(const QString file_full_qstr){
 
   QFile file(file_full_qstr);
   EXP_CHK(file.open(QIODevice::ReadOnly | QIODevice::Text),
-            QMessageBox::warning(0, "AdvImageDisplay::LoadRoi", "Couldn't open xml file");return)
+          QMessageBox::warning(0, "AdvImageDisplay::LoadRoi", "Couldn't open xml file");return)
 
   QXmlStreamAttributes attr;
   QXmlStreamReader xml_reader(&file);

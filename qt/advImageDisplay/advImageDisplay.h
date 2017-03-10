@@ -74,6 +74,10 @@ class AdvImageDisplay : public QWidget{
     QLabel* GetImageQLabel();
     void SetAutoConvertImage(const bool state);
     bool GetAutoConvertImage();
+    void SetDrawClicks(const bool kSet);
+    bool GetDrawClicks();
+    void GetClickPnts(std::vector<cv::Point2f> &pnt_vec);
+    void ClearClickPntBuffer();
     void SaveRoi(QString file_full_qstr);
     void LoadRoi(const QString file_full_qstr);
     bool SetZoomingEnabled(const bool kEnabled);
@@ -91,6 +95,8 @@ class AdvImageDisplay : public QWidget{
     QImage qt_src_img_;
     cv::Mat src_img_, disp_img_;
     cv::Size prev_src_img_size_;
+    std::vector<cv::Point2f> mouse_click_pnt_vec_;
+    bool draw_mouse_clicks_;
 #ifdef HAVE_LCM
     lcm_t *lcm_;
     lcm_opencv_mat_t_subscription_t *new_frame_lcm_sub_;
@@ -99,9 +105,9 @@ class AdvImageDisplay : public QWidget{
     bool lcm_is_init_;
 #endif
 
-    cv::Point2f View2Image(const cv::Point2f &view_coord);
-    cv::Point2f Image2View(const cv::Point2f &img_coord);
-    void Image2View(const std::vector<cv::Point2f> &src, std::vector<cv::Point> &dst, const bool scale_vertices);
+    cv::Point2f ViewToImage(const cv::Point2f &view_coord);
+    cv::Point2f ImageToView(const cv::Point2f &img_coord);
+    void ImageToView(const std::vector<cv::Point2f> &src, std::vector<cv::Point> &dst, const bool scale_vertices);
 
     bool create_roi_, normalize_roi_, show_roi_;
     float resize_fx_total_, resize_fy_total_;
