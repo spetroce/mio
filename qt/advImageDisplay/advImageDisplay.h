@@ -7,9 +7,6 @@
 #include <QLayout>
 #include <QMouseEvent>
 #include <QSocketNotifier> //need to link against Qt5::Core
-//#include <QMessageBox>
-//#include <QFileDialog>
-//#include <QScrollBar>
 
 #include <queue>
 #include <array>

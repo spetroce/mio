@@ -11,7 +11,7 @@ constexpr std::array<const char*, 4> Roi::roi_type_str;
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
     is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true),
-    draw_mouse_clicks_(true){
+    draw_mouse_clicks_(false){
 #ifdef HAVE_LCM
   lcm_is_init_ = false;
 #endif
@@ -487,7 +487,7 @@ void AdvImageDisplay::UpdateRoiMask(){
     {
       if(src_roi_.vertices.size() > 0){
         roi_mask_ = cv::Mat::zeros(disp_img_size, CV_8UC1);
-#if ICV_OPENCV_VERSION_MAJOR < 3
+#if CV_VERSION_MAJOR < 3
         const int fill_flag = CV_FILLED;
 #else
         const int fill_flag = cv::FILLED;
