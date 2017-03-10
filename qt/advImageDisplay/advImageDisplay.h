@@ -27,6 +27,9 @@
 
 #include "opencv2/highgui.hpp"
 #include "opencv2/core.hpp"
+#if CV_MAJOR_VERSION < 3
+#include "opencv2/contrib/contrib.hpp" //applyColorMap()
+#endif
 
 
 struct Roi{
