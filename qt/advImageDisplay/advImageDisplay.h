@@ -37,7 +37,7 @@ struct Roi{
                    ROI_POLY = 1,
                    ROI_CENTER_CIRCLE = 2,
                    ROI_DRAG_CIRCLE = 3;
-  static constexpr std::array<const char*, 4> roi_type_str = {"rect", "poly", "cent-circ", "drag-circ"};
+  static constexpr std::array<const char*, 4> roi_type_str = { {"rect", "poly", "cent-circ", "drag-circ"} };
 
   std::mutex mutex;
   int type;
