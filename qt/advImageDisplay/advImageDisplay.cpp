@@ -487,7 +487,7 @@ void AdvImageDisplay::UpdateRoiMask(){
     {
       if(src_roi_.vertices.size() > 0){
         roi_mask_ = cv::Mat::zeros(disp_img_size, CV_8UC1);
-#if CV_VERSION_MAJOR < 3
+#if CV_MAJOR_VERSION < 3
         const int fill_flag = CV_FILLED;
 #else
         const int fill_flag = cv::FILLED;
