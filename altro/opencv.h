@@ -1,7 +1,7 @@
 #ifndef __MIO_OPENCV_H__
 #define __MIO_OPENCV_H__
 
-#if ICV_OPENCV_VERSION_MAJOR < 3
+#if CV_VERSION_MAJOR < 3
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
