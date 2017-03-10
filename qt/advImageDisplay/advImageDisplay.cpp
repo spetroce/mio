@@ -649,6 +649,7 @@ bool AdvImageDisplay::SetZoomingEnabled(const bool kEnabled){
 
 void AdvImageDisplay::SetDrawClicks(const bool kSet){
   draw_mouse_clicks_ = kSet;
+  UpdateDisplay();
 }
 
 bool AdvImageDisplay::GetDrawClicks(){
@@ -661,6 +662,7 @@ void AdvImageDisplay::GetClickPnts(std::vector<cv::Point2f> &pnt_vec){
 
 void AdvImageDisplay::ClearClickPntBuffer(){
   mouse_click_pnt_vec_.clear();
+  UpdateDisplay();
 }
 
 
