@@ -370,7 +370,11 @@ void AdvImageDisplay::UpdateDisplay(){
 
     if(draw_mouse_clicks_){
       for(const auto &pnt : mouse_click_pnt_vec_)
+#if CV_MAJOR_VERSION < 3
+        cv::circle(disp_img_, ImageToView(pnt), 5, cv::Scalar::all(255), 1);
+#else
         cv::drawMarker(disp_img_, ImageToView(pnt), cv::Scalar::all(255), cv::MARKER_CROSS, 10);
+#endif
     }
 
     OpenCVMat2QImage(disp_img_, qt_src_img_, true); //TODO - check for error here
