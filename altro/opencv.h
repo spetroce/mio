@@ -33,14 +33,14 @@ inline bool SameMat(const cv::Mat &a, const cv::Mat &b){
 //given an image (img) and the maximum allowable dimension (max_dim),
 //the function returns true if one of the image's dimensions exceeds max_dim.
 //when true, max_img_size and max_dim_scale_factor are set.
-inline bool GetMaxSize(const cv::Mat &img, const size_t max_dim, cv::Size &max_img_size, float &max_dim_scale_factor){
-  max_dim_scale_factor = 1.0f;
+inline bool GetMaxSize(const cv::Mat &img, const size_t max_dim, cv::Size &max_img_size, double &max_dim_scale_factor){
+  max_dim_scale_factor = 1.0;
   if(img.cols > max_dim || img.rows > max_dim){
-    max_dim_scale_factor = static_cast<float>(max_dim) / static_cast<float>( std::max(img.rows, img.cols) );
-    max_img_size.height = std::lround(static_cast<float>(img.rows) * max_dim_scale_factor);
+    max_dim_scale_factor = static_cast<double>(max_dim) / static_cast<double>( std::max(img.rows, img.cols) );
+    max_img_size.height = std::lround(static_cast<double>(img.rows) * max_dim_scale_factor);
     if(max_img_size.height > max_dim)
       max_img_size.height = max_dim;
-    max_img_size.width = std::lround(static_cast<float>(img.cols) * max_dim_scale_factor);
+    max_img_size.width = std::lround(static_cast<double>(img.cols) * max_dim_scale_factor);
     if(max_img_size.width > max_dim)
       max_img_size.width = max_dim;
     return true;
@@ -50,7 +50,7 @@ inline bool GetMaxSize(const cv::Mat &img, const size_t max_dim, cv::Size &max_i
 }
 
 inline bool GetMaxSize(const cv::Mat &img, const size_t max_dim, cv::Size &max_img_size){
-  float max_dim_scale_factor;
+  double max_dim_scale_factor;
   return GetMaxSize(img, max_dim, max_img_size, max_dim_scale_factor);
 }
 

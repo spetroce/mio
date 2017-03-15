@@ -41,7 +41,7 @@ struct Roi{
 
   std::mutex mutex;
   int type;
-  std::vector<cv::Point2f> vertices;
+  std::vector<cv::Point2d> vertices;
 
   Roi() : type(-1) {};
 };
@@ -56,33 +56,33 @@ class AdvImageDisplay : public QWidget{
 
     void Init(const int id, const bool manage_layout = true);
     void SetImage(const cv::Mat &kImg, const bool kClone, const bool kCalledFromExternalThread = false);
-    //void SetResizeScale(const float height_scale, const float width_scale);
+    //void SetResizeScale(const double height_scale, const double width_scale);
     void BeginCreateRoi(const int roi_type);
     void AddRoi();
     void RemoveRoi();
     void GetRoiMask(cv::Mat &roi, cv::Size resize_to = cv::Size());
     void ShowStripes();
     void ShowRoi();
-    void SetNormalizeImage(const bool state);
+    void SetNormalizeImage(const bool kState);
     bool GetNormalizeImage();
-    void SetNormalizeRoi(const bool state);
+    void SetNormalizeRoi(const bool kState);
     bool GetNormalizeRoi();
-    void SetConvertToFalseColors(const bool state);
+    void SetConvertToFalseColors(const bool kState);
     bool GetConvertToFalseColors();
-    void SetLimitView(const bool state, const int max_disp_img_dim = 512);
+    void SetLimitView(const bool kState, const int kMaxDispImgDim = 512);
     bool GetLimitView();
     int GetID();
-    void SetShowImage(const bool state);
+    void SetShowImage(const bool kState);
     bool GetShowImage();
     QLabel* GetImageQLabel();
-    void SetAutoConvertImage(const bool state);
+    void SetAutoConvertImage(const bool kState);
     bool GetAutoConvertImage();
     void SetDrawClicks(const bool kSet);
     bool GetDrawClicks();
-    void GetClickPnts(std::vector<cv::Point2f> &pnt_vec);
+    void GetClickPnts(std::vector<cv::Point2d> &pnt_vec);
     void ClearClickPntBuffer();
     void SaveRoi(QString file_full_qstr);
-    void LoadRoi(const QString file_full_qstr);
+    void LoadRoi(const QString kFileFullQStr);
     bool SetZoomingEnabled(const bool kEnabled);
     void SetupLcm(const std::string kNewFrameLcmChanNamePrefix);
 
@@ -91,14 +91,14 @@ class AdvImageDisplay : public QWidget{
 
   private:
     bool is_init_, show_image_, limit_view_, normalize_img_, convert_to_false_colors_, auto_convert_img_;
-    int id_, max_disp_img_dim_;
+    int id_, limit_view_max_img_dim_;
     std::mutex src_img_mtx_;
     QGridLayout *layout_;
     QLabel *label_;
     QImage qt_src_img_;
     cv::Mat src_img_, disp_img_;
-    cv::Size prev_src_img_size_;
-    std::vector<cv::Point2f> mouse_click_pnt_vec_;
+    cv::Size2d prev_src_img_size_;
+    std::vector<cv::Point2d> mouse_click_pnt_vec_;
     bool draw_mouse_clicks_;
 #ifdef HAVE_LCM
     lcm_t *lcm_;
@@ -108,12 +108,12 @@ class AdvImageDisplay : public QWidget{
     bool lcm_is_init_;
 #endif
 
-    cv::Point2f ViewToImage(const cv::Point2f &view_coord);
-    cv::Point2f ImageToView(const cv::Point2f &img_coord);
-    void ImageToView(const std::vector<cv::Point2f> &src, std::vector<cv::Point> &dst, const bool scale_vertices);
+    cv::Point2d ViewToImage(const cv::Point2d &kViewPnt);
+    cv::Point2d ImageToView(const cv::Point2d &kImgPnt);
+    void ImageToView(const std::vector<cv::Point2d> &src, std::vector<cv::Point> &dst, const bool kScaleVertices);
 
     bool create_roi_, normalize_roi_, show_roi_;
-    float resize_fx_total_, resize_fy_total_;
+    double resize_fx_total_, resize_fy_total_;
     Roi src_roi_, disp_roi_;
     std::mutex resize_total_mtx_, roi_mask_mtx_;
     //std::vector<Roi> roi_vec_;
@@ -127,10 +127,10 @@ class AdvImageDisplay : public QWidget{
 
     bool is_zoom_, zooming_enabled_;
     int scroll_wheel_count_;
-    float zoom_scaler_, prev_zoom_, max_disp_img_dim_scale_inv_;
+    double zoom_scalar_, prev_zoom_, display_img_dim_scalar_inv_;
     cv::Mat zoom_img_;
-    cv::Point2f origin_, origin_bounded_, pixmap_mouse_pos_;
-    cv::Size2f zoom_region_size_;
+    cv::Point2d origin_, clamped_origin_, pixmap_mouse_pos_;
+    cv::Size2d zoom_region_size_;
     void UpdateZoom();
     void ResetZoom();
 #ifdef HAVE_LCM
