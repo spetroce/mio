@@ -31,6 +31,12 @@
 #include "opencv2/core.hpp"
 #endif
 
+#if CV_MAJOR_VERSION < 3
+namespace cv{
+typedef Size_<double> Size2d;
+}
+#endif
+
 
 struct Roi{
   static const int ROI_RECT = 0,
