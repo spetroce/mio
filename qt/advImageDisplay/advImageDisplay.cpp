@@ -573,10 +573,10 @@ void AdvImageDisplay::ShowRoi(){
 }
 
 
-void AdvImageDisplay::SetLimitView(const bool state, const int kMaxDispImgDim){
-  limit_view_ = state;
+void AdvImageDisplay::SetLimitView(const bool kState, const int kMaxDispImgDim){
+  limit_view_ = kState;
   limit_view_max_img_dim_ = kMaxDispImgDim;
-  if(state){
+  if(kState){
     ResetZoom();
     UpdateDisplay();
   }
@@ -604,7 +604,7 @@ bool AdvImageDisplay::GetShowImage(){
 
 
 void AdvImageDisplay::SetAutoConvertImage(const bool kState){
-  auto_convert_img_ = state;
+  auto_convert_img_ = kState;
 }
 
 
@@ -635,7 +635,7 @@ bool AdvImageDisplay::GetNormalizeRoi(){
 }
 
 void AdvImageDisplay::SetConvertToFalseColors(const bool kState){
-  convert_to_false_colors_ = state;
+  convert_to_false_colors_ = kState;
 }
 
 bool AdvImageDisplay::GetConvertToFalseColors(){
