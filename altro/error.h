@@ -6,7 +6,9 @@
 #include <cerrno>
 #include <iostream>
 #include <stdexcept>
+#if __cplusplus > 199711L
 #include <system_error>
+#endif
 #include <sstream>
 #include <cassert>
 #include <string>
