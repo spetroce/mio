@@ -334,9 +334,9 @@ void AdvImageDisplay::UpdateDisplay(){
         if(src_roi_.vertices.size() > 1 && src_roi_.type == Roi::ROI_RECT){
           resize_total_mtx_.lock();
           cv::Point2d p1 = ImageToView( cv::Point2d(src_roi_.vertices[0].x * resize_fx_total_,
-                                                   src_roi_.vertices[0].y * resize_fy_total_) ),
+                                                    src_roi_.vertices[0].y * resize_fy_total_) ),
                       p2 = ImageToView( cv::Point2d(src_roi_.vertices[1].x * resize_fx_total_,
-                                                   src_roi_.vertices[1].y * resize_fy_total_) );
+                                                    src_roi_.vertices[1].y * resize_fy_total_) );
           resize_total_mtx_.unlock();
           mio::SetClamp<double>(p1.x, 0, disp_img_.cols-1);
           mio::SetClamp<double>(p1.y, 0, disp_img_.rows-1);
