@@ -289,7 +289,7 @@ void AdvImageDisplay::UpdateDisplay(){
     double display_img_dim_scale;
     const bool kIsScaled = limit_view_ ? mio::GetMaxSize(src_img_, limit_view_max_img_dim_, display_img_size,
                                                          display_img_dim_scale) : false;
-    display_img_dim_scalar_inv_ = kIsScaled ? 1.0f/display_img_dim_scale : 1.0f;
+    display_img_dim_scalar_inv_ = kIsScaled ? 1.0/display_img_dim_scale : 1.0;
 
     if(is_zoom_){ //ROI with original size or maxSize resizing
       clamped_origin_ = cv::Point2d(origin_.x*display_img_dim_scalar_inv_, origin_.y*display_img_dim_scalar_inv_);
@@ -414,8 +414,8 @@ void AdvImageDisplay::DrawRoi(cv::Mat &img){
   if(disp_roi_.vertices.size() > 0){
     std::vector<cv::Point> vertices;
     resize_total_mtx_.lock();
-    const bool kScaleVertices = std::fabs(resize_fx_total_ - 1.0f) > 0.00001f &&
-                                std::fabs(resize_fy_total_ - 1.0f) > 0.00001f;
+    const bool kScaleVertices = std::fabs(resize_fx_total_ - 1.0) > 0.00001 &&
+                                std::fabs(resize_fy_total_ - 1.0) > 0.00001;
     resize_total_mtx_.unlock();
     ImageToView(disp_roi_.vertices, vertices, kScaleVertices);
 
