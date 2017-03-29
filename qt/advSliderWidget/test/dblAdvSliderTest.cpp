@@ -9,8 +9,8 @@ int main(int argc, char *argv[]){
 
   // (min, max, value, num_decimal, abs_min, abs_max, step_size, label_text, parent)
   DblAdvSlider w(-0.001, 0.001, 0.0005, 4, -10, 10, 0.001, "my dbl val");
-  //DblAdvSlider w(0.00, 99.99, 0, 1, 0.00, 99.99, "my dbl val");
-  w.setSliderTracking(false);
+  w.EnableFreqBuffer(true);
+  w.EnableDebugPrint(true);
 
   w.show();
   return a.exec();

@@ -14,12 +14,11 @@ CAdvSliderWidget::CAdvSliderWidget(const int min, const int max, const int value
 
 
 CAdvSliderWidget::~CAdvSliderWidget(){
-  disconnect( min_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetMinimum(int) ) );
-  disconnect( max_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetMaximum(int) ) );
+  disconnect( min_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetMinimumAdv(int) ) );
+  disconnect( max_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetMaximumAdv(int) ) );
   disconnect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) );
   disconnect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetSliderValue(int) ) );
-  disconnect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SIGNAL( valueChanged(int) ) );
-  //disconnect( this, SIGNAL( valueChanged(int) ), this, SLOT( PrintValue(int) ) );
+  disconnect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SIGNAL( ValueChanged(int) ) );
 
   delete label_;
   delete value_spin_box_;
@@ -40,16 +39,15 @@ void CAdvSliderWidget::Init(){
   max_spin_box_ = new QSpinBox();
   slider_ = new QSlider(Qt::Horizontal);
 
-  connect( min_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetMinimum(int) ) );
-  connect( max_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetMaximum(int) ) );
+  connect( min_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetMinimumAdv(int) ) );
+  connect( max_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetMaximumAdv(int) ) );
   //signal sliderMoved() is emitted when the user drags the slider
   //when slider_ is moved by the user, it tells value_spin_box_ to update its value, but then value_spin_box_ 
   //tells slider_ to update its value.  This happens because we don't have a signal valueChangedFromClick() for 
   //value_spin_box_. The solution is to use flag_.
   connect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) );
   connect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( SetSliderValue(int) ) );
-  connect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SIGNAL( valueChanged(int) ) );
-  //connect( this, SIGNAL( valueChanged(int) ), this, SLOT( PrintValue(int) ) );
+  connect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SIGNAL( ValueChanged(int) ) );
 
   min_spin_box_->setMinimum(abs_min_);
   min_spin_box_->setMaximum(abs_max_);
@@ -114,6 +112,40 @@ void CAdvSliderWidget::Init(const int min, const int max, const int value, const
 }
 
 
+void CAdvSliderWidget::EnableDebugPrint(const bool enable){
+  if(enable)
+    connect( this, SIGNAL( ValueChanged(int) ), this, SLOT( PrintValue(int) ) );
+  else
+    disconnect( this, SIGNAL( ValueChanged(int) ), this, SLOT( PrintValue(int) ) );
+}
+
+
+// Gets called by freq_buffer_
+void CAdvSliderWidget::FreqBufCallBack(int value, void *user_data){
+  emit static_cast<CAdvSliderWidget*>(user_data)->ValueChanged(value);
+}
+
+// Called when value_spin_box_'s value changes
+void CAdvSliderWidget::ValueSpinBoxValueChanged(int value){
+  freq_buffer_.Push(value);
+}
+
+void CAdvSliderWidget::EnableFreqBuffer(const bool enable, const size_t freq, const size_t max_buf_size,
+                                        const bool with_fifo_checking){
+  if(enable){
+    disconnect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SIGNAL( ValueChanged(int) ) );
+    freq_buffer_.Init(CAdvSliderWidget::FreqBufCallBack, freq,
+                      max_buf_size, with_fifo_checking, static_cast<void*>(this));
+    connect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( ValueSpinBoxValueChanged(int) ) );
+  }
+  else{
+    freq_buffer_.Uninit();
+    disconnect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( ValueSpinBoxValueChanged(int) ) );
+    connect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SIGNAL( ValueChanged(int) ) );
+  }
+}
+
+
 void CAdvSliderWidget::SetValueSpinBox(const int value){
   flag_ = true;
   value_spin_box_->setValue(value);
@@ -129,7 +161,7 @@ void CAdvSliderWidget::SetSliderValue(const int value){
 }
 
 
-void CAdvSliderWidget::SetMinimum(const int min){
+void CAdvSliderWidget::SetMinimumAdv(const int min){
   const int cur_max = max_spin_box_->value();
   if(min < cur_max){
     slider_->setMinimum(min);
@@ -140,7 +172,7 @@ void CAdvSliderWidget::SetMinimum(const int min){
 }
 
 
-void CAdvSliderWidget::SetMaximum(const int max){
+void CAdvSliderWidget::SetMaximumAdv(const int max){
   const int cur_min = min_spin_box_->value();
   if(max > cur_min){
     slider_->setMaximum(max);
@@ -153,39 +185,39 @@ void CAdvSliderWidget::SetMaximum(const int max){
 
 //public set/get func
 
-void CAdvSliderWidget::setValue(const int value){
+void CAdvSliderWidget::SetValue(const int value){
   if(is_init_)
     value_spin_box_->setValue(value);
 }
 
-int CAdvSliderWidget::value(){
+int CAdvSliderWidget::Value(){
   return is_init_ ? value_spin_box_->value() : 0;
 }
 
 
-int CAdvSliderWidget::min(){
+int CAdvSliderWidget::Min(){
   return is_init_ ? min_spin_box_->value() : 0;
 }
 
 
-void CAdvSliderWidget::setMinimum(const int min){
+void CAdvSliderWidget::SetMinimum(const int min){
   if(is_init_)
     min_spin_box_->setValue(min);
 }
 
 
-int CAdvSliderWidget::max(){
+int CAdvSliderWidget::Max(){
   return is_init_ ? max_spin_box_->value() : 0;
 }
 
 
-void CAdvSliderWidget::setMaximum(const int max){
+void CAdvSliderWidget::SetMaximum(const int max){
   if(is_init_)
     max_spin_box_->setValue(max);
 }
 
 
-void CAdvSliderWidget::setSingleStep(const int step_size){
+void CAdvSliderWidget::SetSingleStep(const int step_size){
   if(is_init_){
     step_size_ = step_size;
     slider_->setSingleStep(step_size_);
@@ -195,18 +227,12 @@ void CAdvSliderWidget::setSingleStep(const int step_size){
   }
 }
 
-int CAdvSliderWidget::singleStep(){
+int CAdvSliderWidget::SingleStep(){
   return is_init_ ? step_size_ : 0;
 }
 
 
-void CAdvSliderWidget::setSliderTracking(bool enabled){
-  if(is_init_)
-    slider_->setTracking(enabled);
-}
-
-
-void CAdvSliderWidget::setReadOnly(const bool val_read_only, const bool min_read_only, const bool max_read_only){
+void CAdvSliderWidget::SetReadOnly(const bool val_read_only, const bool min_read_only, const bool max_read_only){
   if(is_init_){
     value_spin_box_->setReadOnly(val_read_only);
     min_spin_box_->setReadOnly(min_read_only);
@@ -214,12 +240,12 @@ void CAdvSliderWidget::setReadOnly(const bool val_read_only, const bool min_read
   }
 }
 
-bool CAdvSliderWidget::readOnly(){
+bool CAdvSliderWidget::ReadOnly(){
   return is_init_ ? value_spin_box_->isReadOnly() : false;
 }
 
 
-void CAdvSliderWidget::setEnabled(const bool enabled){
+void CAdvSliderWidget::SetEnabled(const bool enabled){
   value_spin_box_->setEnabled(enabled);
   min_spin_box_->setEnabled(enabled);
   slider_->setEnabled(enabled);
@@ -286,12 +312,11 @@ CDoubleAdvSliderWidget::CDoubleAdvSliderWidget(const double min, const double ma
 
 
 CDoubleAdvSliderWidget::~CDoubleAdvSliderWidget(){
-  disconnect( min_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetMinimum(double) ) );
-  disconnect( max_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetMaximum(double) ) );
+  disconnect( min_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetMinimumAdv(double) ) );
+  disconnect( max_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetMaximumAdv(double) ) );
   disconnect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) ); 
   disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetSliderValue(double) ) );
-  disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( valueChanged(double) ) );
-  disconnect( this, SIGNAL( valueChanged(double) ), this, SLOT( PrintValue(double) ) );
+  disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( ValueChanged(double) ) );
 
   delete label_;
   delete value_spin_box_;
@@ -312,14 +337,13 @@ void CDoubleAdvSliderWidget::Init(){
   max_spin_box_ = new QDoubleSpinBox();
   slider_ = new QSlider(Qt::Horizontal);  
 
-  setDecimals(num_decimal_);
+  SetDecimals(num_decimal_);
 
-  connect( min_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetMinimum(double) ) );
-  connect( max_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetMaximum(double) ) );
+  connect( min_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetMinimumAdv(double) ) );
+  connect( max_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetMaximumAdv(double) ) );
   connect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) ); 
   connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetSliderValue(double) ) );
-  connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( valueChanged(double) ) );
-  connect( this, SIGNAL( valueChanged(double) ), this, SLOT( PrintValue(double) ) );
+  connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( ValueChanged(double) ) );
 
   min_spin_box_->setMinimum(abs_min_);
   min_spin_box_->setMaximum(abs_max_);
@@ -383,6 +407,40 @@ void CDoubleAdvSliderWidget::Init(const double min, const double max, const doub
 }
 
 
+void CDoubleAdvSliderWidget::EnableDebugPrint(const bool enable){
+  if(enable)
+    connect( this, SIGNAL( ValueChanged(double) ), this, SLOT( PrintValue(double) ) );
+  else
+    disconnect( this, SIGNAL( ValueChanged(double) ), this, SLOT( PrintValue(double) ) );
+}
+
+
+// Gets called by freq_buffer_
+void CDoubleAdvSliderWidget::FreqBufCallBack(double value, void *user_data){
+  emit static_cast<CDoubleAdvSliderWidget*>(user_data)->ValueChanged(value);
+}
+
+// Called when value_spin_box_'s value changes
+void CDoubleAdvSliderWidget::ValueSpinBoxValueChanged(double value){
+  freq_buffer_.Push(value);
+}
+
+void CDoubleAdvSliderWidget::EnableFreqBuffer(const bool enable, const size_t freq, const size_t max_buf_size,
+                                              const bool with_fifo_checking){
+  if(enable){
+    disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( ValueChanged(double) ) );
+    freq_buffer_.Init(CDoubleAdvSliderWidget::FreqBufCallBack, freq,
+                      max_buf_size, with_fifo_checking, static_cast<void*>(this));
+    connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( ValueSpinBoxValueChanged(double) ) );
+  }
+  else{
+    freq_buffer_.Uninit();
+    disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( ValueSpinBoxValueChanged(double) ) );
+    connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( ValueChanged(double) ) );
+  }
+}
+
+
 void CDoubleAdvSliderWidget::SetValueSpinBox(const int value){
   flag_ = true;
   value_spin_box_->setValue(static_cast<double>(value) * single_step_);
@@ -398,7 +456,7 @@ void CDoubleAdvSliderWidget::SetSliderValue(const double value){
 }
 
 
-void CDoubleAdvSliderWidget::SetMinimum(const double min){
+void CDoubleAdvSliderWidget::SetMinimumAdv(const double min){
   const double cur_max_dbl = max_spin_box_->value();
   const int cur_max_scaled = std::lround( cur_max_dbl * pow_of_ten[num_decimal_] ),
             min_scaled = lround( min * pow_of_ten[num_decimal_] );
@@ -412,7 +470,7 @@ void CDoubleAdvSliderWidget::SetMinimum(const double min){
 }
 
 
-void CDoubleAdvSliderWidget::SetMaximum(const double max){
+void CDoubleAdvSliderWidget::SetMaximumAdv(const double max){
   const double cur_min_dbl = min_spin_box_->value();
   const int cur_min_scaled = lround( cur_min_dbl * pow_of_ten[num_decimal_] ), 
             max_scaled = lround(max * pow_of_ten[num_decimal_]);
@@ -428,40 +486,40 @@ void CDoubleAdvSliderWidget::SetMaximum(const double max){
 
 //public set/get func
 
-void CDoubleAdvSliderWidget::setValue(const double value){
+void CDoubleAdvSliderWidget::SetValue(const double value){
   if(is_init_)
     value_spin_box_->setValue(value);
 }
 
 
-double CDoubleAdvSliderWidget::value(){
+double CDoubleAdvSliderWidget::Value(){
   return is_init_ ? value_spin_box_->value() : 0;
 }
 
 
-double CDoubleAdvSliderWidget::min(){
+double CDoubleAdvSliderWidget::Min(){
   return is_init_ ? min_spin_box_->value() : 0;
 }
 
 
-double CDoubleAdvSliderWidget::max(){
+double CDoubleAdvSliderWidget::Max(){
   return is_init_ ? max_spin_box_->value() : 0;
 }
 
 
-void CDoubleAdvSliderWidget::setMinimum(const double min){
+void CDoubleAdvSliderWidget::SetMinimum(const double min){
   if(is_init_)
     min_spin_box_->setValue(min);
 }
 
 
-void CDoubleAdvSliderWidget::setMaximum(const double max){
+void CDoubleAdvSliderWidget::SetMaximum(const double max){
   if(is_init_)
     max_spin_box_->setValue(max);
 }
 
 
-void CDoubleAdvSliderWidget::setDecimals(int num_decimal){
+void CDoubleAdvSliderWidget::SetDecimals(int num_decimal){
   if(num_decimal < 0 || num_decimal > 12){
     printf("CDoubleAdvSliderWidget::setDecimals(int) - invalid decimal value [%d], should be 0-12\n", num_decimal);
     num_decimal = 2;
@@ -475,11 +533,11 @@ void CDoubleAdvSliderWidget::setDecimals(int num_decimal){
   slider_->setMaximum(max_spin_box_->value() * pow_of_ten[num_decimal_]);
   slider_->setValue(slider_->value() * pow_of_ten[num_decimal_]);
 
-  setSingleStep(pow_of_ten_inv[num_decimal_]);
+  SetSingleStep(pow_of_ten_inv[num_decimal_]);
 }
 
 
-void CDoubleAdvSliderWidget::setSingleStep(const double single_step){
+void CDoubleAdvSliderWidget::SetSingleStep(const double single_step){
   min_spin_box_->setSingleStep(single_step);
   value_spin_box_->setSingleStep(single_step);
   max_spin_box_->setSingleStep(single_step);
@@ -487,17 +545,24 @@ void CDoubleAdvSliderWidget::setSingleStep(const double single_step){
 }
 
 
-void CDoubleAdvSliderWidget::setEnabled(const bool enabled){
+void CDoubleAdvSliderWidget::SetReadOnly(const bool val_read_only, const bool min_read_only, const bool max_read_only){
+  if(is_init_){
+    value_spin_box_->setReadOnly(val_read_only);
+    min_spin_box_->setReadOnly(min_read_only);
+    max_spin_box_->setReadOnly(max_read_only);
+  }
+}
+
+bool CDoubleAdvSliderWidget::ReadOnly(){
+  return is_init_ ? value_spin_box_->isReadOnly() : false;
+}
+
+
+void CDoubleAdvSliderWidget::SetEnabled(const bool enabled){
   value_spin_box_->setEnabled(enabled);
   min_spin_box_->setEnabled(enabled);
   slider_->setEnabled(enabled);
   max_spin_box_->setEnabled(enabled);
-}
-
-
-void CDoubleAdvSliderWidget::setSliderTracking(bool enabled){
-  if(is_init_)
-    slider_->setTracking(enabled);
 }
 
 
