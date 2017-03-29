@@ -8,7 +8,7 @@
 #include <thread>
 #include "mio/altro/error.h"
 
-#ifndef NDEBUG
+#ifdef DEBUG
 #define __FREQ_BUF_DBG__
 #endif
 
