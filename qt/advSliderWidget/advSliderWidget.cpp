@@ -200,6 +200,12 @@ int CAdvSliderWidget::singleStep(){
 }
 
 
+void CAdvSliderWidget::setSliderTracking(bool enabled){
+  if(is_init_)
+    slider_->setTracking(enabled);
+}
+
+
 void CAdvSliderWidget::setReadOnly(const bool val_read_only, const bool min_read_only, const bool max_read_only){
   if(is_init_){
     value_spin_box_->setReadOnly(val_read_only);
@@ -473,6 +479,12 @@ void CDoubleAdvSliderWidget::setEnabled(const bool enabled){
   min_spin_box_->setEnabled(enabled);
   slider_->setEnabled(enabled);
   max_spin_box_->setEnabled(enabled);
+}
+
+
+void CDoubleAdvSliderWidget::setSliderTracking(bool enabled){
+  if(is_init_)
+    slider_->setTracking(enabled);
 }
 
 

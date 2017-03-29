@@ -31,6 +31,7 @@ class CAdvSliderWidget : public QWidget{
     void setEnabled(bool enabled);
     int singleStep();
     bool readOnly();
+    void setSliderTracking(bool enabled);
 
   private:
     QSpinBox *max_spin_box_, *min_spin_box_, *value_spin_box_;
@@ -81,6 +82,7 @@ class CDoubleAdvSliderWidget : public QWidget{
     double min();
     double max();
     void setEnabled(const bool enabled);
+    void setSliderTracking(bool enabled);
 
   private:
     QDoubleSpinBox *max_spin_box_, *min_spin_box_, *value_spin_box_;
