@@ -227,6 +227,19 @@ void CAdvSliderWidget::setEnabled(const bool enabled){
 }
 
 
+void CAdvSliderWidget::PrintAll(const int value){
+  printf( "\nvalueChanged [%d]\n"
+"minSpinBox min [%d]\n"
+"minSpinBox max [%d]\n"
+"maxSpinBox min [%d]\n"
+"maxSpinBox max [%d]\n"
+"slider min [%d]\n"
+"slider max [%d]\n\n", value, min_spin_box_->minimum(), min_spin_box_->maximum(), 
+                       max_spin_box_->minimum(), max_spin_box_->maximum(), 
+                       slider_->minimum(), slider_->maximum() );
+}
+
+
 /*** CDoubleAdvSliderWidget ***/
 
 double CDoubleAdvSliderWidget::pow_of_ten[] = {1.0f, //10^0
@@ -278,7 +291,7 @@ CDoubleAdvSliderWidget::~CDoubleAdvSliderWidget(){
   disconnect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) ); 
   disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetSliderValue(double) ) );
   disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( valueChanged(double) ) );
-  //disconnect( this, SIGNAL( valueChanged(double) ), this, SLOT( PrintValue(double) ) );
+  disconnect( this, SIGNAL( valueChanged(double) ), this, SLOT( PrintValue(double) ) );
 
   delete label_;
   delete value_spin_box_;
@@ -306,7 +319,7 @@ void CDoubleAdvSliderWidget::Init(){
   connect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) ); 
   connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( SetSliderValue(double) ) );
   connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( valueChanged(double) ) );
-  //connect( this, SIGNAL( valueChanged(double) ), this, SLOT( PrintValue(double) ) );
+  connect( this, SIGNAL( valueChanged(double) ), this, SLOT( PrintValue(double) ) );
 
   min_spin_box_->setMinimum(abs_min_);
   min_spin_box_->setMaximum(abs_max_);

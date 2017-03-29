@@ -50,7 +50,6 @@ class CAdvSliderWidget : public QWidget{
     void SetSliderValue(const int value);
     void SetMinimum(const int min);
     void SetMaximum(const int max);
-    void PrintValue(const int value){ printf("val %d\n", value); }
 
   public slots:
     void setValue(const int value);
@@ -58,6 +57,8 @@ class CAdvSliderWidget : public QWidget{
     void setMaximum(const int max);
     void setSingleStep(const int step_size);
     void setReadOnly(const bool val_read_only, const bool min_read_only = false, const bool max_read_only = false);
+    void PrintValue(const int value){ printf("val %d\n", value); }
+    void PrintAll(const int value);
 
   signals:
     void valueChanged(const int value);
@@ -106,13 +107,13 @@ class CDoubleAdvSliderWidget : public QWidget{
     void SetMaximum(const double max);
     void setDecimals(int num_decimal);
     void setSingleStep(const double single_step);
-    void PrintValue(const double value){ printf("val %.6f\n", value); }
-    void PrintAll(const double value);
 
   public slots:
     void setValue(const double value);
     void setMinimum(const double min);
     void setMaximum(const double max);
+    void PrintValue(const double value){ printf("val %.6f\n", value); }
+    void PrintAll(const double value);
 
   signals:
     void valueChanged(double value);
