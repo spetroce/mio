@@ -2,13 +2,14 @@
 #include <cmath>
 
 
-CAdvSliderWidget::CAdvSliderWidget(QWidget *parent) : QWidget(parent), is_init_(false), flag_(false){
+CAdvSliderWidget::CAdvSliderWidget(QWidget *parent) : QWidget(parent), is_init_(false), flag_(false),
+    freq_buffer_is_init_(false), emit_on_slider_release_(false){
 }
 
 
-CAdvSliderWidget::CAdvSliderWidget(const int min, const int max, const int value, const int abs_min,
-                                   const int abs_max, const int step_size, const QString label_text, QWidget *parent) :
-                                   QWidget(parent), is_init_(false), flag_(false){
+CAdvSliderWidget::CAdvSliderWidget(const int min, const int max, const int value, const int abs_min, const int abs_max,
+    const int step_size, const QString label_text, QWidget *parent) :
+    QWidget(parent), is_init_(false), flag_(false), freq_buffer_is_init_(false), emit_on_slider_release_(false){
   Init(min, max, value, abs_min, abs_max, step_size, label_text);
 }
 
@@ -133,15 +134,39 @@ void CAdvSliderWidget::ValueSpinBoxValueChanged(int value){
 void CAdvSliderWidget::EnableFreqBuffer(const bool enable, const size_t freq, const size_t max_buf_size,
                                         const bool with_fifo_checking){
   if(enable){
+    if(emit_on_slider_release_)
+      EmitOnSliderRelease(false);
     disconnect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SIGNAL( ValueChanged(int) ) );
     freq_buffer_.Init(CAdvSliderWidget::FreqBufCallBack, freq,
                       max_buf_size, with_fifo_checking, static_cast<void*>(this));
     connect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( ValueSpinBoxValueChanged(int) ) );
+    freq_buffer_is_init_ = true;
   }
   else{
     freq_buffer_.Uninit();
     disconnect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SLOT( ValueSpinBoxValueChanged(int) ) );
     connect( value_spin_box_, SIGNAL( valueChanged(int) ), this, SIGNAL( ValueChanged(int) ) );
+    freq_buffer_is_init_ = false;
+  }
+}
+
+
+void CAdvSliderWidget::SliderReleased(){
+  CAdvSliderWidget::SetValueSpinBox(slider_->value());
+}
+
+void CAdvSliderWidget::EmitOnSliderRelease(const bool enable){
+  if(enable){
+    if(freq_buffer_is_init_)
+      EnableFreqBuffer(false);
+    disconnect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) );
+    connect( slider_, SIGNAL( sliderReleased() ), this, SLOT( SliderReleased() ) );
+    emit_on_slider_release_ = true;
+  }
+  else{
+    disconnect( slider_, SIGNAL( sliderReleased() ), this, SLOT( SliderReleased() ) );
+    connect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) );
+    emit_on_slider_release_ = false;
   }
 }
 
@@ -297,16 +322,17 @@ double CDoubleAdvSliderWidget::pow_of_ten_inv[] = {1.0f, //10^0
                                                    0.000000000001f}; //10^-12
 
 
-CDoubleAdvSliderWidget::CDoubleAdvSliderWidget(QWidget *parent) : QWidget(parent), is_init_(false), flag_(false){
+CDoubleAdvSliderWidget::CDoubleAdvSliderWidget(QWidget *parent) : QWidget(parent), is_init_(false), flag_(false),
+    freq_buffer_is_init_(false), emit_on_slider_release_(false){
 }
 
 
 //TODO: step_size is ignored, setSingleStep() is called within setDecimals(). To properly use setSingleStep(), the
 //value given must be less than or equal to pow_of_ten_inv[num_decimal_].
 CDoubleAdvSliderWidget::CDoubleAdvSliderWidget(const double min, const double max, const double value,
-                                               const int num_decimal, const double abs_min,  const double abs_max,
-                                               const double step_size, const QString label_text, QWidget *parent) :
-                                               QWidget(parent), is_init_(false), flag_(false){
+    const int num_decimal, const double abs_min,  const double abs_max, const double step_size,
+    const QString label_text, QWidget *parent) :
+    QWidget(parent), is_init_(false), flag_(false), freq_buffer_is_init_(false), emit_on_slider_release_(false){
   Init(min, max, value, num_decimal, abs_min, abs_max, step_size, label_text);
 }
 
@@ -428,15 +454,39 @@ void CDoubleAdvSliderWidget::ValueSpinBoxValueChanged(double value){
 void CDoubleAdvSliderWidget::EnableFreqBuffer(const bool enable, const size_t freq, const size_t max_buf_size,
                                               const bool with_fifo_checking){
   if(enable){
+    if(emit_on_slider_release_)
+      EmitOnSliderRelease(false);
     disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( ValueChanged(double) ) );
     freq_buffer_.Init(CDoubleAdvSliderWidget::FreqBufCallBack, freq,
                       max_buf_size, with_fifo_checking, static_cast<void*>(this));
     connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( ValueSpinBoxValueChanged(double) ) );
+    freq_buffer_is_init_ = true;
   }
   else{
     freq_buffer_.Uninit();
     disconnect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SLOT( ValueSpinBoxValueChanged(double) ) );
     connect( value_spin_box_, SIGNAL( valueChanged(double) ), this, SIGNAL( ValueChanged(double) ) );
+    freq_buffer_is_init_ = false;
+  }
+}
+
+
+void CDoubleAdvSliderWidget::SliderReleased(){
+  CDoubleAdvSliderWidget::SetValueSpinBox(slider_->value());
+}
+
+void CDoubleAdvSliderWidget::EmitOnSliderRelease(const bool enable){
+  if(enable){
+    if(freq_buffer_is_init_)
+      EnableFreqBuffer(false);
+    disconnect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) );
+    connect( slider_, SIGNAL( sliderReleased() ), this, SLOT( SliderReleased() ) );
+    emit_on_slider_release_ = true;
+  }
+  else{
+    disconnect( slider_, SIGNAL( sliderReleased() ), this, SLOT( SliderReleased() ) );
+    connect( slider_, SIGNAL( sliderMoved(int) ), this, SLOT( SetValueSpinBox(int) ) );
+    emit_on_slider_release_ = false;
   }
 }
 

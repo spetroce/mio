@@ -35,6 +35,7 @@ class CAdvSliderWidget : public QWidget{
     void EnableFreqBuffer(const bool enable, const size_t freq = 10, const size_t max_buf_size = 5,
                           const bool with_fifo_checking = false);
     void EnableDebugPrint(const bool enable);
+    void EmitOnSliderRelease(const bool enable);
 
   private:
     QSpinBox *max_spin_box_, *min_spin_box_, *value_spin_box_;
@@ -43,7 +44,7 @@ class CAdvSliderWidget : public QWidget{
     QFrame *line_[3];
     QLabel *label_;
     int min_, max_, value_, abs_min_, abs_max_, step_size_;
-    bool is_init_, flag_;
+    bool is_init_, flag_, freq_buffer_is_init_, emit_on_slider_release_;
     QString label_text_;
     void Init();
     void CreateInterface();
@@ -56,6 +57,7 @@ class CAdvSliderWidget : public QWidget{
     void SetMinimumAdv(const int min);
     void SetMaximumAdv(const int max);
     void ValueSpinBoxValueChanged(int value);
+    void SliderReleased();
 
   public slots:
     void SetValue(const int value);
@@ -93,6 +95,7 @@ class CDoubleAdvSliderWidget : public QWidget{
     void EnableFreqBuffer(const bool enable, const size_t freq = 10, const size_t max_buf_size = 5,
                           const bool with_fifo_checking = false);
     void EnableDebugPrint(const bool enable);
+    void EmitOnSliderRelease(const bool enable);
 
   private:
     QDoubleSpinBox *max_spin_box_, *min_spin_box_, *value_spin_box_;
@@ -101,7 +104,7 @@ class CDoubleAdvSliderWidget : public QWidget{
     QFrame *line_[3];
     QLabel *label_;
     double min_, max_, value_, abs_min_, abs_max_;
-    bool is_init_, flag_;
+    bool is_init_, flag_, freq_buffer_is_init_, emit_on_slider_release_;
     QString label_text_;
     int num_decimal_;
     double single_step_;
@@ -119,6 +122,7 @@ class CDoubleAdvSliderWidget : public QWidget{
     void SetDecimals(int num_decimal);
     void SetSingleStep(const double single_step);
     void ValueSpinBoxValueChanged(double value);
+    void SliderReleased();
 
   public slots:
     void SetValue(const double value);
