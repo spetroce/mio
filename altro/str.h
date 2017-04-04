@@ -26,7 +26,7 @@ inline char* c_str_to_ascii_hex_str(const char *str_src, char *str_out, const si
       sprintf(str_out_tmp, "%x ", str_src[i++]);
       str_out_tmp += 3;
     }
-    sprintf(str_out_tmp, "%x", str_src[i], 0);
+    sprintf(str_out_tmp, "%x", str_src[i]);
     str_out_tmp[2] = 0;
     return str_out;
   }
