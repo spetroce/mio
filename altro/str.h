@@ -7,6 +7,8 @@
 #include <cstring>
 
 
+namespace mio{
+
 template <typename T>
 inline std::string numToStr(T num){
   std::stringstream ss;  //create a stringstream
@@ -97,32 +99,8 @@ inline int str_split(char *src_str, const char deliminator, std::vector<char*> &
 }
 
 
-/*
-template <class ContainerT>
-inline void str_split(const std::string& str, ContainerT& tokens, const std::string& delimiters = " ", 
-                      bool trimEmpty = false){
-  std::string::size_type pos, lastPos = 0;
-  for(;;){
-    pos = str.find_first_of(delimiters, lastPos);
-    if(pos == std::string::npos){
-      pos = str.length();
-      if(pos != lastPos || !trimEmpty)
-        tokens.push_back( ContainerT::value_type(str.data()+lastPos, 
-                                                 (ContainerT::value_type::size_type)pos-lastPos) );
-      break;
-    }
-    else
-      if(pos != lastPos || !trimEmpty)
-        tokens.push_back( ContainerT::value_type(str.data()+lastPos, 
-                                                 (ContainerT::value_type::size_type)pos-lastPos) );
-
-    lastPos = pos + 1;
-  }
-}*/
-
-
-inline void str_split(const std::string &str, std::vector<std::string> &tokens, const std::string &delimiters = " ", 
-                      bool trimEmpty = false){
+inline void SplitStr(const std::string &str, std::vector<std::string> &tokens, const std::string &delimiters = " ", 
+                     bool trimEmpty = false){
   std::string::size_type pos, lastPos = 0;
   for(;;){
     pos = str.find_first_of(delimiters, lastPos);
@@ -142,7 +120,7 @@ inline void str_split(const std::string &str, std::vector<std::string> &tokens, 
 
 
 //split string by a deliminator, then place each piece in a vector
-inline void SplitStrDelim(const std::string &s, const char delim, std::vector<std::string> &elems, bool bClear = false){
+inline void SplitStr(const std::string &s, const char delim, std::vector<std::string> &elems, bool bClear = false){
   std::stringstream ss(s);
   std::string item;
 
@@ -152,6 +130,17 @@ inline void SplitStrDelim(const std::string &s, const char delim, std::vector<st
   while( std::getline(ss, item, delim) )
     elems.push_back(item);
 }
+
+
+void ReplaceAll(std::string& str, const std::string& search_str, const std::string& replace_str){
+  size_t pos = 0;
+  while((pos = str.find(search_str, pos)) != std::string::npos){
+    str.replace(pos, search_str.length(), replace_str);
+    pos += replace_str.length();
+  }
+}
+
+} //namespace mio
 
 #endif //__MIO_STR_H__
 
