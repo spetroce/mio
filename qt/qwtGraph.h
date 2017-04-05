@@ -432,7 +432,7 @@ class CMySliderGraph : public QWidget{
 
     ~CMySliderGraph(){
       for(auto &slider : slider_vec){
-        disconnect( slider, SIGNAL( valueChanged(double) ), this, SLOT( Replot() ) );
+        disconnect( slider, SIGNAL( ValueChanged(double) ), this, SLOT( Replot() ) );
         delete slider;
       }
       delete vert_layout;
@@ -445,7 +445,7 @@ class CMySliderGraph : public QWidget{
       vert_layout->addWidget(graph->qwt_plot);
       for(auto &slider : slider_vec){
         vert_layout->addWidget(slider);
-        connect( slider, SIGNAL( valueChanged(double) ), this, SLOT( Replot() ) );
+        connect( slider, SIGNAL( ValueChanged(double) ), this, SLOT( Replot() ) );
       }
 
       setLayout(vert_layout); //member function of QWidget, here it is peformed on centralWidget
@@ -470,13 +470,13 @@ class CMySliderGraph : public QWidget{
       STD_INVALID_ARG_EM(slider_vec.size() != 0, "you must call SetNumSlider() before SetupSlider() is called")
       // (min, max, value, num_decimal, abs_min, abs_max, step_size, label_text)
       slider_vec[slider_idx]->Init(min, max, value, num_dec, min, max, 1, label_text);
-      //slider_vec[slider_idx]->setMinimum(min);
-      //slider_vec[slider_idx]->setMaximum(max);
-      //slider_vec[slider_idx]->setValue(value);
+      //slider_vec[slider_idx]->SetMinimum(min);
+      //slider_vec[slider_idx]->SetMaximum(max);
+      //slider_vec[slider_idx]->SetValue(value);
     }
 
     double SliderValue(const size_t idx){
-      return slider_vec[idx]->value();
+      return slider_vec[idx]->Value();
     }
 
     virtual void PlotCurves(){
