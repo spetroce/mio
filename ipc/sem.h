@@ -43,14 +43,14 @@ class Semaphore{
         if(sem_addr_ == SEM_FAILED){
           if(errno == EEXIST){
             if(kMustCreate){
-              std::cerr << LF_STRM << "sem_open() error: Semaphore already exists and kMustCreate was set.\n";
+              std::cerr << FL_STRM << "sem_open() error: Semaphore already exists and kMustCreate was set.\n";
               return false;
             }
             EXP_CHK_ERRNO((sem_addr_ = sem_open(kSemName.c_str(), 0)) != SEM_FAILED, return(false))
             created_ = false;
           }
           else{ //some other error besides EEXIST
-            std::cerr << LF_STRM << "sem_open() error. " << ERRNO_STRM << std::endl;
+            std::cerr << FL_STRM << "sem_open() error. " << ERRNO_STRM << std::endl;
             return false;
           }
         }

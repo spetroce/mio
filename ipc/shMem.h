@@ -52,14 +52,14 @@ class SharedMemory{
         if(shm_id_ == -1){
           if(errno == EEXIST){
             if(kMustCreate){
-              std::cerr << LF_STRM << "shmget() error: Shared memory segment already exists and kMustCreate was set.\n";
+              std::cerr << FL_STRM << "shmget() error: Shared memory segment already exists and kMustCreate was set.\n";
               return false;
             }
             EXP_CHK_ERRNO((shm_id_ = shmget(kShmKey, kShmSize, 0666)) != -1, return(false))
             created_ = false;
           }
           else{ //some other error besides EEXIST
-            std::cerr << LF_STRM << "shmget() error. " << ERRNO_STRM << std::endl;
+            std::cerr << FL_STRM << "shmget() error. " << ERRNO_STRM << std::endl;
             return false;
           }
         }
