@@ -88,11 +88,11 @@ if( !!(exp) ) ; else{                                                          \
 
 
 //Put this macro in a c++ stream to print the current function name and line number
-//eg. std::cout << LF_STRM << "there was an error\n";
-#define LF_STRM CURRENT_FUNC << ":" << __LINE__ << ": "
+//eg. std::cout << FL_STRM << "there was an error\n";
+#define FL_STRM CURRENT_FUNC << ":" << __LINE__ << ": "
 
 //Put this macro in a c++ stream to print the current file name, function name, and line number
-#define FLF_STRM __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": "
+#define FFL_STRM __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": "
 
 #define ERRNO_STRM "errno message: " << std::strerror(errno)
 
