@@ -111,9 +111,10 @@ void ImageListViewer::SetImage(const int idx){
 }
 
 
-void ImageListViewer::SetImage(const cv::Mat &img, const std::string &str){
-  adv_img_disp_->SetImage(img, true);
-  ui->lineEdit_img_name->setText(QString(str.c_str()));
+void ImageListViewer::SetImage(const cv::Mat &kImg, const std::string &kStr,
+                               const bool kClone, const bool kCalledFromExternalThread){ 
+  adv_img_disp_->SetImage(kImg, kClone, kCalledFromExternalThread);
+  ui->lineEdit_img_name->setText(QString(kStr.c_str()));
 }
 
 
