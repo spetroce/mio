@@ -12,7 +12,11 @@
 #include <iostream>
 #include <sstream>
 #include "FlyCapture2.h"
+#if CV_MAJOR_VERSION < 3
+#include "opencv2/core/core.hpp"
+#else
 #include "opencv2/core.hpp"
+#endif
 #include "mio/altro/error.h"
 
 
@@ -177,7 +181,7 @@ inline bool InitPtGreyFlyCap2Cam(FlyCapture2::PGRGuid &guid, FlyCapture2::Camera
 	PrintCameraInfo(&cam_info);
 
   if(with_ext_trig)
-    EXP_CHK_E(SetTriggerMode(cam, with_ext_trig), return(false))
+    EXP_CHK(SetTriggerMode(cam, with_ext_trig), return(false))
 
   // Get the camera configuration
   FlyCapture2::FC2Config config;
