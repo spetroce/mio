@@ -176,6 +176,30 @@ inline void PrintFormat7Capabilities(FlyCapture2::Format7Info fmt7Info){
 }
 
 
+// If absControl is available for the property it is used, otherwise, valueA is used.
+inline bool SetProperty(FlyCapture2::Camera &cam, const double value,
+                        const bool enable_auto, const bool on_off, const bool one_push){
+  FlyCapture2::PropertyInfo prop_info;
+  prop_info.type = FlyCapture2::AUTO_EXPOSURE;
+  PGR_ERR_OK(cam.GetPropertyInfo(&prop_info), continue)
+  FlyCapture2::Property prop;
+  prop = FlyCapture2::AUTO_EXPOSURE;
+  prop.absValue = prop.valueA = 0;
+  if(prop_info.absValSupported){
+    prop.absControl = true;
+    prop.absValue = value;
+  }
+  else{
+    prop.absControl = false;
+    prop.valueA = value;
+  }
+  prop.autoManualMode = enable_auto;
+  prop.onOff = on_off;
+  prop.onePush = one_push;
+  PGR_ERR_OK(cam->SetProperty(&prop), return)
+}
+
+
 inline bool SetFormat7Mode(FlyCapture2::Camera &cam,
                            const FlyCapture2::Mode k_fmt7Mode = FlyCapture2::MODE_0,
                            const FlyCapture2::PixelFormat k_fmt7PixFmt = FlyCapture2::PIXEL_FORMAT_RAW8){
