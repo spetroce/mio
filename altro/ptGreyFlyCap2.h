@@ -96,6 +96,14 @@ inline void PrintCameraInfo(FlyCapture2::CameraInfo *cam_info){
 }
 
 
+inline void PrintImageInfo(const FlyCapture2::Image &img){
+  std::cout << FL_STRM << std::endl;
+  std::cout << "Rows: " << img.GetRows() << std::endl;
+  std::cout << "Cols: " << img.GetCols() << std::endl;
+  std::cout << "BitsPerPixel: " << img.GetBitsPerPixel() << std::endl << std::endl;
+}
+
+
 inline bool PollForTriggerReady(FlyCapture2::Camera &cam){
   PGR_ERR_VAR
 	const unsigned int kSoftwareTrigger = 0x62C;
@@ -176,14 +184,37 @@ inline void PrintFormat7Capabilities(FlyCapture2::Format7Info fmt7Info){
 }
 
 
-// If absControl is available for the property it is used, otherwise, valueA is used.
-inline bool SetProperty(FlyCapture2::Camera &cam, const double value,
+/*
+  If absControl is available for the property it is used, otherwise, valueA is used.
+  {FlyCapture2::BRIGHTNESS,
+   FlyCapture2::AUTO_EXPOSURE,
+   FlyCapture2::SHARPNESS,
+   FlyCapture2::WHITE_BALANCE,
+   FlyCapture2::HUE,
+   FlyCapture2::SATURATION,
+   FlyCapture2::GAMMA,
+   FlyCapture2::IRIS,
+   FlyCapture2::FOCUS,
+   FlyCapture2::ZOOM,
+   FlyCapture2::PAN,
+   FlyCapture2::TILT,
+   FlyCapture2::SHUTTER,
+   FlyCapture2::GAIN,
+   FlyCapture2::TRIGGER_MODE,
+   FlyCapture2::TRIGGER_DELAY,
+   FlyCapture2::FRAME_RATE,
+   FlyCapture2::TEMPERATURE,
+   FlyCapture2::UNSPECIFIED_PROPERTY_TYPE,
+   FlyCapture2::PROPERTY_TYPE_FORCE_32BITS};
+*/
+inline bool SetProperty(FlyCapture2::Camera &cam, const FlyCapture2::PropertyType prop_type, const double value,
                         const bool enable_auto, const bool on_off, const bool one_push){
+  PGR_ERR_VAR
   FlyCapture2::PropertyInfo prop_info;
-  prop_info.type = FlyCapture2::AUTO_EXPOSURE;
-  PGR_ERR_OK(cam.GetPropertyInfo(&prop_info), continue)
+  prop_info.type = prop_type;
+  PGR_ERR_OK(cam.GetPropertyInfo(&prop_info), return(false))
   FlyCapture2::Property prop;
-  prop = FlyCapture2::AUTO_EXPOSURE;
+  prop.type = prop_type;
   prop.absValue = prop.valueA = 0;
   if(prop_info.absValSupported){
     prop.absControl = true;
@@ -196,7 +227,8 @@ inline bool SetProperty(FlyCapture2::Camera &cam, const double value,
   prop.autoManualMode = enable_auto;
   prop.onOff = on_off;
   prop.onePush = one_push;
-  PGR_ERR_OK(cam->SetProperty(&prop), return)
+  PGR_ERR_OK(cam.SetProperty(&prop), return(false))
+  return true;
 }
 
 
@@ -227,12 +259,6 @@ inline bool SetFormat7Mode(FlyCapture2::Camera &cam,
 
 	// Set the settings to the camera
 	PGR_ERR_OK(cam.SetFormat7Configuration(&fmt7ImageSettings, fmt7PacketInfo.recommendedBytesPerPacket), return(false))
-
-	// Get the camera information
-	FlyCapture2::CameraInfo cam_info;
-  PGR_ERR_OK(cam.GetCameraInfo(&cam_info), return(false))
-	PrintCameraInfo(&cam_info);
-
   return true;
 }
 
