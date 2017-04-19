@@ -50,7 +50,7 @@ inline void PrintProperty(const FlyCapture2::Property &prop){
 
 
 inline void FC2ImageToOpenCvMat(const FlyCapture2::Image &image, cv::Mat &mat,
-                         FlyCapture2::Image *rgb_img = nullptr, const bool clone_data = false){
+                                FlyCapture2::Image *rgb_img = nullptr, const bool clone_data = false){
   FlyCapture2::Image _rgb_img;
   if(image.GetPixelFormat() == FlyCapture2::PIXEL_FORMAT_MONO8){
     if(clone_data)
@@ -168,8 +168,54 @@ inline bool SetTriggerMode(FlyCapture2::Camera &cam, const bool onOff){
 }
 
 
+inline void PrintFormat7Capabilities(FlyCapture2::Format7Info fmt7Info){
+	std::cout << "Max image pixels: (" << fmt7Info.maxWidth << ", " << fmt7Info.maxHeight << ")" << std::endl;
+	std::cout << "Image Unit size: (" << fmt7Info.imageHStepSize << ", " << fmt7Info.imageVStepSize << ")" << std::endl;
+	std::cout << "Offset Unit size: (" << fmt7Info.offsetHStepSize << ", " << fmt7Info.offsetVStepSize << ")" << std::endl;
+	std::cout << "Pixel format bitfield: 0x" << fmt7Info.pixelFormatBitField << std::endl;
+}
+
+
+inline bool SetFormat7Mode(FlyCapture2::Camera &cam,
+                           const FlyCapture2::Mode k_fmt7Mode = FlyCapture2::MODE_0,
+                           const FlyCapture2::PixelFormat k_fmt7PixFmt = FlyCapture2::PIXEL_FORMAT_RAW8){
+  PGR_ERR_VAR
+	FlyCapture2::Format7Info fmt7Info;
+	fmt7Info.mode = k_fmt7Mode;
+	bool supported;
+	PGR_ERR_OK(cam.GetFormat7Info(&fmt7Info, &supported), return(false))
+	PrintFormat7Capabilities(fmt7Info);
+	EXP_CHK_M((k_fmt7PixFmt & fmt7Info.pixelFormatBitField) != 0, return(false), "Pixel format is not supported")
+
+	FlyCapture2::Format7ImageSettings fmt7ImageSettings;
+	fmt7ImageSettings.mode = k_fmt7Mode;
+	fmt7ImageSettings.offsetX = 0;
+	fmt7ImageSettings.offsetY = 0;
+	fmt7ImageSettings.width = fmt7Info.maxWidth;
+	fmt7ImageSettings.height = fmt7Info.maxHeight;
+	fmt7ImageSettings.pixelFormat = k_fmt7PixFmt;
+
+	bool valid;
+	FlyCapture2::Format7PacketInfo fmt7PacketInfo;
+	// Validate the settings to make sure that they are valid
+	PGR_ERR_OK(cam.ValidateFormat7Settings(&fmt7ImageSettings, &valid, &fmt7PacketInfo), return(false))
+  EXP_CHK_M(valid, return(false), "Format7 settings are not valid")
+
+	// Set the settings to the camera
+	PGR_ERR_OK(cam.SetFormat7Configuration(&fmt7ImageSettings, fmt7PacketInfo.recommendedBytesPerPacket), return(false))
+
+	// Get the camera information
+	FlyCapture2::CameraInfo cam_info;
+  PGR_ERR_OK(cam.GetCameraInfo(&cam_info), return(false))
+	PrintCameraInfo(&cam_info);
+
+  return true;
+}
+
+
 inline bool InitPtGreyFlyCap2Cam(FlyCapture2::PGRGuid &guid, FlyCapture2::Camera &cam,
-                                 const bool wait_for_power_up = false, const bool with_ext_trig = true){
+                                 const bool wait_for_power_up = false, const bool with_ext_trig = true,
+                                 const bool start_capture = true){
   PGR_ERR_VAR
   PGR_ERR_OK(cam.Connect(&guid), return(false))
   if(wait_for_power_up)
@@ -190,7 +236,9 @@ inline bool InitPtGreyFlyCap2Cam(FlyCapture2::PGRGuid &guid, FlyCapture2::Camera
   PGR_ERR_OK(cam.SetConfiguration(&config), return(false))
 
   // Camera is ready, start capturing images
-  PGR_ERR_OK(cam.StartCapture(), return(false));
+  if(start_capture){
+    PGR_ERR_OK(cam.StartCapture(), return(false))
+  }
   return true;
 }
 
