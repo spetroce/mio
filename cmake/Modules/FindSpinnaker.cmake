@@ -14,8 +14,8 @@ pkg_check_modules(PC_SPINNAKER QUIET Spinnaker)
 set(SPINNAKER_DEFINITIONS ${PC_SPINNAKER_CFLAGS_OTHER})
 
 find_path(SPINNAKER_INCLUDE_DIR Spinnaker.h
-          HINTS ${PC_SPINNAKER_INCLUDEDIR} ${PC_SPINNAKER_INCLUDE_DIRS} /opt/spinnaker/include
-          PATHS /opt/
+          HINTS ${PC_SPINNAKER_INCLUDEDIR} ${PC_SPINNAKER_INCLUDE_DIRS} 
+          PATHS /opt/ /opt/spinnaker/include
           PATH_SUFFIXES spinnaker/include)
 
 find_library(SPINNAKER_LIBRARY NAMES Spinnaker libSpinnaker

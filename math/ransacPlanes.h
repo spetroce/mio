@@ -5,7 +5,7 @@
 
 #include "mio/math/math.h"
 #include "mio/altro/algorithm.h"
-#include "opencv2/core.hpp"
+//#include "opencv2/core.hpp"
 
 template <typename PNT_T, typename MODEL_T>
 void PlaneFit(const std::vector<PNT_T> &all_data,
@@ -117,7 +117,7 @@ template void RansacDetectPlanes<PNT_TYPE>(const std::vector<PNT_TYPE> &pnt,\
                                            const uint32_t min_inliers,\
                                          std::vector< std::vector<uint32_t> > &plane_inliers);
 RansacDetectPlanes_EXPLICIT_INST(vertex3f_t)
-RansacDetectPlanes_EXPLICIT_INST(cv::Point3f)
+//RansacDetectPlanes_EXPLICIT_INST(cv::Point3f)
 
 }
 

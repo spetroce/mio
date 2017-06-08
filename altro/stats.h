@@ -9,41 +9,43 @@
 #include <set>
 
 
-inline void VectorStats(const std::vector<double> &_data_in, double &_min, double &_max, double &_variance,
+inline void VectorStats(std::vector<double> &_src_vec, double &_min, double &_max, double &_variance,
                         double &_std_dev, double &_mean, double &_median, std::set<double> &_set_data){
   _set_data.clear();
-	std::sort(_data_in.begin(), _data_in.end());
-	_min = _data_in.front();
-	_max = _data_in.back();
+	std::sort(_src_vec.begin(), _src_vec.end());
+	_min = _src_vec.front();
+	_max = _src_vec.back();
 
 	double sum = 0;
-	std::vector<int> occur_vec(_data_in.size());
-	for(std::vector<double>::const_iterator iter = _data_in.begin(); iter != _data_in.end(); ++iter){
-		sum = sum + *iter; //used for mean
+  const size_t kSrcVecSize = _src_vec.size();
+	std::vector<unsigned int> occur_vec(kSrcVecSize);
+  std::fill(occur_vec.begin(), occur_vec.end(), 0);
+  for(const auto &kSrcVal : _src_vec){
+		sum += kSrcVal; //used for mean
 		//occur_vec will be used later to find the mode
-		for(size_t i = 0; i < _data_in.size(); ++ i)
-			if( *iter == _data_in[i] )
+    for(size_t i = 0; i < kSrcVecSize; ++i)
+			if(kSrcVal == _src_vec[i])
 				++occur_vec[i];
 	}
 
 	//arithmetic mean
-	_mean = sum / _data_in.size();
+	_mean = sum / _src_vec.size();
 
 	//statistical median
-	if(_data_in.size() % 2 == 1)
-	  _median = _data_in[_data_in.size()/2];
-	else if(_data_in.size() % 2 == 0){
-		double median_elem_a = _data_in[(_data_in.size() / 2) - 1];
-		double median_elem_b = _data_in[_data_in.size() / 2];
+	if(_src_vec.size() % 2 == 1)
+	  _median = _src_vec[_src_vec.size()/2];
+	else if(_src_vec.size() % 2 == 0){
+		double median_elem_a = _src_vec[(_src_vec.size() / 2) - 1];
+		double median_elem_b = _src_vec[_src_vec.size() / 2];
 		_median = (median_elem_a + median_elem_b)/2;
 	}//end statistical median
 
 	//variance
 	_std_dev = 0;
 	_variance = 0;
-	for(std::vector<double>::const_iterator iter = _data_in.begin(); iter != _data_in.end(); ++iter)
-		_variance = std::pow( (*iter - _mean), 2 ) + _variance;
-	_variance = _variance / _data_in.size();
+  for(auto &data_in_val : _src_vec)
+		_variance = std::pow( (data_in_val - _mean), 2 ) + _variance;
+	_variance = _variance / _src_vec.size();
 
 	//standard deviation
 	_std_dev = sqrt(_variance);
@@ -51,16 +53,16 @@ inline void VectorStats(const std::vector<double> &_data_in, double &_min, doubl
 	//mode
 	double max_occur_val = 0;
 	int occur_check = 0;
-	for(std::vector<int>::const_iterator iter = occur_vec.begin(); iter != occur_vec.end(); ++iter){
-		if(*iter == 1)//if the vector is filled with 1's it means each number has occurred only once, therefore no mode.
+  for(auto &occur_val : occur_vec){
+		if(occur_val == 1)//if the vector is filled with 1's it means each number has occurred only once, therefore no mode.
 			occur_check = occur_check + 1;
-		else if(*iter > max_occur_val)
-			max_occur_val = *iter;
+		else if(occur_val > max_occur_val)
+			max_occur_val = occur_val;
 	}
 
-	for(size_t i = 0; i < occur_vec.size(); ++i)
+	for(size_t i = 0; i < kSrcVecSize; ++i)
 		if(occur_vec[i] == max_occur_val)
-			_set_data.insert(_data_in[i]);
+			_set_data.insert(_src_vec[i]);
 }
 
 

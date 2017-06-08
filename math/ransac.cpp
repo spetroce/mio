@@ -21,7 +21,7 @@
 
 #include <utility>
 
-#include "opencv2/core.hpp"
+//#include "opencv2/core.hpp"
 #include "mio/math/math.h"
 #include "mio/altro/error.h"
 #include "mio/altro/algorithm.h" //EraseIndices()

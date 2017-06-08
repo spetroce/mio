@@ -113,7 +113,7 @@ template void RansacDetectLines<_TYPE_>(const std::vector<_TYPE_> &pnt, \
                                         const uint32_t min_inliers, \
                                         std::vector< std::vector<uint32_t> > &line_inliers);
 RansacDetectLines_EXPLICIT_INST(vertex2f_t)
-RansacDetectLines_EXPLICIT_INST(cv::Point2f)
+//RansacDetectLines_EXPLICIT_INST(cv::Point2f)
 
 }
 

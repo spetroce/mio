@@ -185,7 +185,7 @@ class MyGraph : public QObject{
       MARKERS = 32
     };
 
-    MyGraph(const bool magnify = true, const bool pan = false, const bool with_window_controls = true) :
+    MyGraph(const bool magnify = true, const bool pan = true, const bool with_window_controls = true) :
         m_last_set_curve_data_flags(-1), magnify_(magnify), pan_(pan) {
       qt_global_colors = {2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
       qwt_plot = new QwtPlot;
