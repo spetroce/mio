@@ -6,8 +6,8 @@
 #  SPINNAKER_DEFINITIONS - Compiler switches required for using Spinnaker
 
 #download spinnaker from ptgrey website
-#extract and copy to /opt removing the version number
-#eg., cp ~/Downloads/spinnaker_1_0_0_295_amd64 /opt/spinnaker
+#extract and copy contents to /opt removing the version number
+#eg., sudo cp -R ~/Downloads/spinnaker_1_0_0_295_amd64/* /opt/spinnaker/
 
 find_package(PkgConfig)
 pkg_check_modules(PC_SPINNAKER QUIET Spinnaker)
