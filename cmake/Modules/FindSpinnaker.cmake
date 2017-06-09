@@ -20,7 +20,7 @@ find_path(SPINNAKER_INCLUDE_DIR Spinnaker.h
 
 find_library(SPINNAKER_LIBRARY NAMES Spinnaker libSpinnaker
              HINTS ${PC_SPINNAKER_LIBDIR} ${PC_SPINNAKER_LIBRARY_DIRS}
-             PATHS /opt/
+             PATHS /opt/ /opt/spinnaker/lib
              PATH_SUFFIXES spinnaker/lib)
 
 include(FindPackageHandleStandardArgs)
