@@ -422,20 +422,20 @@ void AdvImageDisplay::DrawRoi(cv::Mat &img){
     switch(disp_roi_.type){
       case Roi::ROI_RECT:
         STD_INVALID_ARG_E(vertices.size() == 2)
-        cv::rectangle(img, vertices[0], vertices[1], color, 2);
+        cv::rectangle(img, vertices[0], vertices[1], color, 1);
         break;
       case Roi::ROI_POLY:
         if(vertices.size() > 1)
-          cv::polylines(img, vertices, !create_roi_, color, 2);
+          cv::polylines(img, vertices, !create_roi_, color, 1);
         break;
       case Roi::ROI_CENTER_CIRCLE:
         STD_INVALID_ARG_E(vertices.size() == 2)
-        cv::circle(img, vertices[0], sm::VerDist2(vertices[0], vertices[1]), color, 2);
+        cv::circle(img, vertices[0], sm::VerDist2(vertices[0], vertices[1]), color, 1);
         break;
       case Roi::ROI_DRAG_CIRCLE:
         STD_INVALID_ARG_E(vertices.size() == 2)
         cv::circle(img, sm::MidPoint2(vertices[0], vertices[1]),
-                   sm::VerDist2(vertices[0], vertices[1]) / 2.0f, color, 2);
+                   sm::VerDist2(vertices[0], vertices[1]) / 2.0f, color, 1);
         break;
     }
   }
