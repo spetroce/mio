@@ -6,8 +6,8 @@
 #  SPINNAKER_DEFINITIONS - Compiler switches required for using Spinnaker
 
 #download spinnaker from ptgrey website
-#extract and copy to /opt removing the version number
-#eg., cp ~/Downloads/spinnaker_1_0_0_295_amd64 /opt/spinnaker
+#extract and copy contents to /opt removing the version number
+#eg., sudo cp -R ~/Downloads/spinnaker_1_0_0_295_amd64/* /opt/spinnaker/
 
 find_package(PkgConfig)
 pkg_check_modules(PC_SPINNAKER QUIET Spinnaker)
@@ -20,7 +20,7 @@ find_path(SPINNAKER_INCLUDE_DIR Spinnaker.h
 
 find_library(SPINNAKER_LIBRARY NAMES Spinnaker libSpinnaker
              HINTS ${PC_SPINNAKER_LIBDIR} ${PC_SPINNAKER_LIBRARY_DIRS}
-             PATHS /opt/
+             PATHS /opt/ /opt/spinnaker/lib
              PATH_SUFFIXES spinnaker/lib)
 
 include(FindPackageHandleStandardArgs)
@@ -31,9 +31,9 @@ find_package_handle_standard_args(Spinnaker DEFAULT_MSG
 
 mark_as_advanced(SPINNAKER_INCLUDE_DIR SPINNAKER_LIBRARY )
 
-set(SPINNAKER_LIBRARIES ${SPINNAKER_LIBRARY} )
-set(SPINNAKER_INCLUDE_DIRS ${SPINNAKER_INCLUDE_DIR} )
+set(SPINNAKER_LIBRARIES ${SPINNAKER_LIBRARY})
+set(SPINNAKER_INCLUDE_DIRS ${SPINNAKER_INCLUDE_DIR})
 
-message(STATUS "SPINNAKER_LIBRARIES: ${SPINNAKER_LIBRARIES})
-message(STATUS "SPINNAKER_INCLUDE_DIRS: ${SPINNAKER_INCLUDE_DIRS})
+message(STATUS "SPINNAKER_LIBRARIES: ${SPINNAKER_LIBRARIES}")
+message(STATUS "SPINNAKER_INCLUDE_DIRS: ${SPINNAKER_INCLUDE_DIRS}")
 
