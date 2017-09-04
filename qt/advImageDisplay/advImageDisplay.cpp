@@ -297,7 +297,6 @@ void AdvImageDisplay::UpdateDisplay(){
   resize_total_mtx_.unlock();
   prev_src_img_size_ = kSrcImgSize;
 
-
   try{
     cv::Size display_img_size = src_img_.size();
     double display_img_dim_scale;
@@ -306,23 +305,9 @@ void AdvImageDisplay::UpdateDisplay(){
     display_img_dim_scalar_inv_ = kIsScaled ? 1.0/display_img_dim_scale : 1.0;
 
     if(is_zoom_){ //ROI with original size or maxSize resizing
-      clamped_origin_ = cv::Point2d(origin_.x*display_img_dim_scalar_inv_, origin_.y*display_img_dim_scalar_inv_);
-      //check that the ROI is not out of bounds on src_img_, move the origin if necessary
-      if(clamped_origin_.x + zoom_region_size_.width > src_img_.cols)
-         clamped_origin_.x = src_img_.cols - zoom_region_size_.width;
-      if(clamped_origin_.y + zoom_region_size_.height > src_img_.rows)
-         clamped_origin_.y = src_img_.rows - zoom_region_size_.height;
-      //chcek that we didn't move our origin too far
-      if(clamped_origin_.x < 0)
-         clamped_origin_.x = 0;
-      if(clamped_origin_.y < 0)
-         clamped_origin_.y = 0;
-      //perform slight adjustment on the ROI size if necessary (ie. any error from double-int rounding)
-      if(clamped_origin_.x + zoom_region_size_.width > src_img_.cols)
-        zoom_region_size_.width = static_cast<double>(src_img_.cols) - clamped_origin_.x;
-      if(clamped_origin_.y + zoom_region_size_.height > src_img_.rows)
-        zoom_region_size_.height = static_cast<double>(src_img_.rows) - clamped_origin_.y;
-
+      clamped_origin_ = origin_*display_img_dim_scalar_inv_;
+      mio::SetClamp(clamped_origin_.x, 0.0, src_img_.cols - zoom_region_size_.width);
+      mio::SetClamp(clamped_origin_.y, 0.0, src_img_.rows - zoom_region_size_.height);
       zoom_img_ = cv::Mat(src_img_, cv::Rect(clamped_origin_.x, clamped_origin_.y,
                                              zoom_region_size_.width, zoom_region_size_.height));
       if(display_img_size == zoom_img_.size()) //don't call resize if we don't have to
