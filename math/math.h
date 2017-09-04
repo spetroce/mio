@@ -17,6 +17,10 @@ namespace sm{
   template<> inline float WavenumberToNanometer(const float &wavenumber){ return(10000000.0f/wavenumber); }
   template<> inline double WavenumberToNanometer(const double &wavenumber){ return(10000000.0/wavenumber); }
 
+  inline int RoundToMultiple(const int &number, const int multiple){
+    return (((number + multiple/2) / multiple) * multiple);
+  }
+
   //a == b for float point numbers. eg. epsilon = 0.0001
   inline bool FloatComp(const float &a, const float &b, const float &epsilon){
       return( std::fabs(a - b) < epsilon );
