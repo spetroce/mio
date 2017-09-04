@@ -116,7 +116,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
             update_display = true;
           }
           disp_roi_.mutex.unlock();
-          if(update_display) //this is to update the mouse_pos_value in statistics
+          if(update_display)
             UpdateDisplay();
           break;
         }
