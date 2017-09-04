@@ -115,8 +115,11 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
               disp_roi_.vertices.back() = processed_img_mouse_pos;
           }
           else if(mouse_button_pressed_){
-            mouse_drag_ = mouse_button_press_init_pos_ - mouse_pos;
+            mouse_drag_ = mouse_button_press_init_pos_ - cv::Point2d(sm::RoundToMultiple(mouse_pos.x, 3),
+                                                                     sm::RoundToMultiple(mouse_pos.y, 3));
             UpdateZoom();
+            mouse_button_press_init_pos_ -= mouse_drag_;
+            mouse_drag_ = cv::Point2d(0, 0);
           }
           else
             update_display = false;
@@ -252,7 +255,10 @@ void AdvImageDisplay::UpdateZoom(){
     //find the new origin within the last scaled image and add it to the last origin_
     origin_ = cv::Point2d( origin_.x + (pixmap_mouse_pos_.x*prev_zoom_ - pixmap_mouse_pos_.x*zoom_scalar_),
                            origin_.y + (pixmap_mouse_pos_.y*prev_zoom_ - pixmap_mouse_pos_.y*zoom_scalar_) );
-    zoom_region_size_ = cv::Point2d(kSrcImgSize.width*zoom_scalar_, kSrcImgSize.height*zoom_scalar_);
+    origin_ += mouse_drag_*zoom_scalar_;
+    zoom_region_size_ = cv::Size2d(kSrcImgSize.width*zoom_scalar_, kSrcImgSize.height*zoom_scalar_);
+    mio::SetClamp<double>(origin_.x, 0, kSrcImgSize.width-zoom_region_size_.width);
+    mio::SetClamp<double>(origin_.y, 0, kSrcImgSize.height-zoom_region_size_.height);
     prev_zoom_ = zoom_scalar_;
   }
 }
@@ -273,7 +279,7 @@ cv::Point2d AdvImageDisplay::ViewToImage(const cv::Point2d &kViewPnt){
 }
 
 
-//src_img_ to label_ coordinates
+// src_img_ to label_ coordinates
 cv::Point2d AdvImageDisplay::ImageToView(const cv::Point2d &kImgPnt){
   return cv::Point2d((kImgPnt.x - clamped_origin_.x) / zoom_scalar_ / display_img_dim_scalar_inv_,
                      (kImgPnt.y - clamped_origin_.y) / zoom_scalar_ / display_img_dim_scalar_inv_);
