@@ -237,14 +237,9 @@ void AdvImageDisplay::UpdateZoom(){
   if(is_zoom_){
     zoom_scalar_ = 1.0 - static_cast<double>(scroll_wheel_count_)*kZoomScale;
     zoom_region_size_ = cv::Point2d(kSrcImgSize.width*zoom_scalar_, kSrcImgSize.height*zoom_scalar_);
-
-    //scale the mouse position by the last zoom_scalar_
-    cv::Point2d scaled_mouse = cv::Point2d(pixmap_mouse_pos_.x*prev_zoom_,
-                                           pixmap_mouse_pos_.y*prev_zoom_);
     //find the new origin within the last scaled image and add it to the last origin_
-    origin_ = cv::Point2d( origin_.x + ( scaled_mouse.x - scaled_mouse.x*(zoom_scalar_/prev_zoom_) ),
-                           origin_.y + ( scaled_mouse.y - scaled_mouse.y*(zoom_scalar_/prev_zoom_) ) );
-
+    origin_ = cv::Point2d( origin_.x + (pixmap_mouse_pos_.x*prev_zoom_ - pixmap_mouse_pos_.x*zoom_scalar_),
+                           origin_.y + (pixmap_mouse_pos_.y*prev_zoom_ - pixmap_mouse_pos_.y*zoom_scalar_) );
     prev_zoom_ = zoom_scalar_;
   }
 }
