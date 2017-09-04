@@ -106,6 +106,8 @@ class AdvImageDisplay : public QWidget{
     cv::Size2d prev_src_img_size_;
     std::vector<cv::Point2d> mouse_click_pnt_vec_;
     bool draw_mouse_clicks_;
+    bool mouse_button_pressed_;
+    cv::Point2d mouse_button_press_init_pos_, mouse_drag_;
 #ifdef HAVE_LCM
     lcm_t *lcm_;
     lcm_opencv_mat_t_subscription_t *new_frame_lcm_sub_;

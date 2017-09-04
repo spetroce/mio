@@ -11,11 +11,12 @@ constexpr std::array<const char*, 4> Roi::roi_type_str;
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
     is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true),
-    draw_mouse_clicks_(false){
+    draw_mouse_clicks_(false), mouse_button_pressed_(false){
 #ifdef HAVE_LCM
   lcm_is_init_ = false;
 #endif
   prev_src_img_size_ = cv::Size2d(-1, -1);
+  mouse_drag_ = cv::Point2d(0, 0);
   ResetZoom();
 }
 
@@ -98,11 +99,10 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
     switch( event->type() ){
       case QEvent::MouseMove:
         {
-          QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
-          int x = mouseEvent->pos().x(),
-              y = mouseEvent->pos().y();
-          cv::Point2d processed_img_mouse_pos = ViewToImage( cv::Point2d(x, y) );
-          bool update_display = false;
+          QMouseEvent *mouse_event = dynamic_cast<QMouseEvent*>(event);
+          cv::Point2d mouse_pos(mouse_event->pos().x(), mouse_event->pos().y());
+          cv::Point2d processed_img_mouse_pos = ViewToImage(mouse_pos);
+          bool update_display = true;
           disp_roi_.mutex.lock();
           const size_t kRoiVerticesSize = disp_roi_.vertices.size();
           if(create_roi_ && kRoiVerticesSize > 1){
@@ -113,8 +113,13 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
             }
             else if(disp_roi_.type == Roi::ROI_POLY)
               disp_roi_.vertices.back() = processed_img_mouse_pos;
-            update_display = true;
           }
+          else if(mouse_button_pressed_){
+            mouse_drag_ = mouse_button_press_init_pos_ - mouse_pos;
+            UpdateZoom();
+          }
+          else
+            update_display = false;
           disp_roi_.mutex.unlock();
           if(update_display)
             UpdateDisplay();
@@ -122,9 +127,12 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         }
       case QEvent::MouseButtonPress:
         {
+          mouse_button_pressed_ = true;
+          mouse_drag_ = cv::Point2d(0, 0);
           bool update_display = false;
-          QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
-          const cv::Point2d mouse_pos = cv::Point2d( mouseEvent->pos().x(), mouseEvent->pos().y() );
+          QMouseEvent *mouse_event = dynamic_cast<QMouseEvent*>(event);
+          const cv::Point2d mouse_pos = cv::Point2d( mouse_event->pos().x(), mouse_event->pos().y() );
+          mouse_button_press_init_pos_ = mouse_pos;
           if(create_roi_){
             disp_roi_.mutex.lock();
             if(disp_roi_.type == Roi::ROI_RECT ||
@@ -143,6 +151,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         }
       case QEvent::MouseButtonRelease:
         {
+          mouse_button_pressed_ = false;
           bool update_display = false;
           if(create_roi_){
             disp_roi_.mutex.lock();
@@ -153,8 +162,8 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
               disp_roi_.mutex.lock();
             }
             else if(disp_roi_.type == Roi::ROI_POLY){
-              QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent*>(event);
-              const cv::Point2d mouse_pos = cv::Point2d( mouseEvent->pos().x(), mouseEvent->pos().y() );
+              QMouseEvent *mouse_event = dynamic_cast<QMouseEvent*>(event);
+              const cv::Point2d mouse_pos = cv::Point2d( mouse_event->pos().x(), mouse_event->pos().y() );
               if( disp_roi_.vertices.empty() ){
                 disp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
                 disp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
@@ -188,7 +197,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         }
         break;
       case QEvent::Wheel:
-        if(!show_roi_ && zooming_enabled_){
+        if(!show_roi_ && zooming_enabled_ && !mouse_button_pressed_){
           QWheelEvent *wheel_event = dynamic_cast<QWheelEvent*>(event);
           scroll_wheel_count_ += wheel_event->delta()/120;
           if(scroll_wheel_count_ < 0)
@@ -240,10 +249,10 @@ void AdvImageDisplay::UpdateZoom(){
 
   if(is_zoom_){
     zoom_scalar_ = GetZoomScalar(scroll_wheel_count_);
-    zoom_region_size_ = cv::Point2d(kSrcImgSize.width*zoom_scalar_, kSrcImgSize.height*zoom_scalar_);
     //find the new origin within the last scaled image and add it to the last origin_
     origin_ = cv::Point2d( origin_.x + (pixmap_mouse_pos_.x*prev_zoom_ - pixmap_mouse_pos_.x*zoom_scalar_),
                            origin_.y + (pixmap_mouse_pos_.y*prev_zoom_ - pixmap_mouse_pos_.y*zoom_scalar_) );
+    zoom_region_size_ = cv::Point2d(kSrcImgSize.width*zoom_scalar_, kSrcImgSize.height*zoom_scalar_);
     prev_zoom_ = zoom_scalar_;
   }
 }
