@@ -207,6 +207,11 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
 }
 
 
+double GetZoomScalar(const int kIndex){
+  const double kZoomScale = 0.025;
+  return (1.0 - static_cast<double>(kIndex)*kZoomScale);
+}
+
 /*this functions updates the following vairables based on the scroll wheel count:
 bool is_zoom_
 double zoom_scalar_ - scale factor ranging from 0 to 1
@@ -218,11 +223,10 @@ void AdvImageDisplay::UpdateZoom(){
   src_img_mtx_.lock();
   const cv::Size2d kSrcImgSize = src_img_.size();
   src_img_mtx_.unlock();
-  const double kZoomScale = 0.025;
   is_zoom_ = scroll_wheel_count_ > 0;
   if(is_zoom_){
     //check for a minimum of 20 horizontal pixels
-    while(kSrcImgSize.width*(1.0 - static_cast<double>(scroll_wheel_count_)*kZoomScale) < 20)
+    while(kSrcImgSize.width*GetZoomScalar(scroll_wheel_count_) < 20)
       if(scroll_wheel_count_-1 > 0)
         --scroll_wheel_count_;
       else{
@@ -235,7 +239,7 @@ void AdvImageDisplay::UpdateZoom(){
     ResetZoom();
 
   if(is_zoom_){
-    zoom_scalar_ = 1.0 - static_cast<double>(scroll_wheel_count_)*kZoomScale;
+    zoom_scalar_ = GetZoomScalar(scroll_wheel_count_);
     zoom_region_size_ = cv::Point2d(kSrcImgSize.width*zoom_scalar_, kSrcImgSize.height*zoom_scalar_);
     //find the new origin within the last scaled image and add it to the last origin_
     origin_ = cv::Point2d( origin_.x + (pixmap_mouse_pos_.x*prev_zoom_ - pixmap_mouse_pos_.x*zoom_scalar_),
