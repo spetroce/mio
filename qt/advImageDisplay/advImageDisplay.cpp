@@ -281,8 +281,8 @@ cv::Point2d AdvImageDisplay::ViewToImage(const cv::Point2d &kViewPnt){
 
 // src_img_ to label_ coordinates
 cv::Point2d AdvImageDisplay::ImageToView(const cv::Point2d &kImgPnt){
-  return cv::Point2d((kImgPnt.x - clamped_origin_.x) / zoom_scalar_ / display_img_dim_scalar_inv_,
-                     (kImgPnt.y - clamped_origin_.y) / zoom_scalar_ / display_img_dim_scalar_inv_);
+  return cv::Point2d((kImgPnt.x - clamped_origin_.x) / prev_zoom_ / display_img_dim_scalar_inv_,
+                     (kImgPnt.y - clamped_origin_.y) / prev_zoom_ / display_img_dim_scalar_inv_);
 }
 
 
