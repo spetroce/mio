@@ -1,6 +1,7 @@
 #include "imageListViewer.h"
 #include "ui_imageListViewer.h"
 
+using namespace mio;
 
 ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidget(parent), ui(new Ui::ImageListViewer){
   ui->setupUi(this);

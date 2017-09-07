@@ -9,6 +9,7 @@ namespace Ui {
   class ImageListViewer;
 }
 
+namespace mio{
 
 class ImageListViewer : public QWidget {
   Q_OBJECT
@@ -44,6 +45,8 @@ class ImageListViewer : public QWidget {
   public slots:
     void HideShowRoiControl();
 };
+
+} //namespace mio
 
 #endif // IMAGELISTVIEWER_H
 

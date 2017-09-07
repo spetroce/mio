@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]){
     QApplication a(argc, argv);
-    AdvImageDisplay w;
+    mio::AdvImageDisplay w;
     w.Init(0);
     w.SetDrawClicks(true);
     cv::Mat img = cv::imread(argv[1]);

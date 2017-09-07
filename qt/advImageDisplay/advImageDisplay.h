@@ -37,6 +37,7 @@ typedef Size_<double> Size2d;
 }
 #endif
 
+namespace mio{
 
 struct Roi{
   static const int ROI_RECT = 0,
@@ -155,6 +156,8 @@ class AdvImageDisplay : public QWidget{
   signals:
     void ExternalDisplayUpdate(void);
 };
+
+} //namespace mio
 
 #endif //__MIO_ADV_IMAGE_DISPLAY_H__
 

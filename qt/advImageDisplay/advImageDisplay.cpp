@@ -5,6 +5,8 @@
 #include "mio/qt/qtXml.h"
 #endif
 
+using namespace mio;
+
 constexpr std::array<const char*, 4> Roi::roi_type_str;
 
 
