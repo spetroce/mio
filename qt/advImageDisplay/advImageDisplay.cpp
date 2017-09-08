@@ -332,22 +332,20 @@ void AdvImageDisplay::UpdateDisplay(){
     else if(normalize_roi_ && roi_vec_.size() > 0){
       Roi &roi = roi_vec_[roi_idx_];
       roi_vec_mtx_.lock();
-      if(roi.vertices.size() > 0 && !create_roi_){
-        if(roi.vertices.size() > 1 && roi.type == Roi::ROI_RECT){
-          resize_total_mtx_.lock();
-          cv::Point2d p1 = ImageToView( cv::Point2d(roi.vertices[0].x * resize_fx_total_,
-                                                    roi.vertices[0].y * resize_fy_total_) ),
-                      p2 = ImageToView( cv::Point2d(roi.vertices[1].x * resize_fx_total_,
-                                                    roi.vertices[1].y * resize_fy_total_) );
-          resize_total_mtx_.unlock();
-          mio::SetClamp<double>(p1.x, 0, disp_img_.cols-1);
-          mio::SetClamp<double>(p1.y, 0, disp_img_.rows-1);
-          mio::SetClamp<double>(p2.x, 0, disp_img_.cols-1);
-          mio::SetClamp<double>(p2.y, 0, disp_img_.rows-1);
-          if(fabs(p1.x - p2.x) > 2 && fabs(p1.y - p2.y) > 2){
-            cv::Mat roi = cv::Mat( disp_img_, cv::Rect(p1, p2) );
-            cv::normalize(roi, roi, 0, 255, cv::NORM_MINMAX);
-          }
+      if(roi.vertices.size() > 1 && roi.type == Roi::ROI_RECT && !create_roi_){
+        resize_total_mtx_.lock();
+        cv::Point2d p1 = ImageToView( cv::Point2d(roi.vertices[0].x * resize_fx_total_,
+                                                  roi.vertices[0].y * resize_fy_total_) ),
+                    p2 = ImageToView( cv::Point2d(roi.vertices[1].x * resize_fx_total_,
+                                                  roi.vertices[1].y * resize_fy_total_) );
+        resize_total_mtx_.unlock();
+        mio::SetClamp<double>(p1.x, 0, disp_img_.cols-1);
+        mio::SetClamp<double>(p1.y, 0, disp_img_.rows-1);
+        mio::SetClamp<double>(p2.x, 0, disp_img_.cols-1);
+        mio::SetClamp<double>(p2.y, 0, disp_img_.rows-1);
+        if(fabs(p1.x - p2.x) > 2 && fabs(p1.y - p2.y) > 2){
+          cv::Mat roi = cv::Mat( disp_img_, cv::Rect(p1, p2) );
+          cv::normalize(roi, roi, 0, 255, cv::NORM_MINMAX);
         }
       }
       roi_vec_mtx_.unlock();
