@@ -343,7 +343,7 @@ void AdvImageDisplay::UpdateDisplay(){
         mio::SetClamp<double>(p1.y, 0, disp_img_.rows-1);
         mio::SetClamp<double>(p2.x, 0, disp_img_.cols-1);
         mio::SetClamp<double>(p2.y, 0, disp_img_.rows-1);
-        if(fabs(p1.x - p2.x) > 2 && fabs(p1.y - p2.y) > 2){
+        if(std::fabs(p1.x - p2.x) > 2 && std::fabs(p1.y - p2.y) > 2){
           cv::Mat roi = cv::Mat( disp_img_, cv::Rect(p1, p2) );
           cv::normalize(roi, roi, 0, 255, cv::NORM_MINMAX);
         }
