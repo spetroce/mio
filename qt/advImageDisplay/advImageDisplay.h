@@ -46,7 +46,6 @@ struct Roi{
                    ROI_DRAG_CIRCLE = 3;
   static constexpr std::array<const char*, 4> roi_type_str = { {"rect", "poly", "cent-circ", "drag-circ"} };
 
-  std::mutex mutex;
   int type;
   std::vector<cv::Point2d> vertices;
 
@@ -123,9 +122,10 @@ class AdvImageDisplay : public QWidget{
 
     bool create_roi_, normalize_roi_, show_roi_;
     double resize_fx_total_, resize_fy_total_;
-    Roi src_roi_, disp_roi_;
-    std::mutex resize_total_mtx_, roi_mask_mtx_;
-    //std::vector<Roi> roi_vec_;
+    Roi disp_roi_;
+    std::mutex resize_total_mtx_, roi_mask_mtx_, disp_roi_mtx_, roi_vec_mtx_;
+    std::vector<Roi> roi_vec_;
+    size_t roi_idx_;
     //std::vector< std::vector<cv::Point> > roi_polygons_tmp_;
     cv::Mat roi_mask_, disp_roi_mask_;
     void DrawRoi(cv::Mat &img);
