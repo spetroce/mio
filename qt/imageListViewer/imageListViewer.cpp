@@ -25,10 +25,7 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
   adv_img_disp_->SetLimitView(true);
   if(show_earth)
     ShowEarth();
-
-  //TODO - add support for multiple roi's
-  ui->horizontalLayout_roi->removeWidget(ui->comboBox_select_roi);
-  delete ui->comboBox_select_roi;
+  ui->comboBox_select_roi->addItem("Show All");
 }
 
 
@@ -137,11 +134,15 @@ void ImageListViewer::IncrementImgIdxSlider(){
 
 
 void ImageListViewer::AddRoi(){
-  adv_img_disp_->BeginCreateRoi(ui->comboBox_roi_type->currentIndex());
+  const size_t kRoiTypeIdx = ui->comboBox_roi_type->currentIndex();
+  adv_img_disp_->BeginCreateRoi(kRoiTypeIdx);
+  ui->comboBox_select_roi->addItem(QString::number(ui->comboBox_select_roi->count()) +
+                                   " - " + QString(Roi::roi_type_str[kRoiTypeIdx]));
 }
 
 
 void ImageListViewer::RemoveRoi(){
+  ui->comboBox_select_roi->removeItem(ui->comboBox_select_roi->currentIndex());
   adv_img_disp_->RemoveRoi();
 }
 
