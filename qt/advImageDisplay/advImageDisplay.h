@@ -65,7 +65,7 @@ class AdvImageDisplay : public QWidget{
     //void SetResizeScale(const double height_scale, const double width_scale);
     void BeginCreateRoi(const int roi_type);
     void AddRoi();
-    void RemoveRoi();
+    void RemoveRoi(const int kRoiIdx);
     void GetRoiMask(cv::Mat &roi, cv::Size resize_to = cv::Size());
     void ShowStripes();
     void ShowRoi();
@@ -122,12 +122,13 @@ class AdvImageDisplay : public QWidget{
 
     bool create_roi_, normalize_roi_, show_roi_;
     double resize_fx_total_, resize_fy_total_;
-    Roi disp_roi_;
-    std::mutex resize_total_mtx_, roi_mask_mtx_, disp_roi_mtx_, roi_vec_mtx_;
+    Roi temp_roi_;
+    std::mutex resize_total_mtx_, roi_mask_mtx_, temp_roi_mtx_, roi_vec_mtx_;
     std::vector<Roi> roi_vec_;
     size_t roi_idx_;
     //std::vector< std::vector<cv::Point> > roi_polygons_tmp_;
-    cv::Mat roi_mask_, disp_roi_mask_;
+    cv::Mat roi_mask_, temp_roi_mask_;
+    void DrawRoi(const Roi &kRoi, cv::Mat &img);
     void DrawRoi(cv::Mat &img);
     void CreateRoiMask();
     void InitCreateRoi();

@@ -1,5 +1,6 @@
 #include "imageListViewer.h"
 #include "ui_imageListViewer.h"
+#include <QMessageBox>
 
 using namespace mio;
 
@@ -136,14 +137,25 @@ void ImageListViewer::IncrementImgIdxSlider(){
 void ImageListViewer::AddRoi(){
   const size_t kRoiTypeIdx = ui->comboBox_roi_type->currentIndex();
   adv_img_disp_->BeginCreateRoi(kRoiTypeIdx);
-  ui->comboBox_select_roi->addItem(QString::number(ui->comboBox_select_roi->count()) +
+  ui->comboBox_select_roi->addItem(QString::number(ui->comboBox_select_roi->count()-1) +
                                    " - " + QString(Roi::roi_type_str[kRoiTypeIdx]));
 }
 
 
 void ImageListViewer::RemoveRoi(){
-  ui->comboBox_select_roi->removeItem(ui->comboBox_select_roi->currentIndex());
-  adv_img_disp_->RemoveRoi();
+  if(ui->comboBox_select_roi->currentIndex() == 0 && ui->comboBox_select_roi->count() > 1){
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Remove ROI Prompt", "Remove all ROI?", QMessageBox::Yes | QMessageBox::No);
+    if(reply == QMessageBox::Yes){
+      for(size_t i = ui->comboBox_select_roi->count()-1; i > 0; --i)
+        ui->comboBox_select_roi->removeItem(i);
+      adv_img_disp_->RemoveRoi(-1);
+    }
+  }
+  else{
+    adv_img_disp_->RemoveRoi(ui->comboBox_select_roi->currentIndex()-1);
+    ui->comboBox_select_roi->removeItem(ui->comboBox_select_roi->currentIndex());
+  }
 }
 
 

@@ -105,16 +105,16 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
           cv::Point2d mouse_pos(mouse_event->pos().x(), mouse_event->pos().y());
           cv::Point2d processed_img_mouse_pos = ViewToImage(mouse_pos);
           bool update_display = true;
-          disp_roi_mtx_.lock();
-          const size_t kRoiVerticesSize = disp_roi_.vertices.size();
+          temp_roi_mtx_.lock();
+          const size_t kRoiVerticesSize = temp_roi_.vertices.size();
           if(create_roi_ && kRoiVerticesSize > 1){
-            if(disp_roi_.type == Roi::ROI_RECT ||
-               disp_roi_.type == Roi::ROI_CENTER_CIRCLE || disp_roi_.type == Roi::ROI_DRAG_CIRCLE){
+            if(temp_roi_.type == Roi::ROI_RECT ||
+               temp_roi_.type == Roi::ROI_CENTER_CIRCLE || temp_roi_.type == Roi::ROI_DRAG_CIRCLE){
               STD_INVALID_ARG_E(kRoiVerticesSize == 2)
-              disp_roi_.vertices[1] = processed_img_mouse_pos;
+              temp_roi_.vertices[1] = processed_img_mouse_pos;
             }
-            else if(disp_roi_.type == Roi::ROI_POLY)
-              disp_roi_.vertices.back() = processed_img_mouse_pos;
+            else if(temp_roi_.type == Roi::ROI_POLY)
+              temp_roi_.vertices.back() = processed_img_mouse_pos;
           }
           else if(mouse_button_pressed_){
             mouse_drag_ = mouse_button_press_init_pos_ - cv::Point2d(sm::RoundToMultiple(mouse_pos.x, 3),
@@ -125,7 +125,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
           }
           else
             update_display = false;
-          disp_roi_mtx_.unlock();
+          temp_roi_mtx_.unlock();
           if(update_display)
             UpdateDisplay();
           break;
@@ -139,14 +139,14 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
           const cv::Point2d mouse_pos = cv::Point2d( mouse_event->pos().x(), mouse_event->pos().y() );
           mouse_button_press_init_pos_ = mouse_pos;
           if(create_roi_){
-            disp_roi_mtx_.lock();
-            if(disp_roi_.type == Roi::ROI_RECT ||
-               disp_roi_.type == Roi::ROI_CENTER_CIRCLE || disp_roi_.type == Roi::ROI_DRAG_CIRCLE){
-              disp_roi_.vertices.resize(2);
-              disp_roi_.vertices[0] = disp_roi_.vertices[1] = ViewToImage(mouse_pos);
+            temp_roi_mtx_.lock();
+            if(temp_roi_.type == Roi::ROI_RECT ||
+               temp_roi_.type == Roi::ROI_CENTER_CIRCLE || temp_roi_.type == Roi::ROI_DRAG_CIRCLE){
+              temp_roi_.vertices.resize(2);
+              temp_roi_.vertices[0] = temp_roi_.vertices[1] = ViewToImage(mouse_pos);
               update_display = true;
             }
-            disp_roi_mtx_.unlock();
+            temp_roi_mtx_.unlock();
           }
           mouse_click_pnt_vec_.resize(1);
           mouse_click_pnt_vec_[0] = ViewToImage(mouse_pos);
@@ -159,25 +159,25 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
           mouse_button_pressed_ = false;
           bool update_display = false;
           if(create_roi_){
-            disp_roi_mtx_.lock();
-            if(disp_roi_.type == Roi::ROI_RECT ||
-               disp_roi_.type == Roi::ROI_CENTER_CIRCLE || disp_roi_.type == Roi::ROI_DRAG_CIRCLE){
-              disp_roi_mtx_.unlock();
+            temp_roi_mtx_.lock();
+            if(temp_roi_.type == Roi::ROI_RECT ||
+               temp_roi_.type == Roi::ROI_CENTER_CIRCLE || temp_roi_.type == Roi::ROI_DRAG_CIRCLE){
+              temp_roi_mtx_.unlock();
               AddRoi();
-              disp_roi_mtx_.lock();
+              temp_roi_mtx_.lock();
             }
-            else if(disp_roi_.type == Roi::ROI_POLY){
+            else if(temp_roi_.type == Roi::ROI_POLY){
               QMouseEvent *mouse_event = dynamic_cast<QMouseEvent*>(event);
               const cv::Point2d mouse_pos = cv::Point2d( mouse_event->pos().x(), mouse_event->pos().y() );
-              if( disp_roi_.vertices.empty() ){
-                disp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
-                disp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
+              if( temp_roi_.vertices.empty() ){
+                temp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
+                temp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
               }
               else
-                disp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
+                temp_roi_.vertices.push_back( ViewToImage(mouse_pos) );
               update_display = true;
             }
-            disp_roi_mtx_.unlock();
+            temp_roi_mtx_.unlock();
           }
           if(update_display)
             UpdateDisplay();
@@ -187,17 +187,17 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
         if(create_roi_){
           QKeyEvent *keyEvent = dynamic_cast<QKeyEvent*>(event);
           const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
-          disp_roi_mtx_.lock();
-          if(disp_roi_.type == Roi::ROI_POLY && disp_roi_.vertices.size() > 3 &&
+          temp_roi_mtx_.lock();
+          if(temp_roi_.type == Roi::ROI_POLY && temp_roi_.vertices.size() > 3 &&
              keyEvent->key() == Qt::Key_Space && modifiers == Qt::NoButton){
-            disp_roi_.vertices.pop_back();
-            disp_roi_mtx_.unlock();
+            temp_roi_.vertices.pop_back();
+            temp_roi_mtx_.unlock();
             AddRoi();
             UpdateDisplay();
           }
           else{
-            disp_roi_mtx_.unlock();
-            RemoveRoi();
+            temp_roi_mtx_.unlock();
+            RemoveRoi(roi_idx_);
           }
         }
         break;
@@ -356,14 +356,14 @@ void AdvImageDisplay::UpdateDisplay(){
     if(show_roi_){
       roi_mask_mtx_.lock();
       if(kIsScaled)
-        cv::resize(roi_mask_, disp_roi_mask_, display_img_size, 0, 0, cv::INTER_NEAREST);
+        cv::resize(roi_mask_, temp_roi_mask_, display_img_size, 0, 0, cv::INTER_NEAREST);
       else
-        disp_roi_mask_ = roi_mask_;
+        temp_roi_mask_ = roi_mask_;
       roi_mask_mtx_.unlock();
       cv::Mat tmp_img(disp_img_.size(), disp_img_.type());
-      disp_img_.copyTo(tmp_img, disp_roi_mask_);
+      disp_img_.copyTo(tmp_img, temp_roi_mask_);
       disp_img_ *= 0.4;
-      tmp_img.copyTo(disp_img_, disp_roi_mask_);
+      tmp_img.copyTo(disp_img_, temp_roi_mask_);
     }
 
     DrawRoi(disp_img_); //draw the ROI if it exists
@@ -405,21 +405,17 @@ void AdvImageDisplay::ImageToView(const std::vector<cv::Point2d> &kSrcPnt, std::
 }
 
 
-//TODO - there could be a race between the image processing loop and the data used to draw the ROI's, that is,
-//maybe the Roi should be emitted with each frame.
-void AdvImageDisplay::DrawRoi(cv::Mat &img){
+void AdvImageDisplay::DrawRoi(const Roi &kRoi, cv::Mat &img){
   cv::Scalar color = img.channels() > 1 ? cv::Scalar(50, 50, 50) : cv::Scalar(255, 255, 255);
-
-  disp_roi_mtx_.lock();
-  if(disp_roi_.vertices.size() > 0){
+  if(kRoi.vertices.size() > 0){
     std::vector<cv::Point> vertices;
     resize_total_mtx_.lock();
     const bool kScaleVertices = std::fabs(resize_fx_total_ - 1.0) > 0.00001 &&
                                 std::fabs(resize_fy_total_ - 1.0) > 0.00001;
     resize_total_mtx_.unlock();
-    ImageToView(disp_roi_.vertices, vertices, kScaleVertices);
+    ImageToView(kRoi.vertices, vertices, kScaleVertices);
 
-    switch(disp_roi_.type){
+    switch(kRoi.type){
       case Roi::ROI_RECT:
         STD_INVALID_ARG_E(vertices.size() == 2)
         cv::rectangle(img, vertices[0], vertices[1], color, 1);
@@ -439,7 +435,24 @@ void AdvImageDisplay::DrawRoi(cv::Mat &img){
         break;
     }
   }
-  disp_roi_mtx_.unlock();
+}
+
+
+void AdvImageDisplay::DrawRoi(cv::Mat &img){
+  if(create_roi_){
+    temp_roi_mtx_.lock();
+    DrawRoi(temp_roi_, img);
+    temp_roi_mtx_.unlock();
+  }
+  else{
+    roi_vec_mtx_.lock();
+    if(roi_idx_ == -1)
+      for(const auto roi : roi_vec_)
+        DrawRoi(roi, img);
+    else if(roi_vec_.size() > 0 && roi_idx_ > 0 && roi_idx_ < roi_vec_.size())
+      DrawRoi(roi_vec_[roi_idx_], img);
+    roi_vec_mtx_.unlock();
+  }
 }
 
 
@@ -450,36 +463,36 @@ void AdvImageDisplay::BeginCreateRoi(const int kRoiType){
   roi_idx_ = roi_vec_.size()-1;
   roi_vec_mtx_.unlock();
   show_roi_ = false;
-  disp_roi_mtx_.lock();
+  temp_roi_mtx_.lock();
   create_roi_ = true;
-  disp_roi_.type = kRoiType;
-  disp_roi_.vertices.clear();
+  temp_roi_.type = kRoiType;
+  temp_roi_.vertices.clear();
   ResetResizeTotal();
-  disp_roi_mtx_.unlock();
+  temp_roi_mtx_.unlock();
 }
 
 
 void AdvImageDisplay::AddRoi(){
   // TODO callback to imagelistviewer so it knows when add roi is finished (enable add button)
-  disp_roi_mtx_.lock();
+  temp_roi_mtx_.lock();
   create_roi_ = false;
   roi_vec_mtx_.lock();
-  roi_vec_[roi_idx_] = disp_roi_;
+  roi_vec_.push_back(temp_roi_);
   roi_vec_mtx_.unlock();
-  disp_roi_mtx_.unlock();
+  temp_roi_mtx_.unlock();
   UpdateRoiMask();
 }
 
 
- void AdvImageDisplay::RemoveRoi(){
+ void AdvImageDisplay::RemoveRoi(const int kRoiIdx){
   roi_vec_mtx_.lock();
-  roi_vec_.erase(roi_vec_.begin()+roi_idx_);
+  roi_vec_.erase(roi_vec_.begin()+kRoiIdx);
   if(roi_idx_ >= roi_vec_.size())
     roi_idx_ = roi_vec_.size()-1;
-  disp_roi_mtx_.lock();
+  temp_roi_mtx_.lock();
   create_roi_ = false;
-  disp_roi_.vertices.clear();
-  disp_roi_mtx_.unlock();
+  temp_roi_.vertices.clear();
+  temp_roi_mtx_.unlock();
   UpdateRoiMask();
   UpdateDisplay();
 }
@@ -492,10 +505,10 @@ void AdvImageDisplay::UpdateRoiMask(){
     cv::Size disp_img_size = src_img_.size();
     src_img_mtx_.unlock();
 
-    Roi &roi = roi_vec_[roi_idx_];
     roi_mask_mtx_.lock();
     {
-      if(roi.vertices.size() > 0){
+      if(roi_vec_.size() > 0){
+        Roi &roi = roi_vec_[roi_idx_];
         roi_mask_ = cv::Mat::zeros(disp_img_size, CV_8UC1);
 #if CV_MAJOR_VERSION < 3
         const int kFillFlag = CV_FILLED;
@@ -735,7 +748,7 @@ void AdvImageDisplay::LoadRoi(const QString kFileFullQStr){
     if(xml_reader.isStartElement() && xml_reader.name() == "ROI"){
       attr = xml_reader.attributes();
       if(attr.hasAttribute("type") )
-        disp_roi_.type = ATTR_TO_INT(attr, "type");
+        temp_roi_.type = ATTR_TO_INT(attr, "type");
 
       // iterate through children of ROI
       while(!xml_reader.atEnd() && !xml_reader.hasError()){
@@ -751,7 +764,7 @@ void AdvImageDisplay::LoadRoi(const QString kFileFullQStr){
                 pnt.x = ATTR_TO_FLT(attr, "x");
               if(attr.hasAttribute("y") )
                 pnt.y = ATTR_TO_FLT(attr, "y");
-              disp_roi_.vertices.push_back(pnt);
+              temp_roi_.vertices.push_back(pnt);
               std::cout << pnt << std::endl;
             }
             else if(xml_reader.isEndElement() && xml_reader.name() == "Points")
