@@ -719,26 +719,26 @@ int AdvImageDisplay::GetRoiIndex(){
 
 void AdvImageDisplay::SaveRoi(QString file_full_qstr){
 #ifdef HAVE_QT_XML
-  if(roi_vec_.size() > 0)
+  if(roi_vec_.size() > 0){
+    Roi &roi = roi_vec_[i];
+    EXP_CHK(roi.vertices.size() >= 2, return)
+    EXP_CHK(!file_full_qstr.isEmpty(), return)
+    std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
+    mio::FileNameExpand(file_full, ".", &file_path, NULL, &file_name_no_ext, NULL);
+    EXP_CHK_M(mio::DirExists(file_path), return, file_path + "is not an existing directory")
+    file_full = file_path + "/" + file_name_no_ext + "_" + std::to_string(i) + ".xml";
+    printf("%s - saving ROI to %s\n", CURRENT_FUNC, file_full.c_str());
+    file_full_qstr = QString(file_full);
+
+    QFile file(file_full_qstr);
+    EXP_CHK(file.open(QIODevice::WriteOnly),
+            QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
+
+    QXmlStreamWriter xml_writer(&file);
+    xml_writer.setAutoFormatting(true);
+    xml_writer.writeStartDocument(); //write XML version number
+
     for(size_t i = 0; i < roi_vec_.size(); ++i){
-      Roi &roi = roi_vec_[i];
-      EXP_CHK(roi.vertices.size() >= 2, return)
-      EXP_CHK(!file_full_qstr.isEmpty(), return)
-      std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
-      mio::FileNameExpand(file_full, ".", &file_path, NULL, &file_name_no_ext, NULL);
-      EXP_CHK_M(mio::DirExists(file_path), return, file_path + "is not an existing directory")
-      file_full = file_path + "/" + file_name_no_ext + "_" + std::to_string(i) + ".xml";
-      printf("%s - saving ROI to %s\n", CURRENT_FUNC, file_full.c_str());
-      file_full_qstr = QString(file_full);
-
-      QFile file(file_full_qstr);
-      EXP_CHK(file.open(QIODevice::WriteOnly),
-              QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
-
-      QXmlStreamWriter xml_writer(&file);
-      xml_writer.setAutoFormatting(true);
-      xml_writer.writeStartDocument(); //write XML version number
-
       xml_writer.writeStartElement("ROI");
       xml_writer.writeAttribute("type", INT_TO_QSTR(roi.type));
       xml_writer.writeStartElement("Points");
@@ -750,10 +750,11 @@ void AdvImageDisplay::SaveRoi(QString file_full_qstr){
       }
       xml_writer.writeEndElement(); //end Points
       xml_writer.writeEndElement(); //end ROI
-
-      xml_writer.writeEndDocument();
-      file.close();
     }
+
+    xml_writer.writeEndDocument();
+    file.close();
+  }
 #endif
 }
 
