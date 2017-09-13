@@ -720,16 +720,13 @@ int AdvImageDisplay::GetRoiIndex(){
 void AdvImageDisplay::SaveRoi(QString file_full_qstr){
 #ifdef HAVE_QT_XML
   if(roi_vec_.size() > 0){
-    Roi &roi = roi_vec_[i];
-    EXP_CHK(roi.vertices.size() >= 2, return)
     EXP_CHK(!file_full_qstr.isEmpty(), return)
-    std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
-    mio::FileNameExpand(file_full, ".", &file_path, NULL, &file_name_no_ext, NULL);
+    std::string file_full = file_full_qstr.toStdString(), file_path;
+    mio::FileNameExpand(file_full, ".", &file_path, NULL, NULL, NULL);
     EXP_CHK_M(mio::DirExists(file_path), return, file_path + "is not an existing directory")
-    file_full = file_path + "/" + file_name_no_ext + "_" + std::to_string(i) + ".xml";
+    mio::ForceFileExtension(file_full, "xml")
     printf("%s - saving ROI to %s\n", CURRENT_FUNC, file_full.c_str());
     file_full_qstr = QString(file_full);
-
     QFile file(file_full_qstr);
     EXP_CHK(file.open(QIODevice::WriteOnly),
             QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
@@ -738,18 +735,20 @@ void AdvImageDisplay::SaveRoi(QString file_full_qstr){
     xml_writer.setAutoFormatting(true);
     xml_writer.writeStartDocument(); //write XML version number
 
-    for(size_t i = 0; i < roi_vec_.size(); ++i){
-      xml_writer.writeStartElement("ROI");
-      xml_writer.writeAttribute("type", INT_TO_QSTR(roi.type));
-      xml_writer.writeStartElement("Points");
-      for(auto &pnt : roi.vertices){
-        xml_writer.writeStartElement("Point");
-        xml_writer.writeAttribute("x", FLT_TO_QSTR(pnt.x));
-        xml_writer.writeAttribute("y", FLT_TO_QSTR(pnt.y));
-        xml_writer.writeEndElement(); //end point
+    for(auto &roi : roi_vec_){
+      if(roi.vertices.size() >= 2){
+        xml_writer.writeStartElement("ROI");
+        xml_writer.writeAttribute("type", INT_TO_QSTR(roi.type));
+        xml_writer.writeStartElement("Points");
+        for(auto &pnt : roi.vertices){
+          xml_writer.writeStartElement("Point");
+          xml_writer.writeAttribute("x", FLT_TO_QSTR(pnt.x));
+          xml_writer.writeAttribute("y", FLT_TO_QSTR(pnt.y));
+          xml_writer.writeEndElement(); //end point
+        }
+        xml_writer.writeEndElement(); //end Points
+        xml_writer.writeEndElement(); //end ROI
       }
-      xml_writer.writeEndElement(); //end Points
-      xml_writer.writeEndElement(); //end ROI
     }
 
     xml_writer.writeEndDocument();
@@ -772,15 +771,17 @@ void AdvImageDisplay::LoadRoi(const QString kFileFullQStr){
 
   QXmlStreamAttributes attr;
   QXmlStreamReader xml_reader(&file);
+  Roi roi;
   while(!xml_reader.atEnd() && !xml_reader.hasError()){
     xml_reader.readNext();
     if(xml_reader.isStartDocument()) //skip StartDocument tokens
       continue;
 
     if(xml_reader.isStartElement() && xml_reader.name() == "ROI"){
+      roi.vertices.clear();
       attr = xml_reader.attributes();
       if(attr.hasAttribute("type") )
-        temp_roi_.type = ATTR_TO_INT(attr, "type");
+        roi.type = ATTR_TO_INT(attr, "type");
 
       // iterate through children of ROI
       while(!xml_reader.atEnd() && !xml_reader.hasError()){
@@ -796,7 +797,7 @@ void AdvImageDisplay::LoadRoi(const QString kFileFullQStr){
                 pnt.x = ATTR_TO_FLT(attr, "x");
               if(attr.hasAttribute("y") )
                 pnt.y = ATTR_TO_FLT(attr, "y");
-              temp_roi_.vertices.push_back(pnt);
+              roi.vertices.push_back(pnt);
               std::cout << pnt << std::endl;
             }
             else if(xml_reader.isEndElement() && xml_reader.name() == "Points")
@@ -806,6 +807,8 @@ void AdvImageDisplay::LoadRoi(const QString kFileFullQStr){
         else if(xml_reader.isEndElement() && xml_reader.name() == "ROI")
           break;
       }
+      if(roi.vertices.size >= 2)
+        roi_vec_.push_back(roi);
     }
   }
 
