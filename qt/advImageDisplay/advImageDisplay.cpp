@@ -13,7 +13,7 @@ constexpr std::array<const char*, 4> Roi::roi_type_str;
 AdvImageDisplay::AdvImageDisplay(QWidget *parent) : QWidget(parent), id_(0), normalize_img_(false),
     normalize_roi_(false), convert_to_false_colors_(false), layout_(NULL), label_(NULL), show_image_(false),
     is_init_(false), limit_view_(false), show_roi_(false), auto_convert_img_(false), zooming_enabled_(true),
-    draw_mouse_clicks_(false), mouse_button_pressed_(false), roi_idx_(0){
+    draw_mouse_clicks_(false), mouse_button_pressed_(false), roi_idx_(-1){
 #ifdef HAVE_LCM
   lcm_is_init_ = false;
 #endif
@@ -197,7 +197,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
           }
           else{
             temp_roi_mtx_.unlock();
-            RemoveRoi(roi_idx_);
+            CancelCreateRoi();
           }
         }
         break;
@@ -327,10 +327,11 @@ void AdvImageDisplay::UpdateDisplay(){
       disp_img_ = src_img_.clone();
 
     //perform any backend conversions, normalizing, false colors
-    if(normalize_img_)
+    if(normalize_img_){
       cv::normalize(disp_img_, disp_img_, 0, 255, cv::NORM_MINMAX);
+    }
     else if(normalize_roi_ && roi_vec_.size() > 0){
-      Roi &roi = roi_vec_[roi_idx_];
+      Roi &roi = roi_vec_[roi_idx_ == -1 ? 0 : roi_idx_];
       roi_vec_mtx_.lock();
       if(roi.vertices.size() > 1 && roi.type == Roi::ROI_RECT && !create_roi_){
         resize_total_mtx_.lock();
@@ -444,31 +445,37 @@ void AdvImageDisplay::DrawRoi(cv::Mat &img){
     DrawRoi(temp_roi_, img);
     temp_roi_mtx_.unlock();
   }
-  else{
-    roi_vec_mtx_.lock();
+
+  roi_vec_mtx_.lock();
+  if(roi_vec_.size() > 0)
     if(roi_idx_ == -1)
       for(const auto roi : roi_vec_)
         DrawRoi(roi, img);
-    else if(roi_vec_.size() > 0 && roi_idx_ > 0 && roi_idx_ < roi_vec_.size())
+    else if(roi_idx_ < static_cast<int>(roi_vec_.size()))
       DrawRoi(roi_vec_[roi_idx_], img);
-    roi_vec_mtx_.unlock();
+  roi_vec_mtx_.unlock();
+}
+
+
+void AdvImageDisplay::CancelCreateRoi(){
+  if(create_roi_){
+    temp_roi_mtx_.lock();
+    temp_roi_.vertices.clear();
+    create_roi_ = false;
+    temp_roi_mtx_.unlock();
   }
 }
 
 
-void AdvImageDisplay::BeginCreateRoi(const int kRoiType){
+void AdvImageDisplay::CreateRoi(const int kRoiType){
   printf("%s\n", CURRENT_FUNC);
-  roi_vec_mtx_.lock();
-  roi_vec_.emplace_back();
-  roi_idx_ = roi_vec_.size()-1;
-  roi_vec_mtx_.unlock();
-  show_roi_ = false;
   temp_roi_mtx_.lock();
-  create_roi_ = true;
   temp_roi_.type = kRoiType;
   temp_roi_.vertices.clear();
-  ResetResizeTotal();
+  show_roi_ = false;
+  create_roi_ = true;
   temp_roi_mtx_.unlock();
+  ResetResizeTotal();
 }
 
 
@@ -481,34 +488,41 @@ void AdvImageDisplay::AddRoi(){
   roi_vec_mtx_.unlock();
   temp_roi_mtx_.unlock();
   UpdateRoiMask();
+  UpdateDisplay();
 }
 
 
- void AdvImageDisplay::RemoveRoi(const int kRoiIdx){
-  roi_vec_mtx_.lock();
-  roi_vec_.erase(roi_vec_.begin()+kRoiIdx);
-  if(roi_idx_ >= roi_vec_.size())
-    roi_idx_ = roi_vec_.size()-1;
-  temp_roi_mtx_.lock();
-  create_roi_ = false;
-  temp_roi_.vertices.clear();
-  temp_roi_mtx_.unlock();
+void AdvImageDisplay::RemoveRoi(const int kRoiIdx){
+  if(create_roi_){
+    temp_roi_mtx_.lock();
+    create_roi_ = false;
+    temp_roi_.vertices.clear();
+    temp_roi_mtx_.unlock();
+  }
+  else{
+    roi_vec_mtx_.lock();
+    if(kRoiIdx == -1)
+      roi_vec_.clear();
+    else if(roi_vec_.size() > 0 && kRoiIdx > 0 && kRoiIdx < roi_vec_.size())
+      roi_vec_.erase(roi_vec_.begin()+kRoiIdx);
+    roi_vec_mtx_.unlock();
+  }
   UpdateRoiMask();
   UpdateDisplay();
 }
 
 
 void AdvImageDisplay::UpdateRoiMask(){
-  printf("%s - id=%d\n", CURRENT_FUNC, id_);
   try{
     src_img_mtx_.lock();
     cv::Size disp_img_size = src_img_.size();
     src_img_mtx_.unlock();
 
     roi_mask_mtx_.lock();
+    roi_vec_mtx_.lock();
     {
-      if(roi_vec_.size() > 0){
-        Roi &roi = roi_vec_[roi_idx_];
+      if(roi_vec_.size() > 0 && roi_idx_ < static_cast<int>(roi_vec_.size())){
+        Roi &roi = roi_vec_[(roi_idx_ == -1 ? 0 : roi_idx_)];
         roi_mask_ = cv::Mat::zeros(disp_img_size, CV_8UC1);
 #if CV_MAJOR_VERSION < 3
         const int kFillFlag = CV_FILLED;
@@ -517,7 +531,7 @@ void AdvImageDisplay::UpdateRoiMask(){
 #endif
         switch(roi.type){
           case Roi::ROI_RECT:
-            EXP_CHK(roi.vertices.size() == 2, return)
+            STD_INVALID_ARG_E(roi.vertices.size() == 2)
             cv::rectangle(roi_mask_, roi.vertices[0], roi.vertices[1], cv::Scalar(255), kFillFlag);
             break;
           case Roi::ROI_POLY:
@@ -551,6 +565,7 @@ void AdvImageDisplay::UpdateRoiMask(){
       else
         roi_mask_ = cv::Mat();
     }
+    roi_vec_mtx_.unlock();
     roi_mask_mtx_.unlock();
   }
   catch(cv::Exception &e){
@@ -643,6 +658,7 @@ QLabel* AdvImageDisplay::GetImageQLabel(){
 
 void AdvImageDisplay::SetNormalizeImage(const bool kState){
   normalize_img_ = kState;
+  UpdateDisplay();
 }
 
 bool AdvImageDisplay::GetNormalizeImage(){
@@ -651,6 +667,7 @@ bool AdvImageDisplay::GetNormalizeImage(){
 
 void AdvImageDisplay::SetNormalizeRoi(const bool kState){
   normalize_roi_ = kState;
+  UpdateDisplay();
 }
 
 bool AdvImageDisplay::GetNormalizeRoi(){
@@ -688,41 +705,55 @@ void AdvImageDisplay::ClearClickPntBuffer(){
   UpdateDisplay();
 }
 
+// Set the index of the ROI you want to display. Setting to -1 will display all ROIs
+void AdvImageDisplay::SetRoiIndex(const int kRoiIdx){
+  roi_idx_ = kRoiIdx;
+  UpdateRoiMask();
+  UpdateDisplay();
+}
+
+int AdvImageDisplay::GetRoiIndex(){
+  return roi_idx_;
+}
+
 
 void AdvImageDisplay::SaveRoi(QString file_full_qstr){
 #ifdef HAVE_QT_XML
-  Roi &roi = roi_vec_[roi_idx_];
-  EXP_CHK(roi.vertices.size() >= 2, return)
-  EXP_CHK(!file_full_qstr.isEmpty(), return)
-  std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
-  mio::FileNameExpand(file_full, ".", &file_path, NULL, NULL, NULL);
-  EXP_CHK_M(mio::DirExists(file_path), return, file_path + "is not an existing directory")
-  ForceXmlExtension(file_full_qstr);
-  file_full = file_full_qstr.toStdString();
-  printf("%s - saving ROI to %s\n", CURRENT_FUNC, file_full.c_str());
+  if(roi_vec_.size() > 0)
+    for(size_t i = 0; i < roi_vec_.size(); ++i){
+      Roi &roi = roi_vec_[i];
+      EXP_CHK(roi.vertices.size() >= 2, return)
+      EXP_CHK(!file_full_qstr.isEmpty(), return)
+      std::string file_full = file_full_qstr.toStdString(), file_path, file_name_no_ext;
+      mio::FileNameExpand(file_full, ".", &file_path, NULL, &file_name_no_ext, NULL);
+      EXP_CHK_M(mio::DirExists(file_path), return, file_path + "is not an existing directory")
+      file_full = file_path + "/" + file_name_no_ext + "_" + std::to_string(i) + ".xml";
+      printf("%s - saving ROI to %s\n", CURRENT_FUNC, file_full.c_str());
+      file_full_qstr = QString(file_full);
 
-  QFile file(file_full_qstr);
-  EXP_CHK(file.open(QIODevice::WriteOnly),
-            QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
+      QFile file(file_full_qstr);
+      EXP_CHK(file.open(QIODevice::WriteOnly),
+              QMessageBox::warning(0, "Read only", "The file is in read only mode");return)
 
-  QXmlStreamWriter xml_writer(&file);
-  xml_writer.setAutoFormatting(true);
-  xml_writer.writeStartDocument(); //write XML version number
+      QXmlStreamWriter xml_writer(&file);
+      xml_writer.setAutoFormatting(true);
+      xml_writer.writeStartDocument(); //write XML version number
 
-  xml_writer.writeStartElement("ROI");
-  xml_writer.writeAttribute("type", INT_TO_QSTR(roi.type));
-  xml_writer.writeStartElement("Points");
-  for(auto &pnt : roi.vertices){
-    xml_writer.writeStartElement("Point");
-    xml_writer.writeAttribute("x", FLT_TO_QSTR(pnt.x));
-    xml_writer.writeAttribute("y", FLT_TO_QSTR(pnt.y));
-    xml_writer.writeEndElement(); //end point
-  }
-  xml_writer.writeEndElement(); //end Points
-  xml_writer.writeEndElement(); //end ROI
+      xml_writer.writeStartElement("ROI");
+      xml_writer.writeAttribute("type", INT_TO_QSTR(roi.type));
+      xml_writer.writeStartElement("Points");
+      for(auto &pnt : roi.vertices){
+        xml_writer.writeStartElement("Point");
+        xml_writer.writeAttribute("x", FLT_TO_QSTR(pnt.x));
+        xml_writer.writeAttribute("y", FLT_TO_QSTR(pnt.y));
+        xml_writer.writeEndElement(); //end point
+      }
+      xml_writer.writeEndElement(); //end Points
+      xml_writer.writeEndElement(); //end ROI
 
-  xml_writer.writeEndDocument();
-  file.close();
+      xml_writer.writeEndDocument();
+      file.close();
+    }
 #endif
 }
 
@@ -740,7 +771,7 @@ void AdvImageDisplay::LoadRoi(const QString kFileFullQStr){
 
   QXmlStreamAttributes attr;
   QXmlStreamReader xml_reader(&file);
-  while( !xml_reader.atEnd() && !xml_reader.hasError() ){
+  while(!xml_reader.atEnd() && !xml_reader.hasError()){
     xml_reader.readNext();
     if(xml_reader.isStartDocument()) //skip StartDocument tokens
       continue;

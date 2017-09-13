@@ -63,8 +63,8 @@ class AdvImageDisplay : public QWidget{
     void Init(const int id, const bool manage_layout = true);
     void SetImage(const cv::Mat &kImg, const bool kClone, const bool kCalledFromExternalThread = false);
     //void SetResizeScale(const double height_scale, const double width_scale);
-    void BeginCreateRoi(const int roi_type);
-    void AddRoi();
+    void CreateRoi(const int roi_type);
+    void CancelCreateRoi();
     void RemoveRoi(const int kRoiIdx);
     void GetRoiMask(cv::Mat &roi, cv::Size resize_to = cv::Size());
     void ShowStripes();
@@ -87,6 +87,8 @@ class AdvImageDisplay : public QWidget{
     bool GetDrawClicks();
     void GetClickPnts(std::vector<cv::Point2d> &pnt_vec);
     void ClearClickPntBuffer();
+    void SetRoiIndex(const int kRoiIdx);
+    int GetRoiIndex();
     void SaveRoi(QString file_full_qstr);
     void LoadRoi(const QString kFileFullQStr);
     bool SetZoomingEnabled(const bool kEnabled);
@@ -125,12 +127,11 @@ class AdvImageDisplay : public QWidget{
     Roi temp_roi_;
     std::mutex resize_total_mtx_, roi_mask_mtx_, temp_roi_mtx_, roi_vec_mtx_;
     std::vector<Roi> roi_vec_;
-    size_t roi_idx_;
-    //std::vector< std::vector<cv::Point> > roi_polygons_tmp_;
+    int roi_idx_;
     cv::Mat roi_mask_, temp_roi_mask_;
+    void AddRoi();
     void DrawRoi(const Roi &kRoi, cv::Mat &img);
     void DrawRoi(cv::Mat &img);
-    void CreateRoiMask();
     void InitCreateRoi();
     void UpdateRoiMask();
     void ResetResizeTotal();

@@ -4,7 +4,8 @@
 
 using namespace mio;
 
-ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidget(parent), ui(new Ui::ImageListViewer){
+ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) :
+    QWidget(parent), ui(new Ui::ImageListViewer), normalize_roi_(false){
   ui->setupUi(this);
   adv_img_disp_ = new AdvImageDisplay();
   adv_img_disp_->Init(0, false);
@@ -22,6 +23,8 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) : QWidg
   connect(ui->pb_roi_add, SIGNAL(clicked()), this, SLOT(AddRoi()));
   connect(ui->pb_roi_rem, SIGNAL(clicked()), this, SLOT(RemoveRoi()));
   connect(ui->pb_show_roi, SIGNAL(clicked()), this, SLOT(ShowRoi()));
+  connect(ui->pb_roi_norm, SIGNAL(clicked()), this, SLOT(RoiNorm()));
+  connect(ui->comboBox_select_roi, SIGNAL(currentIndexChanged(int)), this, SLOT(SetRoiIndex(int)));
 
   adv_img_disp_->SetLimitView(true);
   if(show_earth)
@@ -103,10 +106,10 @@ void ImageListViewer::SetImgIdxGui(){
 }
 
 
-void ImageListViewer::SetImage(const int idx){
-  EXP_CHK(idx >= 0 && idx < img_vec_.size(), return)
-  adv_img_disp_->SetImage(img_vec_[idx], true);
-  ui->lineEdit_img_name->setText(QString(img_file_name_vec_[idx].c_str()));
+void ImageListViewer::SetImage(const int kIndex){
+  EXP_CHK(kIndex >= 0 && kIndex < img_vec_.size(), return)
+  adv_img_disp_->SetImage(img_vec_[kIndex], true);
+  ui->lineEdit_img_name->setText(QString(img_file_name_vec_[kIndex].c_str()));
 }
 
 
@@ -136,14 +139,14 @@ void ImageListViewer::IncrementImgIdxSlider(){
 
 void ImageListViewer::AddRoi(){
   const size_t kRoiTypeIdx = ui->comboBox_roi_type->currentIndex();
-  adv_img_disp_->BeginCreateRoi(kRoiTypeIdx);
+  adv_img_disp_->CreateRoi(kRoiTypeIdx);
   ui->comboBox_select_roi->addItem(QString::number(ui->comboBox_select_roi->count()-1) +
                                    " - " + QString(Roi::roi_type_str[kRoiTypeIdx]));
 }
 
 
 void ImageListViewer::RemoveRoi(){
-  if(ui->comboBox_select_roi->currentIndex() == 0 && ui->comboBox_select_roi->count() > 1){
+  if(ui->comboBox_select_roi->currentIndex() == 0 && ui->comboBox_select_roi->count() > 2){
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Remove ROI Prompt", "Remove all ROI?", QMessageBox::Yes | QMessageBox::No);
     if(reply == QMessageBox::Yes){
@@ -161,6 +164,17 @@ void ImageListViewer::RemoveRoi(){
 
 void ImageListViewer::ShowRoi(){
   adv_img_disp_->ShowRoi();
+}
+
+
+void ImageListViewer::RoiNorm(){
+  normalize_roi_ = !normalize_roi_;
+  adv_img_disp_->SetNormalizeRoi(normalize_roi_);
+}
+
+
+void ImageListViewer::SetRoiIndex(const int kIndex){
+  adv_img_disp_->SetRoiIndex(kIndex-1);
 }
 
 

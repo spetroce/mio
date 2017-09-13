@@ -7,7 +7,6 @@ int main(int argc, char *argv[]){
   QApplication a(argc, argv);
   QApplication::setStyle(QStyleFactory::create("Fusion"));
   mio::ImageListViewer w(true);
-  w.adv_img_disp_->SetNormalizeRoi(true);
 
   const std::string keys = "{help h usage ? | | img_list_viewer_test -d=/path/to/images -e=tiff}"
                            "{d directory | null | directory containing images}"

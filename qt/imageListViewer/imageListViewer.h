@@ -33,14 +33,17 @@ class ImageListViewer : public QWidget {
     std::vector<cv::Mat> img_vec_;
     std::vector<std::string> img_file_name_vec_;
     void SetImgIdxGui();
+    bool normalize_roi_;
 
   private slots:
-    void SetImage(const int idx);
+    void SetImage(const int kIndex);
     void DecrementImgIdxSlider();
     void IncrementImgIdxSlider();
     void AddRoi();
     void RemoveRoi();
     void ShowRoi();
+    void RoiNorm();
+    void SetRoiIndex(const int kIndex);
 
   public slots:
     void HideShowRoiControl();
