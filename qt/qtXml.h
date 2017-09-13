@@ -19,10 +19,14 @@
 #define ELEM2INT(xml_stream_reader) xml_stream_reader.readElementText().toInt()
 #define ELEM2FLT(xml_stream_reader) xml_stream_reader.readElementText().toFloat()
 
+namespace mio{
+
 inline void ForceXmlExtension(QString &file_full_qt){
   std::string file_full = file_full_qt.toStdString();
   if( mio::ForceFileExtension(file_full, "xml") )
     file_full_qt = QString::fromStdString(file_full);
+}
+
 }
 
 #endif //__MIO_QT_XML_H__
