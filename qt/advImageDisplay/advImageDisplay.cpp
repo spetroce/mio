@@ -29,8 +29,7 @@ AdvImageDisplay::~AdvImageDisplay(){
     lcm_destroy(AdvImageDisplay::lcm_);
   }
 #endif
-  src_img_ = cv::Mat();
-  UpdateDisplay();
+  ClearDisplay();
   delete label_;
   label_ = NULL;
   if(layout_)
@@ -595,6 +594,12 @@ void AdvImageDisplay::ShowStripes(){
   src_img_ = cv::imread(ADV_IMG_DISP_STRIPES_JPEG);
   src_img_mtx_.unlock();
   UpdateDisplay();
+}
+
+
+void AdvImageDisplay::ClearDisplay(){
+  OpenCVMat2QImage(cv::Mat(), qt_src_img_, true); //TODO - check for error here
+  label_->setPixmap(QPixmap::fromImage(qt_src_img_));
 }
 
 

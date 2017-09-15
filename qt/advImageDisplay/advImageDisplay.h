@@ -68,6 +68,7 @@ class AdvImageDisplay : public QWidget{
     void RemoveRoi(const int kRoiIdx);
     void GetRoiMask(cv::Mat &roi, cv::Size resize_to = cv::Size());
     void ShowStripes();
+    void ClearDisplay();
     void ShowRoi();
     void SetNormalizeImage(const bool kState);
     bool GetNormalizeImage();
