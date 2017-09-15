@@ -1,6 +1,7 @@
 #include "imageListViewer.h"
 #include "ui_imageListViewer.h"
 #include <QMessageBox>
+#include <QFileDialog>
 
 using namespace mio;
 
@@ -24,6 +25,8 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) :
   connect(ui->pb_roi_rem, SIGNAL(clicked()), this, SLOT(RemoveRoi()));
   connect(ui->pb_show_roi, SIGNAL(clicked()), this, SLOT(ShowRoi()));
   connect(ui->pb_roi_norm, SIGNAL(clicked()), this, SLOT(RoiNorm()));
+  connect(ui->pb_roi_save, SIGNAL(clicked()), this, SLOT(SaveRoi()));
+  connect(ui->pb_roi_load, SIGNAL(clicked()), this, SLOT(LoadRoi()));
   connect(ui->comboBox_select_roi, SIGNAL(currentIndexChanged(int)), this, SLOT(SetRoiIndex(int)));
 
   adv_img_disp_->SetLimitView(true);
@@ -170,6 +173,29 @@ void ImageListViewer::ShowRoi(){
 void ImageListViewer::RoiNorm(){
   normalize_roi_ = !normalize_roi_;
   adv_img_disp_->SetNormalizeRoi(normalize_roi_);
+}
+
+
+void ImageListViewer::SaveRoi(){
+  QString filter = "*.xml";
+  QString file_full = QFileDialog::getSaveFileName(this, tr("Save ROI"), "/home/", filter);
+  if(file_full != ""){
+    std::cout << FL_STRM << file_full.toStdString() << std::endl;
+    adv_img_disp_->SaveRoi(file_full);
+  }
+}
+
+
+void ImageListViewer::LoadRoi(){
+  QString filter = "*.xml";
+  QString file_full_qt = QFileDialog::getOpenFileName(this, tr("Open ROI"), "/home/", filter);
+  std::string file_full = file_full_qt.toStdString();
+  EXP_CHK_M(mio::FileExists(file_full), return, std::string("file_full=") + file_full)
+  std::vector<int> loaded_roi_types;
+  adv_img_disp_->LoadRoi(file_full_qt, loaded_roi_types);
+  for(const int kRoiType : loaded_roi_types)
+    ui->comboBox_select_roi->addItem(QString::number(ui->comboBox_select_roi->count()-1) +
+                                     " - " + QString(Roi::roi_type_str[kRoiType]));
 }
 
 

@@ -1,10 +1,12 @@
 #include "imageListViewer.h"
 #include <QApplication>
 #include <QStyleFactory>
+#include <QDebug>
 
 
 int main(int argc, char *argv[]){
   QApplication a(argc, argv);
+  qDebug() << QStyleFactory::keys();
   QApplication::setStyle(QStyleFactory::create("Fusion"));
   mio::ImageListViewer w(true);
 
@@ -17,6 +19,8 @@ int main(int argc, char *argv[]){
     return 0;
   }
   std::string img_dir = parser.get<std::string>("directory");
+  if(img_dir == "null" && mio::DirExists(MIO_INCLUDE_DIR"/mio/testImages"))
+    img_dir = MIO_INCLUDE_DIR"/mio/testImages";
   std::cout << "directory: " << img_dir << std::endl;
   std::string img_ext = parser.get<std::string>("extension");
   std::cout << "extension: " << img_ext << std::endl;

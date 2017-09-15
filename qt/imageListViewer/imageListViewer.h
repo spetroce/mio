@@ -43,6 +43,8 @@ class ImageListViewer : public QWidget {
     void RemoveRoi();
     void ShowRoi();
     void RoiNorm();
+    void SaveRoi();
+    void LoadRoi();
     void SetRoiIndex(const int kIndex);
 
   public slots:
