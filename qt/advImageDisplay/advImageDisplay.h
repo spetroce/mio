@@ -131,7 +131,7 @@ class AdvImageDisplay : public QWidget{
     int roi_idx_;
     cv::Mat roi_mask_, temp_roi_mask_;
     void AddRoi();
-    void DrawRoi(const Roi &kRoi, cv::Mat &img);
+    void DrawRoi(const Roi &kRoi, cv::Mat &img, const bool kClosePoly);
     void DrawRoi(cv::Mat &img);
     void InitCreateRoi();
     void UpdateRoiMask();

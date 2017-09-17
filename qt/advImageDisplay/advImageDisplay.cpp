@@ -403,7 +403,7 @@ void AdvImageDisplay::ImageToView(const std::vector<cv::Point2d> &kSrcPnt, std::
 }
 
 
-void AdvImageDisplay::DrawRoi(const Roi &kRoi, cv::Mat &img){
+void AdvImageDisplay::DrawRoi(const Roi &kRoi, cv::Mat &img, const bool kClosePoly){
   cv::Scalar color = img.channels() > 1 ? cv::Scalar(50, 50, 50) : cv::Scalar(255, 255, 255);
   if(kRoi.vertices.size() > 0){
     std::vector<cv::Point> vertices;
@@ -420,7 +420,7 @@ void AdvImageDisplay::DrawRoi(const Roi &kRoi, cv::Mat &img){
         break;
       case Roi::ROI_POLY:
         if(vertices.size() > 1)
-          cv::polylines(img, vertices, !create_roi_, color, 1);
+          cv::polylines(img, vertices, kClosePoly, color, 1);
         break;
       case Roi::ROI_CENTER_CIRCLE:
         STD_INVALID_ARG_E(vertices.size() == 2)
@@ -439,7 +439,7 @@ void AdvImageDisplay::DrawRoi(const Roi &kRoi, cv::Mat &img){
 void AdvImageDisplay::DrawRoi(cv::Mat &img){
   if(create_roi_){
     temp_roi_mtx_.lock();
-    DrawRoi(temp_roi_, img);
+    DrawRoi(temp_roi_, img, false);
     temp_roi_mtx_.unlock();
   }
 
@@ -447,9 +447,9 @@ void AdvImageDisplay::DrawRoi(cv::Mat &img){
   if(roi_vec_.size() > 0)
     if(roi_idx_ == -1)
       for(const auto roi : roi_vec_)
-        DrawRoi(roi, img);
+        DrawRoi(roi, img, true);
     else if(roi_idx_ < static_cast<int>(roi_vec_.size()))
-      DrawRoi(roi_vec_[roi_idx_], img);
+      DrawRoi(roi_vec_[roi_idx_], img, true);
   roi_vec_mtx_.unlock();
 }
 
