@@ -8,7 +8,6 @@
 #include <QMouseEvent>
 #include <QSocketNotifier> //need to link against Qt5::Core
 
-#include <queue>
 #include <array>
 #include <unistd.h>
 #include <mutex>
