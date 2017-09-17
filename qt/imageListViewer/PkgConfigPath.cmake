@@ -14,7 +14,7 @@ elseif(APPLE)
             PATHS "/Users/$ENV{USER}/Qt/*" "/Users/$ENV{USER}/code/src/Qt/*"
             NO_DEFAULT_PATH)
   if(EXISTS ${Qt5_CLANG_64_CMAKE_DIR})
-    set(Qt5_DIR ${Qt5_CLANG_64_CMAKE_DIR})
+    set(Qt5_DIR "${Qt5_CLANG_64_CMAKE_DIR}/clang_64/lib/cmake/Qt5")
     message(STATUS "Qt5_DIR: ${Qt5_DIR}")
   endif()
 else()
