@@ -498,10 +498,14 @@ void AdvImageDisplay::RemoveRoi(const int kRoiIdx){
   }
   else{
     roi_vec_mtx_.lock();
-    if(kRoiIdx == -1)
+    if(kRoiIdx == -1){
+      std::cout << FL_STRM << "Removing all ROIs\n";
       roi_vec_.clear();
-    else if(roi_vec_.size() > 0 && kRoiIdx > 0 && kRoiIdx < roi_vec_.size())
+    }
+    else if(roi_vec_.size() > 0 && kRoiIdx >= 0 && kRoiIdx < roi_vec_.size()){
+      std::cout << FL_STRM << "Removing ROI at index " << kRoiIdx << std::endl;
       roi_vec_.erase(roi_vec_.begin()+kRoiIdx);
+    }
     roi_vec_mtx_.unlock();
   }
   UpdateRoiMask();

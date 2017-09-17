@@ -149,19 +149,25 @@ void ImageListViewer::AddRoi(){
 
 
 void ImageListViewer::RemoveRoi(){
-  if(ui->comboBox_select_roi->currentIndex() == 0 && ui->comboBox_select_roi->count() > 2){
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(this, "Remove ROI Prompt", "Remove all ROI?", QMessageBox::Yes | QMessageBox::No);
-    if(reply == QMessageBox::Yes){
-      for(size_t i = ui->comboBox_select_roi->count()-1; i > 0; --i)
-        ui->comboBox_select_roi->removeItem(i);
-      adv_img_disp_->RemoveRoi(-1);
+  if(ui->comboBox_select_roi->count() > 1){
+    const int kComboBoxCurrentIdx = ui->comboBox_select_roi->currentIndex();
+    if(kComboBoxCurrentIdx == 0 && ui->comboBox_select_roi->count() > 2){
+      QMessageBox::StandardButton reply;
+      reply = QMessageBox::question(this, "Remove ROI Prompt", "Remove all ROI?",
+                                    QMessageBox::Yes | QMessageBox::No);
+      if(reply == QMessageBox::Yes){
+        for(size_t i = ui->comboBox_select_roi->count()-1; i > 0; --i)
+          ui->comboBox_select_roi->removeItem(i);
+        adv_img_disp_->RemoveRoi(-1);
+      }
+    }
+    else{
+      adv_img_disp_->RemoveRoi(kComboBoxCurrentIdx == 0 ? 0 : kComboBoxCurrentIdx-1);
+      ui->comboBox_select_roi->removeItem(kComboBoxCurrentIdx == 0 ? 1 : kComboBoxCurrentIdx);
     }
   }
-  else{
-    adv_img_disp_->RemoveRoi(ui->comboBox_select_roi->currentIndex()-1);
-    ui->comboBox_select_roi->removeItem(ui->comboBox_select_roi->currentIndex());
-  }
+  else
+    std::cout << FL_STRM << "there aren't any ROIs to remove\n";
 }
 
 
