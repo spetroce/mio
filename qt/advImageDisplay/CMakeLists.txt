@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.11)
 project(AdvImageDisplay)
 
 option(BUILD_ADV_IMG_DISP_TEST "Build advImageDisplay test executable" OFF)
-option(BUILD_ADV_IMG_DISP_SELF "Turn on if compiling advImageDisplay alone" OFF)
+option(BUILD_ADV_IMG_DISP_SELF "Enabling tells cmake to look for dependencies" OFF)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
