@@ -6,7 +6,6 @@
 
 int main(int argc, char *argv[]){
   QApplication a(argc, argv);
-  qDebug() << QStyleFactory::keys();
   QApplication::setStyle(QStyleFactory::create("Fusion"));
   mio::ImageListViewer w(true);
 
