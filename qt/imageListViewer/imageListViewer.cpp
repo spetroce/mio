@@ -28,6 +28,7 @@ ImageListViewer::ImageListViewer(const bool show_earth, QWidget *parent) :
   connect(ui->pb_roi_save, SIGNAL(clicked()), this, SLOT(SaveRoi()));
   connect(ui->pb_roi_load, SIGNAL(clicked()), this, SLOT(LoadRoi()));
   connect(ui->comboBox_select_roi, SIGNAL(currentIndexChanged(int)), this, SLOT(SetRoiIndex(int)));
+  connect(ui->checkBox_marker, SIGNAL(clicked()), this, SLOT(DrawClicksMode()));
 
   adv_img_disp_->SetLimitView(true);
   if(show_earth)
@@ -220,5 +221,17 @@ void ImageListViewer::ShowRoiControl(const bool kShow){
 
 void ImageListViewer::HideShowRoiControl(){
   ShowRoiControl(!ui->widget_roiControl->isVisible());
+}
+
+
+void ImageListViewer::DrawClicksMode(){
+  if(ui->checkBox_marker->isChecked()){
+    ui->widget_roiItems->setEnabled(false);
+    adv_img_disp_->SetDrawClicks(true);
+  }
+  else{
+    ui->widget_roiItems->setEnabled(true);
+    adv_img_disp_->SetDrawClicks(false);
+  }
 }
 

@@ -46,6 +46,7 @@ class ImageListViewer : public QWidget {
     void SaveRoi();
     void LoadRoi();
     void SetRoiIndex(const int kIndex);
+    void DrawClicksMode();
 
   public slots:
     void HideShowRoiControl();
