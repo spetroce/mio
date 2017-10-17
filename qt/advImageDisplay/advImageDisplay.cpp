@@ -145,8 +145,8 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
             }
             temp_roi_mtx_.unlock();
           }
-          mouse_click_pnt_vec_.resize(1);
-          mouse_click_pnt_vec_[0] = ViewToImage(mouse_pos);
+          if(draw_mouse_clicks_)
+            mouse_click_pnt_vec_.push_back(ViewToImage(mouse_pos));
           if(update_display || draw_mouse_clicks_)
             UpdateDisplay();
           break;
@@ -181,23 +181,30 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
           break;
         }
       case QEvent::KeyPress:
-        if(create_roi_){
+        {
           QKeyEvent *keyEvent = dynamic_cast<QKeyEvent*>(event);
-          const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
-          temp_roi_mtx_.lock();
-          if(temp_roi_.type == Roi::ROI_POLY && temp_roi_.vertices.size() > 3 &&
-             keyEvent->key() == Qt::Key_Space && modifiers == Qt::NoButton){
-            temp_roi_.vertices.pop_back();
-            temp_roi_mtx_.unlock();
-            AddRoi();
+          const Qt::KeyboardModifiers kModifiers = keyEvent->modifiers();
+          if(draw_mouse_clicks_ && mouse_click_pnt_vec_.size() > 0 &&
+             keyEvent->key() == Qt::Key_R && kModifiers == Qt::NoButton){
+            mouse_click_pnt_vec_.pop_back();
             UpdateDisplay();
           }
-          else{
-            temp_roi_mtx_.unlock();
-            CancelCreateRoi();
+          if(create_roi_){
+            temp_roi_mtx_.lock();
+            if(temp_roi_.type == Roi::ROI_POLY && temp_roi_.vertices.size() > 3 &&
+               keyEvent->key() == Qt::Key_Space && kModifiers == Qt::NoButton){
+              temp_roi_.vertices.pop_back();
+              temp_roi_mtx_.unlock();
+              AddRoi();
+              UpdateDisplay();
+            }
+            else{
+              temp_roi_mtx_.unlock();
+              CancelCreateRoi();
+            }
           }
+          break;
         }
-        break;
       case QEvent::Wheel:
         if(!show_roi_ && zooming_enabled_ && !mouse_button_pressed_){
           QWheelEvent *wheel_event = dynamic_cast<QWheelEvent*>(event);
@@ -696,6 +703,13 @@ bool AdvImageDisplay::SetZoomingEnabled(const bool kEnabled){
 
 void AdvImageDisplay::SetDrawClicks(const bool kSet){
   draw_mouse_clicks_ = kSet;
+  if(draw_mouse_clicks_){
+    // Set the image as in keyboard focus so existing points can be
+    // removed with 'r' without clicking on the image.
+    label_->setFocus();
+    if(create_roi_)
+      CancelCreateRoi();
+  }
   UpdateDisplay();
 }
 
