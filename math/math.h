@@ -17,6 +17,13 @@ namespace sm{
   template<> inline float WavenumberToNanometer(const float &wavenumber){ return(10000000.0f/wavenumber); }
   template<> inline double WavenumberToNanometer(const double &wavenumber){ return(10000000.0/wavenumber); }
 
+  inline float RoundNearestHalf(const float &value){
+    return std::round(value*2.0f)*0.5f;
+  }
+  inline double RoundNearestHalf(const double &value){
+    return std::round(value*2.0)*0.5;
+  }
+
   inline int RoundToMultiple(const int &number, const int multiple){
     return (((number + multiple/2) / multiple) * multiple);
   }
