@@ -114,8 +114,7 @@ bool AdvImageDisplay::eventFilter(QObject *target, QEvent *event){
               temp_roi_.vertices.back() = processed_img_mouse_pos;
           }
           else if(mouse_button_pressed_){
-            mouse_drag_ = mouse_button_press_init_pos_ - cv::Point2d(sm::RoundToMultiple(mouse_pos.x, 3),
-                                                                     sm::RoundToMultiple(mouse_pos.y, 3));
+            mouse_drag_ = mouse_button_press_init_pos_ - cv::Point2d(mouse_pos.x, mouse_pos.y);
             UpdateZoom();
             mouse_button_press_init_pos_ -= mouse_drag_;
             mouse_drag_ = cv::Point2d(0, 0);
