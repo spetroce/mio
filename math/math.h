@@ -8,7 +8,7 @@
 namespace sm{
   #define PI 3.14159265
 
-  //wavenumbers (also called reciprocal centimeters, inverse centimeters or  Kaisers), cm^{-1}
+  //wavenumbers (also called reciprocal centimeters, inverse centimeters or Kaisers), cm^{-1}
   template<typename T> inline T WavenumberToMicrometer(const T &wavenumber){ return(10000/wavenumber); }
   template<> inline float WavenumberToMicrometer(const float &wavenumber){ return(10000.0f/wavenumber); }
   template<> inline double WavenumberToMicrometer(const double &wavenumber){ return(10000.0/wavenumber); }
