@@ -229,7 +229,7 @@ speed_t SerialCom::GetSpeedVal(const unsigned int baud_rate){
 #ifdef B4000000
     case 4000000: return(B4000000);
 #endif
-    default: return -1;
+    default: return 0;
   }
 }
 
