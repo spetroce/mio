@@ -238,7 +238,7 @@ int SerialCom::SetOutBaudRate(const unsigned int baud_rate){
   speed_t speed;
   
   EXP_CHK(is_init_, return(-1))
-  EXP_CHK_M((speed = GetSpeedVal(baud_rate)) != -1, return(-1),
+  EXP_CHK_M((speed = GetSpeedVal(baud_rate)) != 0, return(-1),
              std::string("invalid baud rate: ") + std::to_string(baud_rate));
   EXP_CHK_M(cfgetospeed(&termios_new_) != speed, return(0), "already at requested baud rate, doing nothing")
   EXP_CHK_ERRNO(cfsetospeed(&termios_new_, speed) == 0, return(-1))
@@ -251,7 +251,7 @@ int SerialCom::SetInBaudRate(const unsigned int baud_rate){
   speed_t speed;
   
   EXP_CHK(is_init_, return(-1))
-  EXP_CHK_M((speed = GetSpeedVal(baud_rate)) != -1, return(-1),
+  EXP_CHK_M((speed = GetSpeedVal(baud_rate)) != 0, return(-1),
              std::string("invalid baud rate: ") + std::to_string(baud_rate));
   EXP_CHK_M(cfgetispeed(&termios_new_) != speed, return(0), "already at requested baud rate, doing nothing")
   EXP_CHK_ERRNO(cfsetispeed(&termios_new_, speed) == 0, return(-1))
