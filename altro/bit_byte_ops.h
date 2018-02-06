@@ -14,14 +14,14 @@
 #define BITMASK_CHECK(x,y) ((x) & (y))
 
 #define NUM_TO_TWO_BYTE(num, arr, start_index) \
-  data[start_index] = num & 0xff;              \
-  data[start_index+1] = (num >> 8)  & 0xff;
+  arr[start_index] = num & 0xff;              \
+  arr[start_index+1] = (num >> 8) & 0xff;
 
 #define NUM_TO_FOUR_BYTE(num, arr, start_index) \
-  data[start_index] = num & 0xff;               \
-  data[start_index+1] = (num >> 8)  & 0xff;     \
-  data[start_index+2] = (num >> 16)  & 0xff;    \
-  data[start_index+3] = (num >> 24)  & 0xff;
+  arr[start_index] = num & 0xff;               \
+  arr[start_index+1] = (num >> 8) & 0xff;     \
+  arr[start_index+2] = (num >> 16) & 0xff;    \
+  arr[start_index+3] = (num >> 24) & 0xff;
 
 #define TWO_BYTE_TO_NUM(num_type, arr, start_index) \
   static_cast<num_type>(arr[start_index]) |         \
