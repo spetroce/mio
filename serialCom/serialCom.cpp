@@ -414,9 +414,9 @@ int SerialCom::Write(const void *data_buf, const unsigned int data_buf_len, cons
       EXP_CHK_ERRNO_M(num_active_fd != -1 && errno != EINTR, return(-1), "select() EINTR error")
       EXP_CHK_ERRNO_M(num_active_fd != -1, return(-1), "select() error")
       if(num_active_fd == 0){
-        num_timeout++;
+        ++num_timeout;
         printf("%s - timeout occurence %d\n", CURRENT_FUNC, num_timeout);
-        EXP_CHK(num_timeout >= time_out_limit, return(-1))
+        EXP_CHK(num_timeout < time_out_limit, return(-1))
       }
       else{
         EXP_CHK_ERRNO((num_byte = write(port_fd_, static_cast<const uint8_t*>(data_buf)+num_byte_written,
@@ -472,9 +472,9 @@ int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned 
       EXP_CHK_ERRNO_M(num_active_fd != -1 && errno != EINTR, return(-1), "select() EINTR error")
       EXP_CHK_ERRNO_M(num_active_fd != -1, return(-1), "select() error")
       if(num_active_fd == 0){
-        num_timeout++;
+        ++num_timeout;
         printf("%s - timeout occurence %d\n", CURRENT_FUNC, num_timeout);
-        EXP_CHK(num_timeout >= time_out_limit, return(-1))
+        EXP_CHK(num_timeout < time_out_limit, return(-1))
       }
       else{
         EXP_CHK_ERRNO((num_byte = read(port_fd_, static_cast<uint8_t*>(data_buf)+num_read_byte, 
