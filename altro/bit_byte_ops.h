@@ -13,25 +13,25 @@
 #define BITMASK_FLIP(x,y) ((x) ^= (y))
 #define BITMASK_CHECK(x,y) ((x) & (y))
 
-#define NUM_TO_2_BYTE(num, arr, start_index) \
-  data[start_index] = num & 0xff;            \
+#define NUM_TO_TWO_BYTE(num, arr, start_index) \
+  data[start_index] = num & 0xff;              \
   data[start_index+1] = (num >> 8)  & 0xff;
 
-#define NUM_TO_4_BYTE(num, arr, start_index) \
-  data[start_index] = num & 0xff;            \
-  data[start_index+1] = (num >> 8)  & 0xff;  \
-  data[start_index+2] = (num >> 16)  & 0xff; \
+#define NUM_TO_FOUR_BYTE(num, arr, start_index) \
+  data[start_index] = num & 0xff;               \
+  data[start_index+1] = (num >> 8)  & 0xff;     \
+  data[start_index+2] = (num >> 16)  & 0xff;    \
   data[start_index+3] = (num >> 24)  & 0xff;
 
-#define 2_BYTE_TO_NUM(num, num_type, arr, start_index)  \
-  num = static_cast<num_type>(arr[start_index]) |         \
-        static_cast<num_type>(arr[start_index+1] << 8) |  \
+#define TWO_BYTE_TO_NUM(num_type, arr, start_index) \
+  static_cast<num_type>(arr[start_index]) |         \
+  static_cast<num_type>(arr[start_index+1] << 8)
 
-#define 4_BYTE_TO_NUM(num, num_type, arr, start_index)    \
-  num = static_cast<num_type>(arr[start_index]) |         \
-        static_cast<num_type>(arr[start_index+1] << 8) |  \
-        static_cast<num_type>(arr[start_index+2] << 16) | \
-        static_cast<num_type>(arr[start_index+3] << 24);
+#define FOUR_BYTE_TO_NUM(num_type, arr, start_index) \
+  static_cast<num_type>(arr[start_index]) |          \
+  static_cast<num_type>(arr[start_index+1] << 8) |   \
+  static_cast<num_type>(arr[start_index+2] << 16) |  \
+  static_cast<num_type>(arr[start_index+3] << 24);
 
 #endif //__MIO_BIT_OPS_H__
-
+  
