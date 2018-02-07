@@ -9,14 +9,6 @@
 
 namespace mio{
 
-template <typename T>
-inline std::string numToStr(T num){
-  std::stringstream ss;  //create a stringstream
-  ss << num;  //add number to the stream
-  return ss.str();  //return a string with the contents of the stream
-}
-
-
 inline char* c_str_to_ascii_hex_str(const char *str_src, char *str_out, const size_t str_out_size){
   const size_t str_len = strlen(str_src);
   if(str_out_size >= (str_len*3 + 1) && str_len > 0){
@@ -35,13 +27,13 @@ inline char* c_str_to_ascii_hex_str(const char *str_src, char *str_out, const si
 
 
 //src_str is modified by this function
-inline char** str_split(char *src_str, const char deliminator, size_t &num_sub_str){
+inline char** StrSplit(char *src_str, const char kDeliminator, size_t &num_sub_str){
   //replace deliminator's with NULL's and count how many sub_str's with length >= 1 exist
   num_sub_str = 0;
   char *src_str_tmp = src_str;
   bool found_delim = true;
   while(*src_str_tmp){
-    if(*src_str_tmp == deliminator){
+    if(*src_str_tmp == kDeliminator){
       *src_str_tmp = 0;
       found_delim = true;
     }
@@ -76,7 +68,10 @@ inline char** str_split(char *src_str, const char deliminator, size_t &num_sub_s
 }
 
 
-inline int str_split(char *src_str, const char deliminator, std::vector<char*> &sub_str_vec){
+// src_str is not modified
+// fills sub_str_vec with pointers to c-strings that exist within src_str
+// the deliminator characters are replaced will NULL characters to form proper c-strings
+inline int StrSplit(char *src_str, const char kDeliminator, std::vector<char*> &sub_str_vec){
   char *src_str_tmp = src_str;
   bool found_delim = true;
   sub_str_vec.clear();
@@ -84,7 +79,7 @@ inline int str_split(char *src_str, const char deliminator, std::vector<char*> &
 
   //replace deliminator's with NULL's and count how many sub_str's with length >= 1 exist
   while(*src_str_tmp){
-    if(*src_str_tmp == deliminator){
+    if(*src_str_tmp == kDeliminator){
       *src_str_tmp = 0;
       found_delim = true;
     }
@@ -99,36 +94,36 @@ inline int str_split(char *src_str, const char deliminator, std::vector<char*> &
 }
 
 
-inline void SplitStr(const std::string &str, std::vector<std::string> &tokens, const std::string &delimiters = " ", 
-                     bool trimEmpty = false){
-  std::string::size_type pos, lastPos = 0;
+// split string by multiple deliminators and place split strings in elem_str_vec
+inline void SplitStr(const std::string &kStr, std::vector<std::string> &elem_str_vec,
+                     const std::string &kDelimiters = " ", const bool kTrimEmpty = false){
+  std::string::size_type pos, last_pos = 0;
   for(;;){
-    pos = str.find_first_of(delimiters, lastPos);
+    pos = kStr.find_first_of(kDelimiters, last_pos);
     if(pos == std::string::npos){
-      pos = str.length();
-      if(pos != lastPos || !trimEmpty)
-        tokens.push_back( std::string(str.data()+lastPos, pos-lastPos) );
+      pos = kStr.length();
+      if(pos != last_pos || !kTrimEmpty)
+        elem_str_vec.push_back(std::string(kStr.data()+last_pos, pos-last_pos));
       break;
     }
     else
-      if(pos != lastPos || !trimEmpty)
-        tokens.push_back( std::string(str.data()+lastPos, pos-lastPos) );
+      if(pos != last_pos || !kTrimEmpty)
+        elem_str_vec.push_back(std::string(kStr.data()+last_pos, pos-last_pos));
 
-    lastPos = pos + 1;
+    last_pos = pos + 1;
   }
 }
 
 
 //split string by a deliminator, then place each piece in a vector
-inline void SplitStr(const std::string &s, const char delim, std::vector<std::string> &elems, bool bClear = false){
-  std::stringstream ss(s);
+inline void SplitStr(const std::string &kStr, const char kDelim, std::vector<std::string> &elem_str_vec,
+                     const bool kClear = false){
+  std::stringstream ss(kStr);
   std::string item;
-
-  if(bClear)
-    elems.clear();
-
-  while( std::getline(ss, item, delim) )
-    elems.push_back(item);
+  if(kClear)
+    elem_str_vec.clear();
+  while(std::getline(ss, item, kDelim))
+    elem_str_vec.push_back(item);
 }
 
 
