@@ -240,7 +240,7 @@ int SerialCom::SetOutBaudRate(const unsigned int baud_rate){
   EXP_CHK(is_init_, return(-1))
   EXP_CHK_M((speed = GetSpeedVal(baud_rate)) != 0, return(-1),
              std::string("invalid baud rate: ") + std::to_string(baud_rate));
-  EXP_CHK_M(cfgetospeed(&termios_new_) != speed, return(0), "already at requested baud rate, doing nothing")
+  // EXP_CHK_M(cfgetospeed(&termios_new_) != speed, return(0), "already at requested baud rate, doing nothing")
   EXP_CHK_ERRNO(cfsetospeed(&termios_new_, speed) == 0, return(-1))
   EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
@@ -253,7 +253,7 @@ int SerialCom::SetInBaudRate(const unsigned int baud_rate){
   EXP_CHK(is_init_, return(-1))
   EXP_CHK_M((speed = GetSpeedVal(baud_rate)) != 0, return(-1),
              std::string("invalid baud rate: ") + std::to_string(baud_rate));
-  EXP_CHK_M(cfgetispeed(&termios_new_) != speed, return(0), "already at requested baud rate, doing nothing")
+  // EXP_CHK_M(cfgetispeed(&termios_new_) != speed, return(0), "already at requested baud rate, doing nothing")
   EXP_CHK_ERRNO(cfsetispeed(&termios_new_, speed) == 0, return(-1))
   EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
@@ -262,7 +262,7 @@ int SerialCom::SetInBaudRate(const unsigned int baud_rate){
 
 int SerialCom::SetCharSize(const unsigned int char_size){
   EXP_CHK(is_init_, return(-1))
-  assert(char_size >= 5 || char_size <= 8);
+  EXP_CHK(char_size >= 5 || char_size <= 8, return(-1))
   
   termios_new_.c_cflag &= ~CSIZE;
   
@@ -338,7 +338,7 @@ int SerialCom::SetParity(const unsigned int parity_type){
 
 int SerialCom::SetStopBits(unsigned int num_stop_bits){
   EXP_CHK(is_init_, return(-1))
-  assert(num_stop_bits == 1 || num_stop_bits == 2);
+  EXP_CHK(num_stop_bits == 1 || num_stop_bits == 2, return(-1))
 
   if(num_stop_bits == 1)
     termios_new_.c_cflag &= ~CSTOPB;
