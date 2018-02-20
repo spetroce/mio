@@ -1,5 +1,5 @@
-#ifndef __MIO_BIT_OPS_H__
-#define __MIO_BIT_OPS_H__
+#ifndef __MIO_BIT_BYTE_OPS_H__
+#define __MIO_BIT_BYTE_OPS_H__
 
 // a=target variable, b=bit number to act upon 0-n
 #define BIT_SET(a,b) ((a) |= (1<<(b)))
@@ -33,5 +33,5 @@
   static_cast<num_type>(arr[start_index+2] << 16) |  \
   static_cast<num_type>(arr[start_index+3] << 24);
 
-#endif //__MIO_BIT_OPS_H__
+#endif //__MIO_BIT_BYTE_OPS_H__
   
