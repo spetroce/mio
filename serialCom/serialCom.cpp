@@ -80,36 +80,36 @@ int SerialCom::SetDefaultControlFlags(){
 }
 
 
-int SerialCom::SetOutputType(const outputType type){
+int SerialCom::SetOutputType(const OutputType type){
   EXP_CHK(is_init_, return(-1))
 
   switch(type){
-    case PROCESSED_OUTPUT:
+    case OutputType::ProcessedOutput:
       termios_new_.c_oflag |= OPOST;
       break;
-    case RAW_OUTPUT:
+    case OutputType::RawOutput:
       termios_new_.c_oflag &= ~OPOST;
       break;
     default:
-      printf("%s - invalid outputType\n", CURRENT_FUNC);
+      printf("%s - invalid OutputType\n", CURRENT_FUNC);
       return -1;
   }
   EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
 }
 
 
-int SerialCom::SetInputType(const inputType type){
+int SerialCom::SetInputType(const InputType type){
   EXP_CHK(is_init_, return(-1))
 
   switch(type){
-    case CANONICAL_INPUT:
+    case InputType::CanonicalInput:
       termios_new_.c_lflag |= (ICANON | ECHO | ECHOE);
       break;
-    case RAW_INPUT:
+    case InputType::RawInput:
       termios_new_.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
       break;
     default:
-      printf("%s - invalid inputType\n", CURRENT_FUNC);
+      printf("%s - invalid InputType\n", CURRENT_FUNC);
       return -1;
   }
   
@@ -304,26 +304,26 @@ int SerialCom::GetCharSize(unsigned int &char_size){
 }
 
 
-int SerialCom::SetParity(const unsigned int parity_type){
+int SerialCom::SetParity(const ParityType parity_type){
   EXP_CHK(is_init_, return(-1))
 
   switch(parity_type){
-    case PARITY_NONE:
+    case ParityType::NoneParity:
       termios_new_.c_cflag &= ~PARENB;
       break;
-    case PARITY_EVEN:
+    case ParityType::EvenParity:
       termios_new_.c_cflag |= PARENB;
       termios_new_.c_cflag &= ~PARODD;
       break;
-    case PARITY_ODD:
+    case ParityType::OddParity:
       termios_new_.c_cflag |= (PARENB | PARODD);
       break;
 #ifdef CMSPAR
-    case PARITY_SPACE:
+    case ParityType::SpaceParity:
       termios_new_.c_cflag |= (PARENB | CMSPAR);
       termios_new_.c_cflag &= ~PARODD;
       break;
-    case PARITY_MARK:
+    case ParityType::MarkParity:
       termios_new_.c_cflag |= (PARENB | CMSPAR | PARODD);
 #endif
     default:
@@ -333,6 +333,58 @@ int SerialCom::SetParity(const unsigned int parity_type){
   
   EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
   return 0;
+}
+
+
+/*
+enable (tcflag_t INPCK)
+If this bit is set, input parity checking is enabled. If it is not set, no checking at all is done for parity errors on
+input; the characters are simply passed through to the application.
+Parity checking on input processing is independent of whether parity detection and generation on the underlying
+terminal hardware is enabled; see Control Modes. For example, you could clear the INPCK input mode flag and set
+the PARENB control mode flag to ignore parity errors on input, but still generate parity on output.
+If this bit is set, what happens when a parity error is detected depends on whether the IGNPAR or PARMRK bits are set.
+If neither of these bits are set, a byte with a parity error is passed to the application as a '\0' character.
+
+ignore (tcflag_t IGNPAR)
+If this bit is set, any byte with a framing or parity error is ignored. This is only useful if INPCK is also set.
+
+mark (tcflag_t PARMRK)
+If this bit is set, input bytes with parity or framing errors are marked when passed to the program.
+This bit is meaningful only when INPCK is set and IGNPAR is not set.
+The way erroneous bytes are marked is with two preceding bytes, 377 and 0. Thus, the program actually reads three bytes
+for one erroneous byte received from the terminal.
+If a valid byte has the value 0377, and ISTRIP (see below) is not set, the program might confuse it with the prefix that
+marks a parity error. So a valid byte 0377 is passed to the program as two bytes, 0377 0377, in this case.
+
+strip (tcflag_t ISTRIP)
+If this bit is set, valid input bytes are stripped to seven bits; otherwise, all eight bits are available for programs
+to read.
+*/
+int SerialCom::SetParityChecking(const bool enable, const bool ignore, const bool mark, const bool strip){
+  EXP_CHK(is_init_, return(-1))
+  
+  if(enable) {
+    termios_new_.c_iflag |= INPCK;
+    if(ignore)
+      termios_new_.c_iflag |= IGNPAR;
+    else
+      termios_new_.c_iflag &= ~IGNPAR;
+    if(mark)
+      termios_new_.c_iflag |= PARMRK;
+    else
+      termios_new_.c_iflag &= ~PARMRK;
+    if(strip)
+      termios_new_.c_iflag |= ISTRIP;
+    else
+      termios_new_.c_iflag &= ~ISTRIP;
+  }
+  else {
+    termios_new_.c_iflag &= ~IGNPAR;
+    termios_new_.c_iflag &= ~PARMRK;
+    termios_new_.c_iflag &= ~INPCK;
+    termios_new_.c_iflag &= ~ISTRIP;
+  }
 }
 
 

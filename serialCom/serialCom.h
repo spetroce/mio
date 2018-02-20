@@ -9,23 +9,24 @@
 #include <fcntl.h>
 #include "mio/altro/error.h"
 
-#define PARITY_NONE 0
-#define PARITY_EVEN 1
-#define PARITY_ODD 2
+enum ParityType {
+  NoneParity = 0,
+  EvenParity,
+  OddParity
 #ifdef CMSPAR
-  #define PARITY_SPACE 3
-  #define PARITY_MARK 4
+  , SpaceParity,
+  MarkParity
 #endif
-
-enum inputType{
-  CANONICAL_INPUT,
-  RAW_INPUT
 };
 
+enum InputType{
+  CanonicalInput = 0,
+  RawInput
+};
 
-enum outputType{
-  PROCESSED_OUTPUT, 
-  RAW_OUTPUT
+enum OutputType{
+  ProcessedOutput = 0, 
+  RawOutput
 };
 
 
@@ -48,8 +49,8 @@ class SerialCom{
     int GetPortFD();
     bool IsInit();
 
-    int SetInputType(const inputType type);
-    int SetOutputType(const outputType type);
+    int SetInputType(const InputType type);
+    int SetOutputType(const OutputType type);
     int SetDefaultControlFlags();
 
     static speed_t GetSpeedVal(const unsigned int baud_rate);
@@ -59,7 +60,8 @@ class SerialCom{
     int SetCharSize(const unsigned int char_size);
     int GetCharSize(unsigned int &char_size);
 
-    int SetParity(const unsigned int parity_type);
+    int SetParity(const ParityType parity_type);
+    int SetParityChecking(const bool enable, const bool ignore, const bool mark, const bool strip);
     int SetStopBits(unsigned int num_stop_bits);
     int GetStopBits(unsigned int &num_stop_bits);
     int SetHardwareFlowControl(const bool hardware_flow_control);
