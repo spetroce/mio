@@ -1,8 +1,5 @@
-#ifndef __MIO_RANSAC_LINES_H__
-#define __MIO_RANSAC_LINES_H__
-
-#include "mio/math/math.h"
-#include "mio/altro/algorithm.h"
+#ifndef __MIO_RANSAC_LINES_INL_H__
+#define __MIO_RANSAC_LINES_INL_H__
 
 
 template <typename PNT_T, typename MODEL_T>
@@ -36,12 +33,10 @@ void LineDistance2D(const std::vector<PNT_T> &kDataVec,
 // Return "true" if the selected points are a degenerate (invalid) case
 template <typename PNT_T>
 bool LineDegenerate2D(const std::vector<PNT_T> &kDataVec,
-                    const std::vector<uint32_t> &kUseIndexVec){
+                      const std::vector<uint32_t> &kUseIndexVec){
   return false;
 }
 
-
-namespace sm {
 
 template <typename DATA_T, typename PNT_T, typename LINE_T>
 void RansacDetectLines2D(const std::vector<PNT_T> &kPntVec,
@@ -105,18 +100,5 @@ void RansacDetectLines2D(const std::vector<PNT_T> &kPntVec,
   }
 }
 
-
-// Template explicit instantiations:
-#define RansacDetectLines2D_EXPLICIT_INST(DATA_T, PNT_T, LINE_T) \
-template void RansacDetectLines2D<DATA_T, PNT_T, LINE_T>( \
-  const std::vector<PNT_T> &kPntVec, \
-  std::vector< std::pair<uint32_t, LINE_T> > &detected_lines, \
-  const DATA_T kMinInlierDist, \
-  const uint32_t kMinNumInlier, \
-  std::vector< std::vector<uint32_t> > &inlier_index_vvec);
-RansacDetectLines2D_EXPLICIT_INST(float, vertex2f_t, line3f_t)
-
-} // namespace sm
-
-#endif // __MIO_RANSAC_LINES_H__
+#endif // __MIO_RANSAC_LINES_INL_H__
 

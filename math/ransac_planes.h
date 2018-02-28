@@ -1,10 +1,7 @@
-#ifndef __MIO_RANSAC_PLANES_H__
-#define __MIO_RANSAC_PLANES_H__
+#ifndef __MIO_RANSAC_PLANES_INL_H__
+#define __MIO_RANSAC_PLANES_INL_H__
 
 // Detect Planes in 3D space via RANSAC
-
-#include "mio/math/math.h"
-#include "mio/altro/algorithm.h"
 
 
 template <typename PNT_T, typename PLANE_T>
@@ -43,8 +40,6 @@ bool PlaneDegenerate(const std::vector<PNT_T> &kDataVec,
   return false;
 }
 
-
-namespace sm{
 
 template <typename DATA_T, typename PNT_T, typename PLANE_T>
 void RansacDetectPlanes(const std::vector<PNT_T> &kPntVec,
@@ -107,18 +102,5 @@ void RansacDetectPlanes(const std::vector<PNT_T> &kPntVec,
   }
 }
 
-
-// template explicit instantiations:
-#define RansacDetectPlanes_EXPLICIT_INST(DATA_T, PNT_T, PLANE_T) \
-template void RansacDetectPlanes<DATA_T, PNT_T, PLANE_T>( \
-  const std::vector<PNT_T> &kPntVec, \
-  std::vector< std::pair<uint32_t, PLANE_T> > &detected_planes, \
-  const DATA_T kMinInlierDist, \
-  const uint32_t kMinNumInlier, \
-  std::vector< std::vector<uint32_t> > &inlier_index_vvec);
-RansacDetectPlanes_EXPLICIT_INST(float, vertex3f_t, plane4f_t)
-
-}
-
-#endif // __MIO_RANSAC_PLANES_H__
+#endif // __MIO_RANSAC_PLANES_INL_H__
 
