@@ -242,8 +242,8 @@ namespace sm{
     Compute length of each side of the triangle. Find the circumscribed circle around the triangle.
     if turn from a -> b -> c is to LEFT the returned value is NEGATIVE
   */
-  template <typename PointType> 
-  inline PointType RadiusFromPnt2(const PointType &a, const PointType &b, const PointType &c){
+  template <typename PNT_T> 
+  inline PNT_T RadiusFromPnt2(const PNT_T &a, const PNT_T &b, const PNT_T &c){
     double A, B, C, S, K;
 
     A = sm::VerDist2(a, b);
@@ -261,9 +261,9 @@ namespace sm{
   /*
     Given three vertices that lie on the perimeter of a circle, the function returns the center of the circle
   */
-  template <typename PointType> 
-  inline PointType CenterFromPnt2(const PointType a, const PointType b, const PointType c){
-    PointType result;
+  template <typename PNT_T> 
+  inline PNT_T CenterFromPnt2(const PNT_T a, const PNT_T b, const PNT_T c){
+    PNT_T result;
     double s = 0.5 * ( (b.x - c.x)*(a.x - c.x) - (b.y - c.y)*(c.y - a.y) );
     double su = (a.x - b.x)*(c.y - a.y) - (b.y - a.y)*(a.x - c.x);
 
@@ -282,9 +282,9 @@ namespace sm{
     this function returns the location of the next vertex (vertex 'c') in the direction of a -> b -> c,
     in the arc given the radius. a negative radius means arc turns to the left, positive turns to right
   */
-  template <typename PointType> 
-  inline PointType NextArcVer2(const PointType a, const PointType b, const double radius){
-    PointType c;
+  template <typename PNT_T> 
+  inline PNT_T NextArcVer2(const PNT_T a, const PNT_T b, const double radius){
+    PNT_T c;
     double length = sm::VerDist2(a, b);
     if( length < (2.0 * std::fabs(radius) ) ){
       double theta = verAngle_rad(a, b) + ( 2.0 * ( (PI * 0.5) - std::acos( length / (2.0 * radius) ) ) );
@@ -404,24 +404,24 @@ namespace sm{
     return T( (a.x + b.x) / 2.0, (a.y + b.y) / 2.0);
   }
 
-  template <typename CoefType, typename PointType>
-  inline double DistToLine2(const CoefType &coef, const PointType &pnt){
+  template <typename COEF_T, typename PNT_T>
+  inline double DistToLine2(const COEF_T &coef, const PNT_T &pnt){
     return( std::fabs(coef.a*pnt.x + coef.b*pnt.y + coef.c) / std::sqrt(coef.a*coef.a + coef.b*coef.b) );
   }
 
-  template <typename CoefType, typename PointType>
-  inline double EvaluatePntPlane(const CoefType &coef, const PointType &pnt){
+  template <typename COEF_T, typename PNT_T>
+  inline double EvaluatePntPlane(const COEF_T &coef, const PNT_T &pnt){
 	  return(coef.a*pnt.x + coef.b*pnt.y + coef.c*pnt.z + coef.d);
   }
 
-  template <typename CoefType, typename PointType>
-  inline double DistToPlane(const CoefType &coef, const PointType &pnt){
+  template <typename COEF_T, typename PNT_T>
+  inline double DistToPlane(const COEF_T &coef, const PNT_T &pnt){
 	  return( std::fabs(sm::EvaluatePntPlane(coef, pnt) ) / std::sqrt(coef.a*coef.a + coef.b*coef.b + coef.c*coef.c) );
   }
 
   //computes plane equation from 3 3D points
-  template <typename PointType, typename CoefType> 
-  inline void PlaneCoefFromPnt(const PointType &p1, const PointType &p2, const PointType &p3, CoefType &coef){
+  template <typename PNT_T, typename COEF_Ts> 
+  inline void PlaneCoefFromPnt(const PNT_T &p1, const PNT_T &p2, const PNT_T &p3, COEF_T &coef){
 	  double dx1 = p2.x - p1.x,
 	         dy1 = p2.y - p1.y,
 	         dz1 = p2.z - p1.z,
@@ -436,8 +436,8 @@ namespace sm{
 	  coef.d =- coef.a*p1.x - coef.b*p1.y - coef.c*p1.z;
   }
 
-  template <typename CoefType, typename PointType>
-  inline void NormalVecFromPlaneCoef(const CoefType &coef, PointType &normal_vec, const bool normalize = true){
+  template <typename COEF_T, typename PNT_T>
+  inline void NormalVecFromPlaneCoef(const COEF_T &coef, PNT_T &normal_vec, const bool normalize = true){
     normal_vec.x = coef.a;
     normal_vec.y = coef.b;
     normal_vec.z = coef.c;
@@ -445,22 +445,22 @@ namespace sm{
       VerNormalize3(normal_vec);
   }
 
-  template <typename PointType, typename CoefType>
-  inline void LineCoefFromPnt2(const PointType &p1, const PointType &p2, CoefType &coef){
+  template <typename PNT_T, typename COEF_T>
+  inline void LineCoefFromPnt2(const PNT_T &p1, const PNT_T &p2, COEF_T &coef){
 	  //ERR_CHK(p1 == p2, "getLine() - p1 == p2, points are equal", return);
 	  coef.a = p2.y - p1.y;
 	  coef.b = p1.x - p2.x;
 	  coef.c = p2.x*p1.y - p2.y*p1.x;
   }
 
-  template<typename PointType, typename LINE_T>
-  inline PointType SolveLineEqn2(const LINE_T &line, const double x){
-    return PointType(x, (-line.c - line.a*x) / line.b); //y = (-line.c - line.a*x) / line.b)
+  template<typename DATA_T, typename PNT_T, typename LINE_T>
+  inline PNT_T SolveLineEqn2(const LINE_T &line, const DATA_T x){
+    return PNT_T(x, (-line.c - line.a*x) / line.b); //y = (-line.c - line.a*x) / line.b)
   }
 
-  template<typename PointType, typename LINE_T>
-  inline PointType SolveXLineEqn2(const LINE_T &line, const double y){
-    return PointType((-line.c - line.b*y) / line.a, y); //x = (-line.c - line.b*x) / line.a)
+  template<typename DATA_T, typename PNT_T, typename LINE_T>
+  inline PNT_T SolveXLineEqn2(const LINE_T &line, const DATA_T y){
+    return PNT_T((-line.c - line.b*y) / line.a, y); //x = (-line.c - line.b*x) / line.a)
   }
 
 } //namespace sm
