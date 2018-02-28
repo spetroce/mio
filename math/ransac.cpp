@@ -18,7 +18,7 @@
 
 template <typename DATA_T, typename MODEL_DATA_T, typename MODEL_T>
 bool CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute(
-    const std::vector<MODEL_DATA_T> &kSrcDataVec,
+    const std::vector<MODEL_DATA_T> &kDataVec,
     TRansacFitFunctor fit_func,
     TRansacDistanceFunctor dist_func,
     TRansacDegenerateFunctor degen_func,
@@ -30,9 +30,9 @@ bool CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute(
     const DATA_T kGoodSampleProb,
     const uint32_t kMaxIter){
   EXP_CHK(kMinNumRandomSample > 1, return(false))
-  EXP_CHK(kSrcDataVec.size() > 1, return(false))
+  EXP_CHK(kDataVec.size() > 1, return(false))
 
-  const uint32_t kDataVecSize = kSrcDataVec.size(),
+  const uint32_t kDataVecSize = kDataVec.size(),
                  kMaxDataTrials = 100; // Max attempts to find a non-degenerate data set
   best_inlier_vec.clear();
   bool best_model_is_set = false;
@@ -52,10 +52,10 @@ bool CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute(
       rand_idx_vec.resize(kMinNumRandomSample);
       mio::RandomIntVec<uint32_t>(rand_idx_vec, 0, kDataVecSize-1);
       // Test that these points are not a degenerate configuration
-      degenerate = degen_func(kSrcDataVec, rand_idx_vec);
+      degenerate = degen_func(kDataVec, rand_idx_vec);
       if(!degenerate){
         // Fit model to random selection of data points
-        fit_func(kSrcDataVec, rand_idx_vec, model_vec);
+        fit_func(kDataVec, rand_idx_vec, model_vec);
         // Depending on the problem, checking whether we have a model or not might be the
         // only way to determine a data set is degenerate. If it is, we try a new data set
         degenerate = model_vec.empty();
@@ -68,15 +68,15 @@ bool CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute(
     }
 
     uint32_t best_model_idx = model_vec.size() + 1; //TODO - why is this set here? also, it's out of bounds.
-    std::vector<uint32_t> inlier_vec;
+    std::vector<uint32_t> inlier_index_vec;
     if(!degenerate){
       // The distance function will determine which model has the most number of inliers and
-      // will populate best_model_idx and inlier_vec accordingly
-      dist_func(kSrcDataVec, model_vec, kMinInlierDist, best_model_idx, inlier_vec);
+      // will populate best_model_idx and inlier_index_vec accordingly
+      dist_func(kDataVec, model_vec, kMinInlierDist, best_model_idx, inlier_index_vec);
       EXP_CHK_M(best_model_idx < model_vec.size(), return(false), "invalid model index")
     }
 
-    const uint32_t kNumInliers = inlier_vec.size();
+    const uint32_t kNumInliers = inlier_index_vec.size();
     bool update_estimated_num_iter = num_iter == 0; // Always update estimated_num_iter on the first iteration
 
     if(kNumInliers > best_score || (best_score == std::string::npos && kNumInliers != 0)){
@@ -84,7 +84,7 @@ bool CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute(
       best_score = kNumInliers;  
       best_model = model_vec[best_model_idx];
       best_model_is_set = true;
-      best_inlier_vec = inlier_vec;
+      best_inlier_vec = inlier_index_vec;
       update_estimated_num_iter = true;
     }
 

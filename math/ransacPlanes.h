@@ -8,38 +8,38 @@
 
 
 template <typename PNT_T, typename PLANE_T>
-void PlaneFit(const std::vector<PNT_T> &all_data,
-              const std::vector<uint32_t> &use_indices,
-              std::vector<PLANE_T> &fit_model){
-  fit_model.resize(1);
-  sm::PlaneCoefFromPnt<PNT_T, PLANE_T>(all_data[use_indices[0]], all_data[use_indices[1]], 
-                                       all_data[use_indices[2]], fit_model[0]);
+void PlaneFit(const std::vector<PNT_T> &kDataVec,
+              const std::vector<uint32_t> &kUseIndexVec,
+              std::vector<PLANE_T> &model_vec){
+  model_vec.resize(1);
+  sm::PlaneCoefFromPnt<PNT_T, PLANE_T>(kDataVec[kUseIndexVec[0]], kDataVec[kUseIndexVec[1]], 
+                                       kDataVec[kUseIndexVec[2]], model_vec[0]);
 }
 
 
 template <typename DATA_T, typename PNT_T, typename PLANE_T>
-void PlaneDistance(const std::vector<PNT_T> &all_data,
-                   const std::vector<PLANE_T> &test_model,
-                   const DATA_T dist_thresh,
+void PlaneDistance(const std::vector<PNT_T> &kDataVec,
+                   const std::vector<PLANE_T> &kTestModelVec,
+                   const DATA_T kMinInlierDist,
                    uint32_t &best_model_idx,
-                   std::vector<uint32_t> &inlier_indices){ // out
+                   std::vector<uint32_t> &inlier_index_vec){ // out
   best_model_idx = 0;
-  inlier_indices.clear();
-  if( test_model.empty() || all_data.empty() )
+  inlier_index_vec.clear();
+  if( kTestModelVec.empty() || kDataVec.empty() )
     return;
-  inlier_indices.reserve(100); // TODO - 100 is arbitrary
-  for(size_t i = 0, allDataSize = all_data.size(); i < allDataSize; ++i){
-    const DATA_T d = sm::DistToPlane<PLANE_T, PNT_T>(test_model[0], all_data[i]);
-    if(d < dist_thresh)
-      inlier_indices.push_back(i);
+  inlier_index_vec.reserve(100); // TODO - 100 is arbitrary
+  for(size_t i = 0, allDataSize = kDataVec.size(); i < allDataSize; ++i){
+    const DATA_T d = sm::DistToPlane<PLANE_T, PNT_T>(kTestModelVec[0], kDataVec[i]);
+    if(d < kMinInlierDist)
+      inlier_index_vec.push_back(i);
   }
 }
 
 
 // Return "true" if the selected points are a degenerate (invalid) case.
 template <typename PNT_T>
-bool PlaneDegenerate(const std::vector<PNT_T> &all_data,
-                     const std::vector<uint32_t> &use_indices){
+bool PlaneDegenerate(const std::vector<PNT_T> &kDataVec,
+                     const std::vector<uint32_t> &kUseIndexVec){
   return false;
 }
 
@@ -47,50 +47,49 @@ bool PlaneDegenerate(const std::vector<PNT_T> &all_data,
 namespace sm{
 
 template <typename DATA_T, typename PNT_T, typename PLANE_T>
-void RansacDetectPlanes(const std::vector<PNT_T> &pnt,
+void RansacDetectPlanes(const std::vector<PNT_T> &kPntVec,
                         std::vector< std::pair<uint32_t, PLANE_T> > &detected_planes, // out
-                        const DATA_T dist_thresh,
-                        const uint32_t min_inliers,
-                        std::vector< std::vector<uint32_t> > &plane_inliers){ // out
+                        const DATA_T kMinInlierDist,
+                        const uint32_t kMinNumInlier,
+                        std::vector< std::vector<uint32_t> > &inlier_index_vvec){ // out
   detected_planes.clear();
-  if(pnt.empty())
+  if(kPntVec.empty())
     return;
   // The running lists of remaining points after each plane, as a matrix
-  std::vector<PNT_T> remaining_pnts = pnt;
-  plane_inliers.clear();
-  std::vector<uint32_t> indices( pnt.size() );
-  for(size_t i = 0, indicesSize = indices.size(); i < indicesSize; ++i)
-    indices[i] = i;
-  bool first_iter_flag = true;
+  std::vector<PNT_T> remaining_pnt_vec = kPntVec;
+  inlier_index_vvec.clear();
+  const size_t kPntVecSize = kPntVec.size();
+  std::vector<uint32_t> index_vec(kPntVecSize);
+  for(size_t i = 0; i < kPntVecSize; ++i)
+    index_vec[i] = i;
+  bool is_first_iter = true;
 
-  while(remaining_pnts.size() >= 3){
-    std::vector<uint32_t>	best_inliers;
+  while(remaining_pnt_vec.size() >= 3){
+    std::vector<uint32_t>	best_inlier_vec;
     PLANE_T best_model;
 
-    CRansac<DATA_T, PNT_T, PLANE_T>::execute(remaining_pnts,
+    CRansac<DATA_T, PNT_T, PLANE_T>::execute(remaining_pnt_vec,
                                              PlaneFit,
                                              PlaneDistance,
                                              PlaneDegenerate,
-                                             dist_thresh,
+                                             kMinInlierDist,
                                              3, // Minimum set of points
-                                             best_inliers,
-                                             best_model,
-                                             false, // verbose
-                                             0.999); // Prob. of good result
+                                             best_inlier_vec,
+                                             best_model);
     // Check fit robustness
-    if(best_inliers.size() >= min_inliers){
+    if(best_inlier_vec.size() >= kMinNumInlier){
       // Add this plane to the output list
-      detected_planes.push_back(std::make_pair<uint32_t, PLANE_T>(best_inliers.size(), PLANE_T(best_model)));
-      if(first_iter_flag){
-        plane_inliers.push_back(best_inliers);
-        first_iter_flag = false;
+      detected_planes.push_back(std::make_pair<uint32_t, PLANE_T>(best_inlier_vec.size(), PLANE_T(best_model)));
+      if(is_first_iter){
+        inlier_index_vvec.push_back(best_inlier_vec);
+        is_first_iter = false;
       }
       else{
-        std::vector<uint32_t> temp( best_inliers.size() );
+        std::vector<uint32_t> temp(best_inlier_vec.size());
         const size_t kTempSize = temp.size();
         for(size_t i = 0; i < kTempSize; ++i)
-          temp[i] = indices[best_inliers[i]];
-        plane_inliers.push_back(temp);
+          temp[i] = index_vec[best_inlier_vec[i]];
+        inlier_index_vvec.push_back(temp);
       }
       // Normalize coefifients
       PLANE_T &plane = detected_planes.rbegin()->second;
@@ -100,8 +99,8 @@ void RansacDetectPlanes(const std::vector<PNT_T> &pnt,
       plane.c *= inv_l2_norm;
       plane.d *= inv_l2_norm;
       // Discard the selected points so they are not used again for finding subsequent planes
-      remaining_pnts = mio::EraseIndices<PNT_T>(remaining_pnts, best_inliers);
-      indices = mio::EraseIndices<uint32_t>(indices, best_inliers);
+      remaining_pnt_vec = mio::EraseIndices<PNT_T>(remaining_pnt_vec, best_inlier_vec);
+      index_vec = mio::EraseIndices<uint32_t>(index_vec, best_inlier_vec);
     }
     else
       break; // Do not search for more planes
@@ -112,11 +111,11 @@ void RansacDetectPlanes(const std::vector<PNT_T> &pnt,
 // template explicit instantiations:
 #define RansacDetectPlanes_EXPLICIT_INST(DATA_T, PNT_T, PLANE_T) \
 template void RansacDetectPlanes<DATA_T, PNT_T, PLANE_T>( \
-  const std::vector<PNT_T> &pnt, \
+  const std::vector<PNT_T> &kPntVec, \
   std::vector< std::pair<uint32_t, PLANE_T> > &detected_planes, \
-  const DATA_T dist_thresh, \
-  const uint32_t min_inliers, \
-  std::vector< std::vector<uint32_t> > &plane_inliers);
+  const DATA_T kMinInlierDist, \
+  const uint32_t kMinNumInlier, \
+  std::vector< std::vector<uint32_t> > &inlier_index_vvec);
 RansacDetectPlanes_EXPLICIT_INST(float, vertex3f_t, plane4f_t)
 
 }
