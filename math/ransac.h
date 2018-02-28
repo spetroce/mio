@@ -49,7 +49,7 @@ class CRansac{
                         MODEL_T &best_model, // out
                         const bool kVerbosePrint = false,
                         const DATA_T kGoodSampleProb = 0.999,
-                        const uint32_t kMaxIter = 2000);
+                        const uint32_t kMaxIter = 20000);
 };
 
 

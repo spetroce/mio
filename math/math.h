@@ -340,12 +340,12 @@ namespace sm{
     with the line segment defined by vertices C and D.
   */
   template <typename T> 
-  inline T SegmentIntersection2(const T &a, const T &b, const T &c, const T &d){
+  inline T SegmentIntersection2(T a, T b, T c, T d){
     float dist_ab, cos_val, sin_val, new_x, pos_ab;
 
     //fail if either line segment is zero-length.
     if( (a.x == b.x && a.y == b.y) || (c.x == d.x && c.y == d.y) )
-      return T(NULL, NULL);
+      return T(0, 0);
 
     if( (a.x == c.x && a.y == c.y) || (b.x == c.x && b.y == c.y) )
       return c;
@@ -373,14 +373,14 @@ namespace sm{
 
     //fail if segment cd doesn't cross line ab.
     if( (c.y < 0.0 && d.y < 0.0) || (c.y >= 0.0 && d.y >= 0.0) ) 
-      return T(NULL, NULL);
+      return T(0, 0);
 
     //get position of the intersection vertex along line ab.
     pos_ab = d.x + ( ( (c.x - d.x) * d.y ) / (d.y - c.y) );
 
     //fail if segment cd crosses line ab outside of segment ab.
     if( (pos_ab < 0.) || (pos_ab > dist_ab) )
-      return T(NULL, NULL);
+      return T(0, 0);
 
     //translate the discovered position to line ab in the original coordinate system.
     return T(a.x + pos_ab * cos_val, a.y + pos_ab * sin_val);
