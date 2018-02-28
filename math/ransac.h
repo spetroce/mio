@@ -3,19 +3,8 @@
 
 /* 
   Samuel Petrocelli
-    -derived from MRPT RANSAC class
+    -derived from MRPT (http://www.mrpt.org/) RANSAC class , which is based on http://www.csse.uwa.edu.au/~pk/
     -cleaned up and refactored code, modified to use std objects
-   
-   MRPT licnese and copyright notice:
-
-   +---------------------------------------------------------------------------+
-   |                     Mobile Robot Programming Toolkit (MRPT)               |
-   |                          http://www.mrpt.org/                             |
-   |                                                                           |
-   | Copyright (c) 2005-2015, Individual contributors, see AUTHORS file        |
-   | See: http://www.mrpt.org/Authors - All rights reserved.                   |
-   | Released under BSD License. See details in http://www.mrpt.org/License    |
-   +---------------------------------------------------------------------------+
 */
 
 #include <random>
@@ -29,33 +18,34 @@ template <typename DATA_T, typename MODEL_DATA_T, typename MODEL_T>
 class CRansac{
   public:
     // The type of the 'fit' function passed to CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute
-    typedef void (*TRansacFitFunctor)(const std::vector<DATA_T> &all_data,
+    typedef void (*TRansacFitFunctor)(const std::vector<MODEL_DATA_T> &all_data,
 	                                    const std::vector<uint32_t> &use_indices,
 	                                    std::vector<MODEL_T> &fit_model);
 
     // The type of the 'distance' function passed to CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute
-    typedef void (*TRansacDistanceFunctor)(const std::vector<DATA_T> &all_data,
+    typedef void (*TRansacDistanceFunctor)(const std::vector<MODEL_DATA_T> &all_data,
 	                                         const std::vector<MODEL_T> &test_model,
 	                                         const DATA_T dist_thresh,
                                            uint32_t &best_model_idx,
 	                                         std::vector<uint32_t> &inlier_indices); // out
 
     // The type of the 'degenerate' function passed to CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute
-    typedef bool (*TRansacDegenerateFunctor)(const std::vector<DATA_T> &all_data,
+    typedef bool (*TRansacDegenerateFunctor)(const std::vector<MODEL_DATA_T> &all_data,
 	                                           const std::vector<uint32_t> &use_indices);
 
-    static bool execute(const std::vector<DATA_T> &data,
+    static bool execute(const std::vector<MODEL_DATA_T> &kDataVec,
                         TRansacFitFunctor fit_func,
                         TRansacDistanceFunctor dist_func,
                         TRansacDegenerateFunctor degen_func,
-                        const DATA_T dist_thresh,
-                        const uint32_t min_samples_thresh,
-                        std::vector<uint32_t> &best_inliers, // out
+                        const DATA_T kDistThresh,
+                        const uint32_t kMinSamplesThresh,
+                        std::vector<uint32_t> &best_inlier_vec, // out
                         MODEL_T &best_model, // out
-                        bool verbose,
-                        const DATA_T good_sample_prob = 0.999,
-                        const uint32_t max_iter = 2000);
+                        const bool kVerbosePrint = false,
+                        const DATA_T kGoodSampleProb = 0.999,
+                        const uint32_t kMaxIter = 2000);
 };
+
 
 namespace sm{
 

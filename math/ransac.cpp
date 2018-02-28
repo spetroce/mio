@@ -1,18 +1,7 @@
 /* 
   Samuel Petrocelli
-    -derived from MRPT RANSAC class
+    -derived from MRPT (http://www.mrpt.org/) RANSAC class , which is based on http://www.csse.uwa.edu.au/~pk/
     -cleaned up and refactored code, modified to use std objects
-   
-   MRPT licnese and copyright notice:
-
-   +---------------------------------------------------------------------------+
-   |                     Mobile Robot Programming Toolkit (MRPT)               |
-   |                          http://www.mrpt.org/                             |
-   |                                                                           |
-   | Copyright (c) 2005-2015, Individual contributors, see AUTHORS file        |
-   | See: http://www.mrpt.org/Authors - All rights reserved.                   |
-   | Released under BSD License. See details in http://www.mrpt.org/License    |
-   +---------------------------------------------------------------------------+
 */
 
 #include "mio/math/ransac.h"
@@ -29,122 +18,113 @@
 
 template <typename DATA_T, typename MODEL_DATA_T, typename MODEL_T>
 bool CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute(
-    const std::vector<MODEL_DATA_T> &data,
+    const std::vector<MODEL_DATA_T> &kSrcDataVec,
     TRansacFitFunctor fit_func,
     TRansacDistanceFunctor dist_func,
     TRansacDegenerateFunctor degen_func,
-    const DATA_T dist_thresh,
-    const uint32_t	min_samples_thresh,
-    std::vector<uint32_t> &best_inliers, // out
+    const DATA_T kMinInlierDist, // minimum distance for data pnt to be considered an inlier
+    const uint32_t kMinNumRandomSample,
+    std::vector<uint32_t> &best_inlier_vec, // out
     MODEL_T &best_model, // out
-    bool	verbose,
-    const DATA_T good_sample_prob,
-    const uint32_t	max_iter){
-  STD_INVALID_ARG_E(min_samples_thresh > 1);
-  if(data.size() < 1)
-    return false;
-  const uint32_t data_size = data.size();
-  const uint32_t max_data_trials = 100; // Max attempts to select a non-degenerate data set
-  best_inliers.clear();
+    const bool kVerbosePrint,
+    const DATA_T kGoodSampleProb,
+    const uint32_t kMaxIter){
+  EXP_CHK(kMinNumRandomSample > 1, return(false))
+  EXP_CHK(kSrcDataVec.size() > 1, return(false))
+
+  const uint32_t kDataVecSize = kSrcDataVec.size(),
+                 kMaxDataTrials = 100; // Max attempts to find a non-degenerate data set
+  best_inlier_vec.clear();
   bool best_model_is_set = false;
-
-  uint32_t trial_count = 0;
+  uint32_t num_iter = 0,
+           estimated_num_iter = 1;
   size_t best_score = std::string::npos; // npos will mean "none"
-  uint32_t N = 1; // Dummy initialisation for number of trials.
+  std::vector<uint32_t> rand_idx_vec(kMinNumRandomSample);
 
-  std::vector<uint32_t> ind(min_samples_thresh);
-
-  // Select random datapoints to form a trial model, M.  
-  // Check that data points are not in a degenerate configuration.
-  while(N > trial_count){
+  while(estimated_num_iter > num_iter){
+    // We start in the degenerate state so we can form a trial model with a random set of points
     bool degenerate = true;
-    uint32_t count = 1;
-    std::vector<MODEL_T> models;
+    std::vector<MODEL_T> model_vec;
 
+    uint32_t count = 0;
     while(degenerate){
       // Generate random indicies
-      ind.resize(min_samples_thresh);
-      mio::RandomIntVec<uint32_t>(ind, 0, data_size-1);
-
-      // Test that these points are not a degenerate configuration.
-      degenerate = degen_func(data, ind);
-
+      rand_idx_vec.resize(kMinNumRandomSample);
+      mio::RandomIntVec<uint32_t>(rand_idx_vec, 0, kDataVecSize-1);
+      // Test that these points are not a degenerate configuration
+      degenerate = degen_func(kSrcDataVec, rand_idx_vec);
       if(!degenerate){
-        // Fit model to this random selection of data points. Note that M may represent a set of models that fit the data
-        fit_func(data, ind, models);
-        // Depending on your problem it might be that the only way you can determine whether a data set is 
-        // degenerate or not is to try to fit a model and see if it succeeds.  If it fails we reset degenerate to true.
-        degenerate = models.empty();
+        // Fit model to random selection of data points
+        fit_func(kSrcDataVec, rand_idx_vec, model_vec);
+        // Depending on the problem, checking whether we have a model or not might be the
+        // only way to determine a data set is degenerate. If it is, we try a new data set
+        degenerate = model_vec.empty();
       }
-
-      // Safeguard against being stuck in this loop forever
-      if(++count > max_data_trials){
-        if(verbose) 
-          printf("%s - unable to select a nondegenerate data set\n", CURRENT_FUNC);
+      if(++count > kMaxDataTrials){
+        if(kVerbosePrint) 
+          printf("%s - unable to find a nondegenerate data set\n", CURRENT_FUNC);
         break;
       }
     }
 
-    // Evaluate distances between points and model returning the indices of elements in x that are inliers.  
-    // Additionally, if M is a cell array of possible models 'distfn' will return the model that has the most inliers.  
-    // after this call M will be a non-cell object representing only one model.
-    uint32_t best_model_idx = models.size() + 1;
-    std::vector<uint32_t> inliers;
+    uint32_t best_model_idx = model_vec.size() + 1; //TODO - why is this set here? also, it's out of bounds.
+    std::vector<uint32_t> inlier_vec;
     if(!degenerate){
-      dist_func(data, models, dist_thresh, best_model_idx, inliers);
-      EXP_CHK_M(best_model_idx < models.size(), return(false), "invalid model index")
+      // The distance function will determine which model has the most number of inliers and
+      // will populate best_model_idx and inlier_vec accordingly
+      dist_func(kSrcDataVec, model_vec, kMinInlierDist, best_model_idx, inlier_vec);
+      EXP_CHK_M(best_model_idx < model_vec.size(), return(false), "invalid model index")
     }
 
-    // Find the number of inliers to this model
-    const uint32_t num_inliers = inliers.size();
-    bool update_estim_num_iters = trial_count == 0; // Always update on the first iteration, regardless
-                                                    // of the result (even for num_inliers=0)
+    const uint32_t kNumInliers = inlier_vec.size();
+    bool update_estimated_num_iter = num_iter == 0; // Always update estimated_num_iter on the first iteration
 
-    if( num_inliers > best_score || (best_score == std::string::npos && num_inliers != 0) ){
-      // Record data for this model
-      best_score = num_inliers;  
-      best_model = models[best_model_idx];
+    if(kNumInliers > best_score || (best_score == std::string::npos && kNumInliers != 0)){
+      // Record best model and inlier vec
+      best_score = kNumInliers;  
+      best_model = model_vec[best_model_idx];
       best_model_is_set = true;
-      best_inliers = inliers;
-      update_estim_num_iters = true;
+      best_inlier_vec = inlier_vec;
+      update_estimated_num_iter = true;
     }
 
-    if(update_estim_num_iters){
-      // Update estimate of N, the number of trials to ensure we pick,
+    if(update_estimated_num_iter){
+      // Update estimate of estimated_num_iter, the number of trials to ensure we pick,
       // with probability p, a data set with no outliers.
-      DATA_T fracinliers =  num_inliers / static_cast<DATA_T>(data_size);
-      DATA_T prob_no_outliers = 1 - std::pow( fracinliers, static_cast<DATA_T>(min_samples_thresh) );
-
+      DATA_T fracinliers =  kNumInliers / static_cast<DATA_T>(kDataVecSize);
+      DATA_T prob_no_outliers = static_cast<DATA_T>(1) -
+                                std::pow(fracinliers, static_cast<DATA_T>(kMinNumRandomSample));
       prob_no_outliers = std::max(std::numeric_limits<DATA_T>::epsilon(), prob_no_outliers); // Avoid division by -Inf
-      prob_no_outliers = std::min(1.0 - std::numeric_limits<DATA_T>::epsilon(), prob_no_outliers); // Avoid division by 0
-      N = std::log(1-good_sample_prob) / std::log(prob_no_outliers);
-      if(verbose)
-        printf("%s - iter #%u Estimated number of iters: %u  prob_no_outliers = %f  #inliers: %u\n", 
-               CURRENT_FUNC, static_cast<uint32_t>(trial_count), static_cast<uint32_t>(N),
-               prob_no_outliers, static_cast<uint32_t>(num_inliers));
+      prob_no_outliers = std::min(static_cast<DATA_T>(1.0 - std::numeric_limits<DATA_T>::epsilon()),
+                                  prob_no_outliers); // Avoid division by 0
+      estimated_num_iter = std::log(static_cast<DATA_T>(1)-kGoodSampleProb) / std::log(prob_no_outliers);
+      if(kVerbosePrint)
+        printf("%s - Number of iterations: %u, Estimated number of iterations: %u, "
+"Probability of no outliers: %f, Number of inliers: %u\n", 
+               CURRENT_FUNC, num_iter, estimated_num_iter, prob_no_outliers, kNumInliers);
     }
 
-    ++trial_count;
+    ++num_iter;
 
-    if(verbose)
-      printf("%s - trial %u out of %u \r", CURRENT_FUNC, static_cast<uint32_t>(trial_count),
-             static_cast<uint32_t>(std::ceil(static_cast<DATA_T>(N))));
+    if(kVerbosePrint)
+      printf("%s - Number of iterations: %u, Estimated number of iterations: %u\n",
+             CURRENT_FUNC, num_iter, estimated_num_iter);
 
-    // Safeguard against being stuck in this loop forever
-    if(trial_count > max_iter){
-      printf("%s - warning: maximum number of trials (%u) reached\n", CURRENT_FUNC, static_cast<uint32_t>(max_iter));
+    if(num_iter > kMaxIter){
+      if(kVerbosePrint)
+        printf("%s - warning: maximum number of iterations (%u) reached\n", CURRENT_FUNC, kMaxIter);
       break;
     }
   }
 
   if(best_model_is_set){
-    if(verbose)
-      printf("%s - finished in %u iterations.\n", CURRENT_FUNC, static_cast<uint32_t>(trial_count));
+    if(kVerbosePrint)
+      printf("%s - finished in %u iterations\n", CURRENT_FUNC, static_cast<uint32_t>(num_iter));
     return true;
   }
   else{
-    if(verbose)
-      printf("%s - warning: finished without any proper solution.\n", CURRENT_FUNC);
+    if(kVerbosePrint)
+      printf("%s - warning: finished without finding solution\n", CURRENT_FUNC);
     return false;
   }
 }

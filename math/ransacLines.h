@@ -1,6 +1,9 @@
 #ifndef __MIO_RANSAC_LINES_H__
 #define __MIO_RANSAC_LINES_H__
 
+#include "mio/math/math.h"
+#include "mio/altro/algorithm.h"
+
 
 template <typename PNT_T, typename MODEL_T>
 void LineFit2D(const std::vector<PNT_T> &all_data,
@@ -32,7 +35,7 @@ void LineDistance2D(const std::vector<PNT_T> &all_data,
 
 // Return "true" if the selected points are a degenerate (invalid) case
 template <typename PNT_T>
-bool LineDegenerate(const std::vector<PNT_T> &all_data,
+bool LineDegenerate2D(const std::vector<PNT_T> &all_data,
                     const std::vector<uint32_t> &use_indices){
   return false;
 }
