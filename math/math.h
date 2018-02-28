@@ -420,7 +420,7 @@ namespace sm{
   }
 
   //computes plane equation from 3 3D points
-  template <typename PNT_T, typename COEF_Ts> 
+  template <typename PNT_T, typename COEF_T> 
   inline void PlaneCoefFromPnt(const PNT_T &p1, const PNT_T &p2, const PNT_T &p3, COEF_T &coef){
 	  double dx1 = p2.x - p1.x,
 	         dy1 = p2.y - p1.y,
