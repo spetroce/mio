@@ -1,5 +1,5 @@
-#include "imageListViewer.h"
-#include "ui_imageListViewer.h"
+#include "image_list_viewer.h"
+#include "ui_image_list_viewer.h"
 #include <QMessageBox>
 #include <QFileDialog>
 

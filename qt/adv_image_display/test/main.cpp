@@ -1,4 +1,4 @@
-#include "mio/qt/advImageDisplay/advImageDisplay.h"
+#include "mio/qt/adv_image_display/adv_image_display.h"
 #include <QApplication>
 
 

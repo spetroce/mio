@@ -25,7 +25,7 @@
 
 #include "mio/altro/error.h"
 #ifdef HAVE_ADV_SLIDER_WIDGET
-#include "mio/qt/advSliderWidget/advSliderWidget.h"
+#include "mio/qt/adv_slider_widget/adv_slider_widget.h"
 #endif
 
 

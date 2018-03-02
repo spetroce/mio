@@ -1,4 +1,4 @@
-#include "advSliderWidget.h"
+#include "adv_slider_widget.h"
 #include <cmath>
 
 

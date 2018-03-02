@@ -3,8 +3,8 @@
 
 #include <functional>
 #include <lcm/lcm.h>
-#include "mio/lcm/lcmUtils.h"
-#include "mio/ipc/shMem.h"
+#include "mio/lcm/lcm_utils.h"
+#include "mio/ipc/shared_mem.h"
 #include "lcm_types/lcm_create_shm_t.h"
 
 

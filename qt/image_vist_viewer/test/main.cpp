@@ -1,4 +1,4 @@
-#include "imageListViewer.h"
+#include "image_list_viewer.h"
 #include <QApplication>
 #include <QStyleFactory>
 #include <QDebug>

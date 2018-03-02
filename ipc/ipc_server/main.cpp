@@ -1,5 +1,5 @@
-#include "ipcServer.h"
-#include "ipcServerShmClient.h"
+#include "ipc_server.h"
+#include "ipc_server_shm_client.h"
 #include "mio/altro/getch.h"
 
 

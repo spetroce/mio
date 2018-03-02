@@ -33,11 +33,11 @@ endif()
 
 add_definitions(-DADV_IMG_DISP_STRIPES_JPEG="${CMAKE_CURRENT_SOURCE_DIR}/stripes.jpg")
 
-add_library(mio_advImageDisplay advImageDisplay.cpp)
-target_link_libraries(mio_advImageDisplay Qt5::Widgets Qt5::Core ${OpenCV_LIBS})
+add_library(mio_adv_image_display adv_image_display.cpp)
+target_link_libraries(mio_adv_image_display Qt5::Widgets Qt5::Core ${OpenCV_LIBS})
 
 if(BUILD_ADV_IMG_DISP_TEST)
   add_executable(adv_img_disp_test test/main.cpp)
-  target_link_libraries(adv_img_disp_test mio_advImageDisplay)
+  target_link_libraries(adv_img_disp_test mio_adv_image_display)
 endif()
 

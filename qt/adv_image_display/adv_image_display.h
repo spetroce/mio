@@ -16,9 +16,9 @@
 #include "mio/altro/opencv.h"
 #include "mio/math/math.h"
 #include "mio/altro/error.h"
-#include "mio/qt/cvMatToQImage.h"
+#include "mio/qt/cv_mat_to_qimage.h"
 #ifdef HAVE_LCM
-#include "mio/lcm/lcmTypes.h"
+#include "mio/lcm/lcm_types.h"
 #endif
 
 #if CV_MAJOR_VERSION < 3

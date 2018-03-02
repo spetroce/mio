@@ -3,11 +3,7 @@
 #include <string>
 #include <iostream>
 #include <random>
-#if ICV_OPENCV_VERSION_MAJOR < 3
-#include "opencv2/core/core.hpp"
-#else
 #include "opencv2/core.hpp"
-#endif
 #include "mio/math/integration.h"
 
 typedef double (*func_t)(double);

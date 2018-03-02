@@ -1,4 +1,4 @@
-#include "mio/ipc/shMem.h"
+#include "mio/ipc/shared_mem.h"
 #include "mio/ipc/sem.h"
 
 

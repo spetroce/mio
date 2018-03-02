@@ -1,4 +1,4 @@
-#include "advImageDisplay.h"
+#include "mio/qt/adv_image_display/adv_image_display.h"
 #include <QMessageBox>
 #include <QXmlStreamWriter>
 #include "mio/qt/qtXml.h"

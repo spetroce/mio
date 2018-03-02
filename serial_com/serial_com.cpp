@@ -6,7 +6,7 @@
 #include <sys/select.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include "mio/serialCom/serialCom.h"
+#include "mio/serial_com/serial_com.h"
 
 
 SerialCom::SerialCom() : is_init_(false), port_fd_(0){}

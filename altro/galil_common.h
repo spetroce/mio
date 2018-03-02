@@ -5,7 +5,7 @@
 #include "gclib.h"
 #include "gclibo.h"
 #include "gclib_errors.h"
-#include "mio/altro/io.hpp" //ResolveUdevSymlink()
+#include "mio/altro/io.h" //ResolveUdevSymlink()
 
 
 class GalilException : std::exception {

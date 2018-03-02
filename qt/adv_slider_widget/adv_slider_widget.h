@@ -10,7 +10,7 @@
 #include <QString>
 #include <limits.h> //int limits
 #include <float.h> //double limits
-#include "mio/altro/freqBuffer.h"
+#include "mio/altro/freq_buffer.h"
 
 
 class CAdvSliderWidget : public QWidget{

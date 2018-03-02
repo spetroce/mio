@@ -8,9 +8,9 @@
 #include <QMessageBox>
 #include <QXmlStreamWriter>
 #include <QFile>
-#include "mio/qt/advSliderWidget/advSliderWidget.h"
-#include "mio/altro/ptGreyFlyCap2.h"
-#include "mio/altro/freqBuffer.h"
+#include "mio/qt/adv_slider_widget/adv_slider_widget.h"
+#include "mio/altro/pt_grey_fly_cap2.h"
+#include "mio/altro/freq_buffer.h"
 #include "mio/altro/io.h"
 #include "mio/qt/qtXml.h"
 
