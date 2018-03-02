@@ -288,7 +288,7 @@ inline PNT_T LinearInterpolationRegression2(const std::vector<PNT_T> &pnts, cons
   else
     sm::LineCoefFromPnt2(*(it-1), *it, line_coef);
 
-  return sm::SolveLineEqn2<PNT_T>(line_coef, x);
+  return PNT_T(x, sm::SolveLineEqn2(line_coef, x));
 }
 
 //NOTE: Do not forget to sort the data points so x_data goes from least to greatest
@@ -302,7 +302,7 @@ inline PNT_T LinearInterpolationRegression2(const std::vector<PNT_T> &pnts, cons
 //  // Check if x is less than pnts.front().x
 //  if(x < pnts[0].x){
 //    sm::LineCoefFromPnt2(pnts[0], pnts[1], line_coef);
-//    return sm::SolveLineEqn2<PNT_T>(line_coef, x);
+//    return PNT_T(x, sm::SolveLineEqn2(line_coef, x));
 //  }
 
 //  if(x == pnts[0].x)
@@ -314,13 +314,13 @@ inline PNT_T LinearInterpolationRegression2(const std::vector<PNT_T> &pnts, cons
 //      return pnts[i];
 //    if(x < pnts[i].x){
 //      sm::LineCoefFromPnt2(pnts[i-1], pnts[i], line_coef);
-//      return sm::SolveLineEqn2<PNT_T>(line_coef, x);
+//      return PNT_T(x, sm::SolveLineEqn2(line_coef, x));
 //    }
 //  }
 
 //  // x is greater than pnts.back().x
 //  sm::LineCoefFromPnt2(pnts[pnts_size-2], pnts[pnts_size_less_one], line_coef);
-//  return sm::SolveLineEqn2<PNT_T>(line_coef, x);
+//  return PNT_T(x, sm::SolveLineEqn2(line_coef, x));
 
 //  const bool not_found = false;
 //  assert(not_found); // This point should never be reached

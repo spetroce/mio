@@ -453,14 +453,14 @@ namespace sm{
 	  coef.c = p2.x*p1.y - p2.y*p1.x;
   }
 
-  template<typename DATA_T, typename PNT_T, typename LINE_T>
-  inline PNT_T SolveLineEqn2(const LINE_T &line, const DATA_T x){
-    return PNT_T(x, (-line.c - line.a*x) / line.b); //y = (-line.c - line.a*x) / line.b)
+  template<typename DATA_T, typename LINE_T>
+  inline DATA_T SolveLineEqn2(const LINE_T &line_coef, const DATA_T x){
+    return (-line_coef.c - line_coef.a*x) / line_coef.b; //y = (-line_coef.c - line_coef.a*x) / line_coef.b)
   }
 
-  template<typename DATA_T, typename PNT_T, typename LINE_T>
-  inline PNT_T SolveXLineEqn2(const LINE_T &line, const DATA_T y){
-    return PNT_T((-line.c - line.b*y) / line.a, y); //x = (-line.c - line.b*x) / line.a)
+  template<typename DATA_T, typename LINE_T>
+  inline DATA_T SolveXLineEqn2(const LINE_T &line_coef, const DATA_T y){
+    return (-line_coef.c - line_coef.b*y) / line_coef.a; //x = (-line_coef.c - line_coef.b*x) / line_coef.a)
   }
 
 } //namespace sm

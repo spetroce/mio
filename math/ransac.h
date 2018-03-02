@@ -70,7 +70,7 @@ bool CRansac<DATA_T, MODEL_DATA_T, MODEL_T>::execute(
   EXP_CHK(kDataVec.size() > 1, return(false))
 
   const uint32_t kDataVecSize = kDataVec.size(),
-                 kMaxDataTrials = 100; // Max attempts to find a non-degenerate data set
+                 kMaxDataTrials = 20000; // Max attempts to find a non-degenerate data set
   best_inlier_vec.clear();
   bool best_model_is_set = false;
   uint32_t num_iter = 0,
