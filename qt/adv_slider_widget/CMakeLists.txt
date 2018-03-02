@@ -11,7 +11,7 @@ endif()
 set(MIO_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 include_directories(${MIO_INCLUDE_DIR})
 
-add_library(mio_adv_slider_widget advSliderWidget.cpp)
+add_library(mio_adv_slider_widget adv_slider_widget.cpp)
 target_link_libraries(mio_adv_slider_widget Qt5::Widgets pthread)
 
 option(BUILD_ADV_SLIDER_WID_TEST "Build adv_slider_widget test executable" OFF)
