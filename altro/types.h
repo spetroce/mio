@@ -68,7 +68,7 @@ void class_name::Split(const std::vector<class_name> &src, std::vector<DATA_T> &
 \
 \
 template<class DATA_T> \
-void Merge(const std::vector<DATA_T> &src0, const std::vector<DATA_T> &src1, std::vector<class_name> &dst){ \
+void class_name::Merge(const std::vector<DATA_T> &src0, const std::vector<DATA_T> &src1, std::vector<class_name> &dst){ \
   STD_INVALID_ARG_E( src0.size() == src1.size() ) \
   const size_t src_size = src0.size(); \
   CHECK_VECTOR_SIZE(dst, src_size) \
