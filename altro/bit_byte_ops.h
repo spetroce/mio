@@ -38,7 +38,7 @@
 inline uint32_t SetByte(const uint32_t num,
                         const uint8_t byte,
                         const uint8_t index) {
-  const uint32_t masks[] = {0xFFFFFF00, 0xFFFF00FF, 0xFF00FFFF, 0xFFFFFF};
+  const uint32_t masks[] = {0xffffff00, 0xffff00ff, 0xff00ffff, 0xffffff};
   if (index >= 0 && index < 4)
     return (num & masks[index]) | byte << 8*index;
   return 0;
@@ -47,7 +47,7 @@ inline uint32_t SetByte(const uint32_t num,
 inline uint32_t SetWord(const uint32_t num,
                         const uint16_t word,
                         const uint8_t index) {
-  const uint32_t masks[] = {0xFFFF0000, 0xFFFF};
+  const uint32_t masks[] = {0xffff0000, 0xffff};
   if (index == 0 || index == 1)
     return (num & masks[index]) | word << 16*index;
   return 0;
