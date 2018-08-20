@@ -91,7 +91,7 @@ class AdvImageDisplay : public QWidget{
     int GetRoiIndex();
     void SaveRoi(QString file_full_qstr);
     void LoadRoi(const QString kFileFullQStr, std::vector<int> &loaded_roi_types);
-    bool SetZoomingEnabled(const bool kEnabled);
+    void SetZoomingEnabled(const bool kEnabled);
     void SetupLcm(const std::string kNewFrameLcmChanNamePrefix);
 
   protected:
