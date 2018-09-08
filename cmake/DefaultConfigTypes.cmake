@@ -4,9 +4,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -pedantic -O2 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-std=c++14 -pedantic -O2 -DNDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -pedantic -g  -O0 -DDEBUG -D_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-std=c++14 -pedantic -g  -O0 -DDEBUG -D_DEBUG")
 set(CMAKE_C_FLAGS_DEBUG "-g -O0 -DDEBUG -D_DEBUG")
 # Handle some compile flag options
 option(DEBUG_FLAG_GLIBCXX_DEBUG "use gcc flag -D_GLIBCXX_DEBUG when CMAKE_BUILD_TYPE is Debug" OFF)
