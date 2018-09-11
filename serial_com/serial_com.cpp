@@ -26,7 +26,8 @@ int SerialCom::Init(const char *path_name, int nFlags){
 "Run the following command to check if you are a member of dialout:\n" 
 "id -Gn <username>\n"
 "Run the following command to add a user to the dialout group:\n"
-"sudo usermod -a -G dialout <username>\n");
+"sudo usermod -a -G dialout <username>\n"
+"Then 'sign out' or reboot for changes to take effect\n");
     return -1;
   }
   //save original termios settings in termios_orig_ (only for restoring settings in Uninit)
