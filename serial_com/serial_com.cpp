@@ -96,6 +96,7 @@ int SerialCom::SetOutputType(const OutputType type){
       return -1;
   }
   EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
+  return 0;
 }
 
 
@@ -386,6 +387,7 @@ int SerialCom::SetParityChecking(const bool enable, const bool ignore, const boo
     termios_new_.c_iflag &= ~INPCK;
     termios_new_.c_iflag &= ~ISTRIP;
   }
+  return 0;
 }
 
 
