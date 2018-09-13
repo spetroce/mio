@@ -43,8 +43,8 @@ class SerialCom{
     SerialCom();
     ~SerialCom();
 
-    int Init(const char *path_name, int nFlags = O_RDWR | O_NOCTTY | O_NDELAY); //must have O_RDONLY, O_WRONLY, or O_RDWR flag
-    int Uninit(const bool kRestoreSettings);
+    int Init(const char *path_name, int flags = O_RDWR | O_NOCTTY | O_NDELAY); //must have O_RDONLY, O_WRONLY, or O_RDWR flag
+    int Uninit(const bool kRestoreSettings = true);
 
     int GetPortFD();
     bool IsInit();

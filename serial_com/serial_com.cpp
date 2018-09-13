@@ -13,13 +13,13 @@ SerialCom::SerialCom() : is_init_(false), port_fd_(0){}
 
 SerialCom::~SerialCom(){
   if(is_init_)
-    Uninit(true);
+    Uninit();
 }
 
 
-int SerialCom::Init(const char *path_name, int nFlags){
+int SerialCom::Init(const char *path_name, int flags){
   EXP_CHK(!is_init_, return(0))
-  if( ( port_fd_ = open(path_name, nFlags) ) == -1){
+  if( ( port_fd_ = open(path_name, flags) ) == -1){
     perror("SerialCom::Init() - open()");
     if(errno == EACCES)
       printf("It's possible that the current user is not part of the dialout group\n"
