@@ -35,7 +35,7 @@
   static_cast<num_type>(arr[start_index+2] << 16) |  \
   static_cast<num_type>(arr[start_index+3] << 24);
 
-uint32_t SetByte(const uint32_t num,
+inline uint32_t SetByte(const uint32_t num,
                  const uint8_t byte,
                  const uint8_t index) {
   const uint32_t masks[] = {0xffffff00, 0xffff00ff, 0xff00ffff, 0xffffff};
@@ -44,7 +44,7 @@ uint32_t SetByte(const uint32_t num,
   return 0;
 }
 
-uint32_t SetWord(const uint32_t num,
+inline uint32_t SetWord(const uint32_t num,
                  const uint16_t word,
                  const uint8_t index) {
   const uint32_t masks[] = {0xffff0000, 0xffff};
@@ -53,7 +53,7 @@ uint32_t SetWord(const uint32_t num,
   return 0;
 }
 
-uint8_t GetByte(const uint32_t num,
+inline uint8_t GetByte(const uint32_t num,
                 const uint8_t index) {
   const uint32_t masks[] = {0xff, 0xff00, 0xff0000, 0xff000000};
   if (index >= 0 && index < 4)
@@ -61,7 +61,7 @@ uint8_t GetByte(const uint32_t num,
   return 0;
 }
 
-uint16_t GetWord(const uint32_t num,
+inline uint16_t GetWord(const uint32_t num,
                  const uint8_t index) {
   const uint32_t masks[] = {0xffff, 0xffff0000};
   if (index == 0 || index == 1)
