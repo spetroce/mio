@@ -3,6 +3,8 @@
 
 namespace mio{
 
+#define static_cast_void_ptr(ptr_type, ptr_var) static_cast<ptr_type *>(static_cast<void *>(ptr_var))
+
 // variable1_t *var1;
 // variable2_t *var2;
 // variable2_t *var = mio::StaticCastPtr<variable2_t>(var1);
