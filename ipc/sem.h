@@ -28,25 +28,25 @@ class Semaphore{
         EXP_CHK(Uninit() == true, return)
     }
 
-    //If kTryCreate is true and kMustCreate is false, Init will attempt
+    //If try_create is true and must_create is false, Init will attempt
     //to create the semaphore (no error thrown if it already exists).
-    //If kTryCreate and kMustCreate are true, Init will throw an error if the semaphore already exists in the system.
-    bool Init(const std::string kSemName, const unsigned int kInitialSemValue = 0,
-              const bool kTryCreate = true, const bool kMustCreate = false){
+    //If try_create and must_create are true, Init will throw an error if the semaphore already exists in the system.
+    bool Init(const std::string sem_name, const unsigned int initial_sem_value = 0,
+              const bool try_create = true, const bool must_create = false){
       EXP_CHK(!is_init_, return(true))
-      EXP_CHK(kSemName.size() > 0 && kSemName.size() <= NAME_MAX-4, return(false))
-      EXP_CHK(kSemName[0] == '/', return(false))
+      EXP_CHK(sem_name.size() > 0 && sem_name.size() <= NAME_MAX-4, return(false))
+      EXP_CHK(sem_name[0] == '/', return(false))
 
-      created_ = kTryCreate;
-      if(kTryCreate){
-        sem_addr_ = sem_open(kSemName.c_str(), O_CREAT | O_EXCL, 0666, kInitialSemValue);
+      created_ = try_create;
+      if(try_create){
+        sem_addr_ = sem_open(sem_name.c_str(), O_CREAT | O_EXCL, 0666, initial_sem_value);
         if(sem_addr_ == SEM_FAILED){
           if(errno == EEXIST){
-            if(kMustCreate){
-              std::cerr << FL_STRM << "sem_open() error: Semaphore already exists and kMustCreate was set.\n";
+            if(must_create){
+              std::cerr << FL_STRM << "sem_open() error: Semaphore already exists and must_create was set.\n";
               return false;
             }
-            EXP_CHK_ERRNO((sem_addr_ = sem_open(kSemName.c_str(), 0)) != SEM_FAILED, return(false))
+            EXP_CHK_ERRNO((sem_addr_ = sem_open(sem_name.c_str(), 0)) != SEM_FAILED, return(false))
             created_ = false;
           }
           else{ //some other error besides EEXIST
@@ -56,17 +56,17 @@ class Semaphore{
         }
       }
       else{
-        EXP_CHK_ERRNO((sem_addr_ = sem_open(kSemName.c_str(), 0)) != SEM_FAILED, return(false))
+        EXP_CHK_ERRNO((sem_addr_ = sem_open(sem_name.c_str(), 0)) != SEM_FAILED, return(false))
       }
 
-      sem_name_ = kSemName;
+      sem_name_ = sem_name;
       is_init_ = true;
       return true;
     }
 
-    bool Init(const char *kSemName, const unsigned int kInitialSemValue = 0,
-              const bool kTryCreate = true, const bool kMustCreate = false){
-      return Init(std::string(kSemName), kInitialSemValue, kTryCreate, kMustCreate);
+    bool Init(const char *sem_name, const unsigned int initial_sem_value = 0,
+              const bool try_create = true, const bool must_create = false){
+      return Init(std::string(sem_name), initial_sem_value, try_create, must_create);
     }
 
     bool Uninit(){
@@ -140,11 +140,11 @@ class Semaphore{
     abs_timeout.  Furthermore, the validity of abs_timeout is not checked
     in this case.
     */
-    bool TimedWait(const time_t kSec, const long kNanosec){
+    bool TimedWait(const time_t time_sec, const long time_nanosec){
       EXP_CHK(is_init_, return(false))
       timespec abs_timeout;
-      abs_timeout.tv_sec = kSec;
-      abs_timeout.tv_nsec = kNanosec;
+      abs_timeout.tv_sec = time_sec;
+      abs_timeout.tv_nsec = time_nanosec;
       EXP_CHK_ERRNO(sem_timedwait(sem_addr_, &abs_timeout) == 0, return(false))
       return true;
     }
