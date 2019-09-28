@@ -75,6 +75,7 @@ class SharedMemory{
 
       shm_size_ = shm_size;
       is_init_ = true;
+      return true;
     }
 
     //NOTE: proj_id is an int, but still only the 8 least significant bits are used to generate the key
