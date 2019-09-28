@@ -386,6 +386,27 @@ namespace sm{
     return T(a.x + pos_ab * cos_val, a.y + pos_ab * sin_val);
   }
 
+/*  template <typename LINE_T> */
+/*  inline T LineIntersect2(LINE_T line_coef_a, LINE_T line_coef_b){*/
+/*    // y = mx + b*/
+
+/*    DATA_T m[2], b[2];*/
+
+/*    m[0] = -line_coef_a.a/line_coef_a.b;*/
+/*    b[0] = -line_coef_a.c/line_coef_a.b;*/
+
+/*    m[1] = -line_coef_b.a/line_coef_b.b;*/
+/*    b[1] = -line_coef_b.c/line_coef_b.b;*/
+
+/*    if(m[0] == m[1])*/
+/*      return; // lines are parallel*/
+
+/*    //y = ax+b*/
+/*    //y = bx+d*/
+
+/*    //PNT_T((d-c)/(a-b),(a*d-b*c)/(a-b))*/
+/*  }*/
+
   // Given two pnts p1 and p2 that define a line and a third point p3, the function finds and
   // returns a point p4 on the line p1p2 such that p1p2 and p3p4 are perpendicular.
   template <typename PNT_T>
