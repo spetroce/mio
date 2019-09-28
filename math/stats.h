@@ -20,57 +20,57 @@ inline void ComputeStatistics(std::vector<DATA_T> &_src_vec, DATA_T &_min, DATA_
     src_vec_copy = _src_vec;
   std::vector<DATA_T> &src_vec = kReadOnlySrc ? src_vec_copy : _src_vec;
   _set_data.clear();
-	std::sort(src_vec.begin(), src_vec.end());
-	_min = src_vec.front();
-	_max = src_vec.back();
+  std::sort(src_vec.begin(), src_vec.end());
+  _min = src_vec.front();
+  _max = src_vec.back();
 
-	DATA_T sum = 0;
+  DATA_T sum = 0;
   const size_t kSrcVecSize = src_vec.size();
-	std::vector<unsigned int> occur_vec(kSrcVecSize);
+  std::vector<unsigned int> occur_vec(kSrcVecSize);
   std::fill(occur_vec.begin(), occur_vec.end(), 0);
   for(const auto &kSrcVal : src_vec){
-		sum += kSrcVal; // used for mean
-		// occur_vec will be used later to find the mode
+    sum += kSrcVal; // used for mean
+    // occur_vec will be used later to find the mode
     for(size_t i = 0; i < kSrcVecSize; ++i)
-			if(kSrcVal == src_vec[i])
-				++occur_vec[i];
-	}
+      if(kSrcVal == src_vec[i])
+        ++occur_vec[i];
+  }
 
-	// arithmetic mean
-	_mean = sum / src_vec.size();
+  // arithmetic mean
+  _mean = sum / src_vec.size();
 
-	// statistical median
-	if(src_vec.size() % 2 == 1)
-	  _median = src_vec[src_vec.size()/2];
-	else if(src_vec.size() % 2 == 0){
-		DATA_T median_elem_a = src_vec[(src_vec.size() / 2) - 1];
-		DATA_T median_elem_b = src_vec[src_vec.size() / 2];
-		_median = (median_elem_a + median_elem_b)/2;
-	} // end statistical median
+  // statistical median
+  if(src_vec.size() % 2 == 1)
+    _median = src_vec[src_vec.size()/2];
+  else if(src_vec.size() % 2 == 0){
+    DATA_T median_elem_a = src_vec[(src_vec.size() / 2) - 1];
+    DATA_T median_elem_b = src_vec[src_vec.size() / 2];
+    _median = (median_elem_a + median_elem_b)/2;
+  }
 
-	//variance
-	_std_dev = 0;
-	_variance = 0;
+  //variance
+  _std_dev = 0;
+  _variance = 0;
   for(auto &data_in_val : src_vec)
-		_variance = std::pow( (data_in_val - _mean), 2 ) + _variance;
-	_variance = _variance / src_vec.size();
+    _variance = std::pow( (data_in_val - _mean), 2 ) + _variance;
+  _variance = _variance / src_vec.size();
 
-	// standard deviation
-	_std_dev = sqrt(_variance);
+  // standard deviation
+  _std_dev = sqrt(_variance);
 
-	// mode
-	DATA_T max_occur_val = 0;
-	int occur_check = 0;
+  // mode
+  DATA_T max_occur_val = 0;
+  int occur_check = 0;
   for(auto &occur_val : occur_vec){
-		if(occur_val == 1) // if the vector is filled with 1's it means each number has occurred only once, therefore no mode.
-			occur_check = occur_check + 1;
-		else if(occur_val > max_occur_val)
-			max_occur_val = occur_val;
-	}
+    if(occur_val == 1) // if the vector is filled with 1's it means each number has occurred only once, therefore no mode.
+      occur_check = occur_check + 1;
+    else if(occur_val > max_occur_val)
+      max_occur_val = occur_val;
+  }
 
-	for(size_t i = 0; i < kSrcVecSize; ++i)
-		if(occur_vec[i] == max_occur_val)
-			_set_data.insert(src_vec[i]);
+  for(size_t i = 0; i < kSrcVecSize; ++i)
+    if(occur_vec[i] == max_occur_val)
+      _set_data.insert(src_vec[i]);
 }
 
 
@@ -98,7 +98,7 @@ DATA_T StatisticalOutlierRemoval(const std::vector<DATA_T> &src_data, std::vecto
 
   // a distance that is bigger than this signals an outlier
   const DATA_T thresh_upper = mean + std_dev_coef*std_dev,
-               thresh_lower = mean - std_dev_coef*std_dev;
+  thresh_lower = mean - std_dev_coef*std_dev;
 
   unsigned int count = 0;
   for(unsigned int i = 0; i < kDataLen; ++i){

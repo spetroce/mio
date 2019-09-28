@@ -1,7 +1,7 @@
 #include "mio/qt/adv_image_display/adv_image_display.h"
 #include <QMessageBox>
 #include <QXmlStreamWriter>
-#include "mio/qt/qtXml.h"
+#include "mio/qt/qt_xml.h"
 
 using namespace mio;
 
@@ -695,7 +695,7 @@ bool AdvImageDisplay::GetConvertToFalseColors(){
   return convert_to_false_colors_;
 }
 
-bool AdvImageDisplay::SetZoomingEnabled(const bool kEnabled){
+void AdvImageDisplay::SetZoomingEnabled(const bool kEnabled){
   zooming_enabled_ = kEnabled;
   ResetZoom();
 }

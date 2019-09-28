@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.11)
-project(ImageListViewer)
+project(image_list_viewer)
 
-option(BUILD_IMG_LIST_VIEWER_TEST "Build imageListViewer test executable" OFF)
+option(BUILD_IMG_LIST_VIEWER_TEST "Build image_list_viewer test executable" OFF)
 option(BUILD_IMG_LIST_VIEWER_SELF "Enabling tells cmake to look for dependencies" OFF)
 
 if(BUILD_IMG_LIST_VIEWER_SELF)
@@ -33,17 +33,17 @@ if(BUILD_IMG_LIST_VIEWER_SELF)
   #add_definitions(-DMIO_OPENCV_VERSION_MAJOR=${OpenCV_VERSION_MAJOR})
 endif()
 
-## mio_advImageDisplay
-add_subdirectory(${MIO_INCLUDE_DIR}/mio/qt/advImageDisplay ${CMAKE_CURRENT_BINARY_DIR}/mio/qt/advImageDisplay)
+## mio_adv_image_display
+add_subdirectory(${MIO_INCLUDE_DIR}/mio/qt/adv_image_display ${CMAKE_CURRENT_BINARY_DIR}/mio/qt/adv_image_display)
 
 add_definitions(-DIMG_LIST_VIEWER_EARTH_JPEG_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
-qt5_wrap_ui(ui_imageListViewer imageListViewer.ui)
-add_library(mio_imageListViewer imageListViewer.cpp ${ui_imageListViewer})
-target_link_libraries(mio_imageListViewer Qt5::Widgets ${OPENCV_LIBRARIES} mio_advImageDisplay)
+qt5_wrap_ui(ui_image_list_viewer image_list_viewer.ui)
+add_library(mio_image_list_viewer image_list_viewer.cpp ${ui_image_list_viewer})
+target_link_libraries(mio_image_list_viewer Qt5::Widgets ${OPENCV_LIBRARIES} mio_adv_image_display)
 
 if(BUILD_IMG_LIST_VIEWER_TEST)
   add_executable(img_list_viewer_test test/main.cpp)
-  target_link_libraries(img_list_viewer_test mio_imageListViewer)
+  target_link_libraries(img_list_viewer_test mio_image_list_viewer)
 endif()
 

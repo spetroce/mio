@@ -13,20 +13,21 @@ SerialCom::SerialCom() : is_init_(false), port_fd_(0){}
 
 SerialCom::~SerialCom(){
   if(is_init_)
-    Uninit(true);
+    Uninit();
 }
 
 
-int SerialCom::Init(const char *path_name, int nFlags){
+int SerialCom::Init(const char *path_name, int flags){
   EXP_CHK(!is_init_, return(0))
-  if( ( port_fd_ = open(path_name, nFlags) ) == -1){
+  if( ( port_fd_ = open(path_name, flags) ) == -1){
     perror("SerialCom::Init() - open()");
     if(errno == EACCES)
       printf("It's possible that the current user is not part of the dialout group\n"
 "Run the following command to check if you are a member of dialout:\n" 
 "id -Gn <username>\n"
 "Run the following command to add a user to the dialout group:\n"
-"sudo usermod -a -G dialout <username>\n");
+"sudo usermod -a -G dialout <username>\n"
+"Then 'sign out' or reboot for changes to take effect\n");
     return -1;
   }
   //save original termios settings in termios_orig_ (only for restoring settings in Uninit)
@@ -95,6 +96,7 @@ int SerialCom::SetOutputType(const OutputType type){
       return -1;
   }
   EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
+  return 0;
 }
 
 
@@ -385,6 +387,7 @@ int SerialCom::SetParityChecking(const bool enable, const bool ignore, const boo
     termios_new_.c_iflag &= ~INPCK;
     termios_new_.c_iflag &= ~ISTRIP;
   }
+  return 0;
 }
 
 
