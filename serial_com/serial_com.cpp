@@ -470,7 +470,7 @@ int SerialCom::Write(const void *data_buf, const unsigned int data_buf_len, cons
       EXP_CHK_ERRNO_M(num_active_fd != -1, return(-1), "select() error")
       if(num_active_fd == 0){
         ++num_timeout;
-        printf("%s - timeout occurence %d\n", CURRENT_FUNC, num_timeout);
+        printf("%s - timeout occurrence %d\n", CURRENT_FUNC, num_timeout);
         EXP_CHK(num_timeout < time_out_limit, return(-1))
       }
       else{
@@ -528,7 +528,7 @@ int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned 
       EXP_CHK_ERRNO_M(num_active_fd != -1, return(-1), "select() error")
       if(num_active_fd == 0){
         ++num_timeout;
-        printf("%s - timeout occurence %d\n", CURRENT_FUNC, num_timeout);
+        printf("%s - timeout occurrence %d\n", CURRENT_FUNC, num_timeout);
         EXP_CHK(num_timeout < time_out_limit, return(-1))
       }
       else{
