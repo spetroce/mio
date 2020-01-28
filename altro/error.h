@@ -231,7 +231,4 @@ else mio::error( mio::ErrCode::StsAssert, #expr, CURRENT_FUNC, __FILE__, __LINE_
 #define MIO_DBG_ASSERT(expr)
 #endif
 
-#define SIZE_OF_CHECK(type_name, type_size) \
-typedef char type_name ## sizeof_check[(((sizeof(type_name)))==type_size)*2-1];
-
 #endif //__MIO_ERROR_H__
