@@ -532,7 +532,7 @@ int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned 
         EXP_CHK(num_timeout < time_out_limit, return(-1))
       }
       else{
-        EXP_CHK_ERRNO((num_byte = read(port_fd_, static_cast<uint8_t*>(data_buf)+num_read_byte, 
+        EXP_CHK_ERRNO((num_byte = read(port_fd_, reinterpret_cast<uint8_t*>(data_buf)+num_read_byte, 
                     req_buffer_len-num_read_byte)) != -1, return(-1))
       }
     } while(num_active_fd == 0); //loop for timeout check instances
