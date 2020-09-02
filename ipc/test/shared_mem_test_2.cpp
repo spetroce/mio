@@ -1,3 +1,5 @@
+#define USE_SYS_V_SHM
+
 #include "mio/ipc/shared_mem.h"
 #include "mio/ipc/sem.h"
 #include <chrono>

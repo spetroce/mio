@@ -1,15 +1,20 @@
+// #define USE_SYS_V_SHM
+
 #include "mio/ipc/shared_mem.h"
 #include "mio/ipc/sem.h"
-
 
 int main(int argc, char *argv[]){
   EXP_CHK(argc == 2, return(-1))
 
   mio::SharedMemory<int> shmem;
-  shmem.Init(std::string(__FILE__), 33, sizeof(int));
+#ifdef USE_SYS_V_SHM
+  EXP_CHK(shmem.Init(std::string(__FILE__), 33, sizeof(int)), return -1);
+#else
+  EXP_CHK(shmem.Init("/shm_test", sizeof(int)), return -1);
+#endif
 
   mio::Semaphore sem;
-  sem.Init("/sem_test");
+  EXP_CHK(sem.Init("/sem_test"), return -1);
 
   if (atoi(argv[1]) == 0) {
     // Producer
@@ -39,4 +44,3 @@ int main(int argc, char *argv[]){
 
   return 0;
 }
-
