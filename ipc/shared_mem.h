@@ -58,6 +58,7 @@ class SharedMemory {
           std::cerr << FL_STRM << "shmget() error. " << ERRNO_STRM << std::endl;
           return false;
         }
+        // It's not an error if we are trying to create and fail
         created_ = (errno != EEXIST);
       }
       if (!created_) {
@@ -161,6 +162,7 @@ class SharedMemory {
           std::cerr << FL_STRM << "shm_open() error. " << ERRNO_STRM << std::endl;
           return false;
         }
+        // It's not an error if we are trying to create and fail
         created_ = (errno != EEXIST);
       }
       if (!created_) {

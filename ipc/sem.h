@@ -47,6 +47,7 @@ class Semaphore{
           std::cerr << FL_STRM << "sem_open() error. " << ERRNO_STRM << std::endl;
           return false;
         }
+        // It's not an error if we are trying to create and fail
         created_ = (errno != EEXIST);
       }
       if (!created_) {
