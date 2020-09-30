@@ -12,7 +12,8 @@ include(${MIO_INCLUDE_DIR}/mio/cmake/DefaultConfigTypes.cmake)
 include_directories(${MIO_INCLUDE_DIR})
 
 add_executable(shared_mem_test shared_mem_test.cpp)
-target_link_libraries(shared_mem_test pthread) #pthread needed for semaphore functions
+# pthread needed for semaphore functions, rt needed for sem_open/unlink()
+target_link_libraries(shared_mem_test pthread rt)
 
 add_executable(shared_mem_test_2 shared_mem_test_2.cpp)
-target_link_libraries(shared_mem_test_2 pthread)
+target_link_libraries(shared_mem_test_2 pthread rt)
