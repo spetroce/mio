@@ -62,6 +62,7 @@ class SerialCom{
 
     int SetParity(const ParityType parity_type);
     int SetParityChecking(const bool enable, const bool ignore, const bool mark, const bool strip);
+    int IgnoreBreakCondition(const bool ignore);
     int SetStopBits(unsigned int num_stop_bits);
     int GetStopBits(unsigned int &num_stop_bits);
     int SetHardwareFlowControl(const bool hardware_flow_control);

@@ -391,6 +391,18 @@ int SerialCom::SetParityChecking(const bool enable, const bool ignore, const boo
 }
 
 
+int SerialCom::IgnoreBreakCondition(const bool ignore) {
+  EXP_CHK(is_init_, return(-1))
+  if (ignore) {
+    termios_new_.c_cflag |= IGNBRK;  // ignore break conditions
+  } else {
+    termios_new_.c_cflag &= ~IGNBRK;
+  }
+  EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return(-1))
+  return 0;
+}
+
+
 int SerialCom::SetStopBits(unsigned int num_stop_bits){
   EXP_CHK(is_init_, return(-1))
   EXP_CHK(num_stop_bits == 1 || num_stop_bits == 2, return(-1))
