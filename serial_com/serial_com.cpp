@@ -391,7 +391,7 @@ int SerialCom::SetParityChecking(const bool enable, const bool ignore, const boo
 }
 
 
-int SerialCom::IgnoreBreakCondition(const bool ignore) {
+int SerialCom::SetIgnoreBreakCondition(const bool ignore) {
   EXP_CHK(is_init_, return(-1))
   if (ignore) {
     termios_new_.c_cflag |= IGNBRK;  // ignore break conditions
