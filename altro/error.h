@@ -21,9 +21,19 @@
 #define CURRENT_FUNC ""
 #endif
 
+/*
+  You can put the following into your CMakeLists.txt to make file paths relative
+  to the project root dir.
+  string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
+  add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
+*/
+#ifndef SOURCE_PATH_SIZE
+#define SOURCE_PATH_SIZE 0
+#endif
+#define FILENAME (__FILE__ + SOURCE_PATH_SIZE)
 
 #define FRIENDLY_RETHROW(exception_){                                                                     \
-  std::cout << "Exception caught here: " << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << "\n";   \
+  std::cout << "Exception caught here: " << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << "\n";   \
   throw exception_;                                                                                       \
 }
 
@@ -31,21 +41,21 @@
 #define EXCEPTION_MACRO_E(exp, exception_type)                                                         \
 if( !!(exp) ) ; else{                                                                                  \
   std::ostringstream stream;                                                                           \
-  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": (" << #exp << ") is false.\n";    \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << ": (" << #exp << ") is false.\n";    \
   throw exception_type( stream.str() );                                                                \
 }
 
 #define EXCEPTION_MACRO_M(msg, exception_type)                                            \
 {                                                                                         \
   std::ostringstream stream;                                                              \
-  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ":" << msg << "\n";     \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << ":" << msg << "\n";     \
   throw exception_type( stream.str() );                                                   \
 }
 
 #define EXCEPTION_MACRO_EM(exp, exception_type, opt_msg)            \
 if( !!(exp) ) ; else{                                               \
   std::ostringstream stream;                                        \
-  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ <<   \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ <<   \
             ": (" << #exp << ") is false. " << opt_msg << "\n";     \
   throw exception_type( stream.str() );                             \
 }
@@ -74,14 +84,14 @@ if( !!(exp) ) ; else{                                               \
 #define EXP_CHK_SYSERR(exp)                                                                                         \
 if( !!(exp) ) ; else{                                                                                               \
   std::ostringstream stream;                                                                                        \
-  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": (" << #exp << ") is false. System message";    \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << ": (" << #exp << ") is false. System message";    \
   throw std::system_error( errno, std::system_category(), stream.str() );                                           \
 }
 
 #define EXP_CHK_SYSERR_M(exp, opt_msg)                                         \
 if( !!(exp) ) ; else{                                                          \
   std::ostringstream stream;                                                   \
-  stream << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ <<              \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ <<              \
             ": (" << #exp << ") is false. " << opt_msg << ". System message";  \
   throw std::system_error( errno, std::system_category(), stream.str() );      \
 }
@@ -92,7 +102,7 @@ if( !!(exp) ) ; else{                                                          \
 #define FL_STRM CURRENT_FUNC << ":" << __LINE__ << ": "
 
 //Put this macro in a c++ stream to print the current file name, function name, and line number
-#define FFL_STRM __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << ": "
+#define FFL_STRM FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << ": "
 
 #define ERRNO_STRM "errno message: " << std::strerror(errno)
 
@@ -107,7 +117,7 @@ The above line will print the formatted message and call return if value is <= 0
 */
 #define EXP_CHK(exp, exit_function)                                    \
 if( !!(exp) ) ; else{                                                  \
-  std::cout << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ <<   \
+  std::cout << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ <<   \
                ": (" << #exp << ") is false.\n";                       \
   exit_function;                                                       \
 }
@@ -119,7 +129,7 @@ EXP_CHK(value > 0, return(false), "you entered an incorrect value")
 */
 #define EXP_CHK_M(exp, exit_function, opt_msg)                         \
 if( !!(exp) ) ; else{                                                  \
-  std::cout << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ <<   \
+  std::cout << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ <<   \
                ": (" << #exp << ") is false. " << opt_msg << "\n";     \
   exit_function;                                                       \
 }
@@ -127,14 +137,14 @@ if( !!(exp) ) ; else{                                                  \
 //Expression checking macros with errno evaluation
 #define EXP_CHK_ERRNO(exp, exit_function)                                                       \
 if( !!(exp) ) ; else{                                                                           \
-  std::cout << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ <<                            \
+  std::cout << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ <<                            \
                ": (" << #exp << ") is false. errno message: " << std::strerror(errno) << "\n";  \
   exit_function;                                                                                \
 }
 
 #define EXP_CHK_ERRNO_M(exp, exit_function, opt_msg)                                                       \
 if( !!(exp) ) ; else{                                                                                      \
-  std::cout << __FILE__ << ":" << CURRENT_FUNC << ":" << __LINE__ << " - (" << #exp << ") is false. " <<   \
+  std::cout << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << " - (" << #exp << ") is false. " <<   \
                opt_msg << ": errno message: " << std::strerror(errno) << "\n";                             \
   exit_function;                                                                                           \
 }
@@ -223,7 +233,7 @@ inline void error(int code, const std::string &err, const char *func, const char
 
 #define MIO_ASSERT( expr ) \
 if(!!(expr)) ; \
-else mio::error( mio::ErrCode::StsAssert, #expr, CURRENT_FUNC, __FILE__, __LINE__ )
+else mio::error( mio::ErrCode::StsAssert, #expr, CURRENT_FUNC, FILENAME, __LINE__ )
 
 #ifdef _DEBUG
 #define MIO_DBG_ASSERT(expr) MIO_ASSERT(expr)
