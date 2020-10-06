@@ -30,12 +30,12 @@ int SerialCom::Init(const char *path_name, int flags) {
 "Then 'sign out' or reboot for changes to take effect\n");
     return -1;
   }
-  //save original termios settings in termios_orig_ (only for restoring settings in Uninit)
+  // save original termios settings in termios_orig_ (only for restoring settings in Uninit)
   EXP_CHK_ERRNO(tcgetattr(port_fd_, &termios_orig_) == 0, return -1)
-  //get original termios settings and put in termios_new_ (what is used throughtout library)
+  // get original termios settings and put in termios_new_ (what is used throughtout library)
   EXP_CHK_ERRNO(tcgetattr(port_fd_, &termios_new_) == 0, return -1)
 
-  //used by select() in SerialCom::Read() and SerialCom::Write()
+  // used by select() in SerialCom::Read() and SerialCom::Write()
   FD_ZERO(&write_fd_set_);
   FD_SET(port_fd_, &write_fd_set_);
   FD_ZERO(&read_fd_set_);
@@ -83,7 +83,6 @@ int SerialCom::SetDefaultControlFlags() {
 
 int SerialCom::SetOutputType(const OutputType type) {
   EXP_CHK(is_init_, return -1)
-
   switch (type) {
     case OutputType::ProcessedOutput:
       termios_new_.c_oflag |= OPOST;
@@ -102,19 +101,18 @@ int SerialCom::SetOutputType(const OutputType type) {
 
 int SerialCom::SetInputType(const InputType type) {
   EXP_CHK(is_init_, return -1)
-
   switch (type) {
     case InputType::CanonicalInput:
       termios_new_.c_lflag |= (ICANON | ECHO | ECHOE);
       break;
     case InputType::RawInput:
-      termios_new_.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+      termios_new_.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
+      termios_new_.c_iflag &= ~(INLCR | IGNCR | ICRNL);
       break;
     default:
       printf("%s - invalid InputType\n", CURRENT_FUNC);
       return -1;
   }
-  
   EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return -1)
   return 0;
 }
@@ -238,7 +236,6 @@ speed_t SerialCom::GetSpeedVal(const unsigned int baud_rate) {
 
 int SerialCom::SetOutBaudRate(const unsigned int baud_rate) {
   speed_t speed;
-  
   EXP_CHK(is_init_, return -1)
   EXP_CHK_M((speed = GetSpeedVal(baud_rate)) != 0, return -1,
              std::string("invalid baud rate: ") + std::to_string(baud_rate));
@@ -251,7 +248,6 @@ int SerialCom::SetOutBaudRate(const unsigned int baud_rate) {
 
 int SerialCom::SetInBaudRate(const unsigned int baud_rate) {
   speed_t speed;
-  
   EXP_CHK(is_init_, return -1)
   EXP_CHK_M((speed = GetSpeedVal(baud_rate)) != 0, return -1,
              std::string("invalid baud rate: ") + std::to_string(baud_rate));
@@ -265,9 +261,9 @@ int SerialCom::SetInBaudRate(const unsigned int baud_rate) {
 int SerialCom::SetCharSize(const unsigned int char_size) {
   EXP_CHK(is_init_, return -1)
   EXP_CHK(char_size >= 5 || char_size <= 8, return -1)
-  
+
   termios_new_.c_cflag &= ~CSIZE;
-  
+
   switch (char_size) {
     case 5:
       termios_new_.c_cflag |= CS5; break;
@@ -299,9 +295,6 @@ int SerialCom::GetCharSize(unsigned int &char_size) {
     char_size = 5;
 
   EXP_CHK_M(char_size != 0, return -1, "could not determine char size")
-    
-  //printf("CS5: %d\nCS6: %d\nCS7: %d\nCS8: %d\n", CS5, CS6, CS7, CS8);
-  //printf("CSTOPB: %d\nCSIZE: %d\nPARENB: %d\nPARODD: %d\n", CSTOPB, CSIZE, PARENB, PARODD);
   return 0;
 }
 
@@ -393,9 +386,9 @@ int SerialCom::SetParityChecking(const bool enable, const bool ignore, const boo
 int SerialCom::SetIgnoreBreakCondition(const bool ignore) {
   EXP_CHK(is_init_, return -1)
   if (ignore) {
-    termios_new_.c_cflag |= IGNBRK;  // ignore break conditions
+    termios_new_.c_iflag |= ~(IGNBRK | BRKINT);  // ignore break conditions
   } else {
-    termios_new_.c_cflag &= ~IGNBRK;
+    termios_new_.c_iflag &= ~(IGNBRK | BRKINT);
   }
   EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_new_) == 0, return -1)
   return 0;
