@@ -36,9 +36,9 @@ class Semaphore{
               const bool try_create = true,
               const bool must_create = false,
               const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) {
-      EXP_CHK(!is_init_, return(true))
-      EXP_CHK(sem_name.size() > 0 && sem_name.size() <= NAME_MAX-4, return(false))
-      EXP_CHK(sem_name[0] == '/', return(false))
+      EXP_CHK(!is_init_, return true)
+      EXP_CHK(sem_name.size() > 0, return false)
+      EXP_CHK(sem_name[0] == '/', return false)
 
       created_ = false;
       if (try_create) {
@@ -51,7 +51,7 @@ class Semaphore{
         created_ = (errno != EEXIST);
       }
       if (!created_) {
-        EXP_CHK_ERRNO((sem_addr_ = sem_open(sem_name.c_str(), 0)) != SEM_FAILED, return(false))
+        EXP_CHK_ERRNO((sem_addr_ = sem_open(sem_name.c_str(), 0)) != SEM_FAILED, return false)
       }
 
       sem_name_ = sem_name;
@@ -60,13 +60,13 @@ class Semaphore{
     }
 
     bool Uninit() {
-      EXP_CHK(is_init_, return(true))
-      EXP_CHK_ERRNO(sem_close(sem_addr_) == 0, return(false))
+      EXP_CHK(is_init_, return true)
+      EXP_CHK_ERRNO(sem_close(sem_addr_) == 0, return false)
       // Only the creator should mark the shm for removal. sem_unlink() tells OS
       // it can remove the named semaphore once all processes using the
       // semaphore call sem_close on it.
       if (created_) {
-        EXP_CHK_ERRNO(sem_unlink(sem_name_.c_str()) == 0, return(false))
+        EXP_CHK_ERRNO(sem_unlink(sem_name_.c_str()) == 0, return false)
       }
       sem_name_ = "";
       is_init_ = created_ = false;
@@ -80,8 +80,8 @@ class Semaphore{
     to lock the semaphore.
     */
     bool Post() {
-      EXP_CHK(is_init_, return(false))
-      EXP_CHK_ERRNO(sem_post(sem_addr_) == 0, return(false))
+      EXP_CHK(is_init_, return false)
+      EXP_CHK_ERRNO(sem_post(sem_addr_) == 0, return false)
       return true;
     }
 
@@ -94,8 +94,8 @@ class Semaphore{
     interrupts the call.
     */
     bool Wait() {
-      EXP_CHK(is_init_, return(false))
-      EXP_CHK_ERRNO(sem_wait(sem_addr_) == 0, return(false))
+      EXP_CHK(is_init_, return false)
+      EXP_CHK_ERRNO(sem_wait(sem_addr_) == 0, return false)
       return true;
     }
 
@@ -105,8 +105,8 @@ class Semaphore{
     instead of blocking.
     */
     bool TryWait() {
-      EXP_CHK(is_init_, return(false))
-      EXP_CHK_ERRNO(sem_trywait(sem_addr_) == 0, return(false))
+      EXP_CHK(is_init_, return false)
+      EXP_CHK_ERRNO(sem_trywait(sem_addr_) == 0, return false)
       return true;
     }
 
@@ -131,11 +131,11 @@ class Semaphore{
     Furthermore, the validity of abs_timeout is not checked in this case.
     */
     bool TimedWait(const time_t time_sec, const long time_nanosec) {
-      EXP_CHK(is_init_, return(false))
+      EXP_CHK(is_init_, return false)
       timespec abs_timeout;
       abs_timeout.tv_sec = time_sec;
       abs_timeout.tv_nsec = time_nanosec;
-      EXP_CHK_ERRNO(sem_timedwait(sem_addr_, &abs_timeout) == 0, return(false))
+      EXP_CHK_ERRNO(sem_timedwait(sem_addr_, &abs_timeout) == 0, return false)
       return true;
     }
 
