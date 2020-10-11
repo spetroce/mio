@@ -106,7 +106,12 @@ class Semaphore{
     */
     bool TryWait() {
       EXP_CHK(is_init_, return false)
-      EXP_CHK_ERRNO(sem_trywait(sem_addr_) == 0, return false)
+      if (sem_trywait(sem_addr_) == -1) {
+        if (errno != EAGAIN) {
+          std::cout << FFL_STRM << ERRNO_STRM << std::endl;
+        }
+        return false;
+      }
       return true;
     }
 
@@ -135,7 +140,12 @@ class Semaphore{
       timespec abs_timeout;
       abs_timeout.tv_sec = time_sec;
       abs_timeout.tv_nsec = time_nanosec;
-      EXP_CHK_ERRNO(sem_timedwait(sem_addr_, &abs_timeout) == 0, return false)
+      if (sem_timedwait(sem_addr_, &abs_timeout) == -1) {
+        if (errno != ETIMEDOUT) {
+          std::cout << FFL_STRM << ERRNO_STRM << std::endl;
+        }
+        return false;
+      }
       return true;
     }
 
