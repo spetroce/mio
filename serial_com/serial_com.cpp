@@ -49,8 +49,9 @@ int SerialCom::Init(const char *path_name, int flags) {
 int SerialCom::Uninit(const bool kRestoreSettings) {
   EXP_CHK(is_init_, return 0)
 
-  if (kRestoreSettings)
+  if (kRestoreSettings) {
     EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_orig_) == 0, return -1)
+  }
   
   close(port_fd_);
   port_fd_ = 0;
@@ -485,8 +486,9 @@ int SerialCom::Write(const void *data_buf, const unsigned int data_buf_len, cons
   }
   
   //tcdrain() function blocks until all output data is written to fildes
-  if (drain_buffer)
+  if (drain_buffer) {
     EXP_CHK_ERRNO(tcdrain(port_fd_) != -1, return -1);
+  }
   return 0;
 }
 

@@ -159,7 +159,7 @@ class SharedMemory {
       created_ = false;
       if (try_create) {
         shm_fd_ = shm_open(shm_name.c_str(), O_CREAT | O_EXCL | oflag, mode);
-        if (shm_fd_ == -1 && (errno == EEXIST && must_create || errno != EEXIST)) {
+        if (shm_fd_ == -1 && ((errno == EEXIST && must_create) || errno != EEXIST)) {
           std::cerr << FL_STRM << "shm_open() error. " << ERRNO_STRM << std::endl;
           return false;
         }

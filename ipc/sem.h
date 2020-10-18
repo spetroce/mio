@@ -14,8 +14,8 @@ namespace mio{
 
 class Semaphore{
   private:
-    std::string sem_name_;
     bool is_init_, created_;
+    std::string sem_name_;
 
   public:
     sem_t *sem_addr_;
@@ -23,8 +23,9 @@ class Semaphore{
     Semaphore() : is_init_(false), created_(false), sem_name_("") {}
 
     ~Semaphore() {
-      if (is_init_)
+      if (is_init_) {
         EXP_CHK(Uninit() == true, return)
+      }
     }
 
     // If try_create is true and must_create is false, Init will attempt to
@@ -43,7 +44,7 @@ class Semaphore{
       created_ = false;
       if (try_create) {
         sem_addr_ = sem_open(sem_name.c_str(), O_CREAT | O_EXCL, mode, initial_sem_value);
-        if (sem_addr_ == SEM_FAILED && (errno == EEXIST && must_create || errno != EEXIST)) {
+        if (sem_addr_ == SEM_FAILED && ((errno == EEXIST && must_create) || errno != EEXIST)) {
           std::cerr << FL_STRM << "sem_open() error. " << ERRNO_STRM << std::endl;
           return false;
         }
