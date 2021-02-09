@@ -17,9 +17,9 @@ SerialCom::~SerialCom() {
 }
 
 
-int SerialCom::Init(const char *path_name, int flags) {
+int SerialCom::Init(std::string dev_path, int flags) {
   EXP_CHK(!is_init_, return 0)
-  if ((port_fd_ = open(path_name, flags)) == -1) {
+  if ((port_fd_ = open(dev_path.c_str(), flags)) == -1) {
     perror("SerialCom::Init() - open()");
     if (errno == EACCES)
       printf("It's possible that the current user is not part of the dialout group\n"
@@ -35,8 +35,14 @@ int SerialCom::Init(const char *path_name, int flags) {
   // get original termios settings and put in termios_new_ (what is used throughtout library)
   EXP_CHK_ERRNO(tcgetattr(port_fd_, &termios_new_) == 0, return -1)
   
+  dev_path_ = dev_path;
   is_init_ = true;
   return 0;
+}
+
+
+int SerialCom::Init(const char *dev_path, int flags) {
+  return Init(std::string(dev_path), flags);
 }
 
 
@@ -48,6 +54,7 @@ int SerialCom::Uninit(const bool kRestoreSettings) {
   }
   
   close(port_fd_);
+  dev_path_.clear();
   port_fd_ = 0;
   is_init_ = false;
   return 0;
@@ -56,6 +63,11 @@ int SerialCom::Uninit(const bool kRestoreSettings) {
 
 int SerialCom::GetPortFD() {
   return port_fd_;
+}
+
+
+std::string SerialCom::GetDevPath() {
+  return dev_path_;
 }
 
 

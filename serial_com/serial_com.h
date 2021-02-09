@@ -35,6 +35,7 @@ class SerialCom{
   private:
     bool is_init_;
     int port_fd_;
+    std::string dev_path_;
 
     struct termios termios_orig_, termios_new_;
 
@@ -42,10 +43,12 @@ class SerialCom{
     SerialCom();
     ~SerialCom();
 
-    int Init(const char *path_name, int flags = O_RDWR | O_NOCTTY | O_NDELAY); //must have O_RDONLY, O_WRONLY, or O_RDWR flag
+    int Init(std::string dev_path, int flags = O_RDWR | O_NOCTTY | O_NDELAY); //must have O_RDONLY, O_WRONLY, or O_RDWR flag
+    int Init(const char *dev_path, int flags = O_RDWR | O_NOCTTY | O_NDELAY);
     int Uninit(const bool kRestoreSettings = true);
 
     int GetPortFD();
+    std::string GetDevPath();
     bool IsInit();
 
     int SetInputType(const InputType type);
