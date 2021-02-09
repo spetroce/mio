@@ -34,12 +34,6 @@ int SerialCom::Init(const char *path_name, int flags) {
   EXP_CHK_ERRNO(tcgetattr(port_fd_, &termios_orig_) == 0, return -1)
   // get original termios settings and put in termios_new_ (what is used throughtout library)
   EXP_CHK_ERRNO(tcgetattr(port_fd_, &termios_new_) == 0, return -1)
-
-  // used by select() in SerialCom::Read() and SerialCom::Write()
-  FD_ZERO(&write_fd_set_);
-  FD_SET(port_fd_, &write_fd_set_);
-  FD_ZERO(&read_fd_set_);
-  FD_SET(port_fd_, &read_fd_set_);
   
   is_init_ = true;
   return 0;
@@ -50,7 +44,7 @@ int SerialCom::Uninit(const bool kRestoreSettings) {
   EXP_CHK(is_init_, return 0)
 
   if (kRestoreSettings) {
-    EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_orig_) == 0, return -1)
+    EXP_CHK_ERRNO(tcsetattr(port_fd_, TCSANOW, &termios_orig_) == 0, void(0))
   }
   
   close(port_fd_);
@@ -460,6 +454,7 @@ int SerialCom::Write(const void *data_buf, const unsigned int data_buf_len, cons
   
   int num_byte, num_active_fd;
   unsigned int num_timeout = 0, num_byte_written = 0;
+  fd_set write_fd_set;
   struct timeval tv, tv_temp;
 
   // Set timeout struct
@@ -468,15 +463,14 @@ int SerialCom::Write(const void *data_buf, const unsigned int data_buf_len, cons
   
   while (data_buf_len > num_byte_written) {
     do {
-      tv_temp = tv; //select may be modifying tv_temp so reset
-      num_active_fd = select(port_fd_ + 1, NULL, &write_fd_set_, NULL, &tv_temp); //getdtablesize()
-      // This error is sometimes thrown, so I check separately 
-      EXP_CHK_ERRNO_M(num_active_fd != -1 && errno != EINTR, return -1, "select() EINTR error")
+      FD_ZERO(&write_fd_set);
+      FD_SET(port_fd_, &write_fd_set);
+      tv_temp = tv;  // Select may be modifying tv_temp so reset
+      num_active_fd = select(port_fd_ + 1, NULL, &write_fd_set, NULL, &tv_temp); //getdtablesize()
       EXP_CHK_ERRNO_M(num_active_fd != -1, return -1, "select() error")
       if (num_active_fd == 0) {
         ++num_timeout;
-        printf("%s - timeout occurrence %d\n", CURRENT_FUNC, num_timeout);
-        EXP_CHK(num_timeout < time_out_limit, return -1)
+        EXP_CHK_M(num_timeout < time_out_limit, return -1, "timeout occured")
       } else{
         EXP_CHK_ERRNO((num_byte = write(port_fd_, static_cast<const uint8_t*>(data_buf)+num_byte_written,
                                         data_buf_len-num_byte_written)) != -1, return -1)
@@ -511,12 +505,10 @@ int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned 
                     const unsigned int time_out_sec, const unsigned int time_out_limit) {
   EXP_CHK(is_init_, return -1)
   EXP_CHK(req_buffer_len > 0, return 0) 
-//  int nNumBytes;
-//  ioctl(port_fd_, FIONREAD, &nNumBytes);
-//  printf("input bytes available: %d\n", nNumBytes);
   
   int num_byte, num_active_fd;
   unsigned int num_timeout = 0;
+  fd_set read_fd_set;
   struct timeval tv, tv_temp;
 
   //Wait up to five seconds.
@@ -526,18 +518,24 @@ int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned 
   num_read_byte = 0;
   while (req_buffer_len > num_read_byte) {
     do {
-      tv_temp = tv; //select may be modifying tv_temp so reset
-      num_active_fd = select(port_fd_ + 1, &read_fd_set_, NULL, NULL, &tv_temp); //getdtablesize()
-      //this error is sometimes thrown, so I check separately 
-      EXP_CHK_ERRNO_M(num_active_fd != -1 && errno != EINTR, return -1, "select() EINTR error")
+      FD_ZERO(&read_fd_set);
+      FD_SET(port_fd_, &read_fd_set);
+      tv_temp = tv;  // Select may be modifying tv_temp so reset
+      num_active_fd = select(port_fd_ + 1, &read_fd_set, NULL, NULL, &tv_temp); //getdtablesize()
       EXP_CHK_ERRNO_M(num_active_fd != -1, return -1, "select() error")
       if (num_active_fd == 0) {
         ++num_timeout;
-        printf("%s - timeout occurrence %d\n", CURRENT_FUNC, num_timeout);
-        EXP_CHK(num_timeout < time_out_limit, return -1)
+        EXP_CHK_M(num_timeout < time_out_limit, return -1, "timeout occured")
       } else{
         EXP_CHK_ERRNO((num_byte = read(port_fd_, reinterpret_cast<uint8_t*>(data_buf)+num_read_byte, 
                                        req_buffer_len-num_read_byte)) != -1, return -1)
+        // If a USB TTL cable is disconnected (ie. the file associated with
+        // port_fd_ is deleted), select will return immediately with
+        // num_active_fd set to 1. An easy way to handle this edge case is the
+        // any calls to read() will not actually read any bytes.
+        if (time_out_sec > 0) {
+          EXP_CHK_M(num_byte > 0, return -1, "file descriptor error")
+        }
       }
     } while (num_active_fd == 0); //loop for timeout check instances
     num_read_byte += num_byte;

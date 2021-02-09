@@ -37,7 +37,6 @@ class SerialCom{
     int port_fd_;
 
     struct termios termios_orig_, termios_new_;
-    fd_set write_fd_set_, read_fd_set_;
 
   public:
     SerialCom();
