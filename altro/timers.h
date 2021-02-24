@@ -8,6 +8,32 @@
 
 namespace mio{
 
+double diff(timespec time_start, timespec time_stop) {
+  timespec time_diff;
+  if ((time_stop.tv_nsec - time_start.tv_nsec) < 0) {
+    time_diff.tv_sec = time_stop.tv_sec-time_start.tv_sec - 1;
+    time_diff.tv_nsec = 1000000000 + time_stop.tv_nsec - time_start.tv_nsec;
+  } else {
+    time_diff.tv_sec = time_stop.tv_sec - time_start.tv_sec;
+    time_diff.tv_nsec = time_stop.tv_nsec - time_start.tv_nsec;
+  }
+  return static_cast<double>(time_diff.tv_sec) +
+         (static_cast<double>(time_diff.tv_nsec) * 0.000000001);
+}
+
+#define MIO_HR_TIMER_START \
+  timespec time_start, time_stop; \
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_start);
+
+#define MIO_HR_TIMER_STOP \
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_stop);
+
+#define MIO_HR_TIMER_DIFF diff(time_start, time_stop)
+
+#define MIO_HR_TIMER_DIFF_STREAM \
+std::fixed << std::setprecision(9) << diff(time_start, time_stop)
+
+
 class SysTimer{
   private:
     timeval tv_clk_a_, tv_clk_b_;
