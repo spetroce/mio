@@ -28,10 +28,10 @@ double diff(timespec time_start, timespec time_stop) {
 #define MIO_HR_TIMER_STOP \
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_stop);
 
-#define MIO_HR_TIMER_DIFF diff(time_start, time_stop)
+#define MIO_HR_TIMER_DIFF mio::diff(time_start, time_stop)
 
 #define MIO_HR_TIMER_DIFF_STREAM \
-std::fixed << std::setprecision(9) << diff(time_start, time_stop)
+std::fixed << std::setprecision(9) << mio::diff(time_start, time_stop)
 
 
 class SysTimer{
