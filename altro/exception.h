@@ -1,3 +1,73 @@
+#include <stdexcept>
+#if __cplusplus > 199711L
+#include <system_error>
+#endif
+
+#define FRIENDLY_RETHROW(exception_) \
+{ \
+  std::cout << "Exception caught here: " << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << "\n"; \
+  throw exception_; \
+}
+
+//Exception system macros
+#define EXCEPTION_MACRO_E(exp, exception_type) \
+if (!!(exp)) ; else { \
+  std::ostringstream stream; \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << ": (" << #exp << ") is false.\n"; \
+  throw exception_type( stream.str() ); \
+}
+
+#define EXCEPTION_MACRO_M(msg, exception_type) \
+{ \
+  std::ostringstream stream; \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << ":" << msg << "\n"; \
+  throw exception_type(stream.str()); \
+}
+
+#define EXCEPTION_MACRO_EM(exp, exception_type, opt_msg) \
+if (!!(exp)) ; else { \
+  std::ostringstream stream; \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << \
+            ": (" << #exp << ") is false. " << opt_msg << "\n"; \
+  throw exception_type(stream.str()); \
+}
+
+//std::runtime_error
+#define STD_RT_ERR_E(exp) EXCEPTION_MACRO_E(exp, std::runtime_error)
+#define STD_RT_ERR_M(msg) EXCEPTION_MACRO_M(msg, std::runtime_error)
+#define STD_RT_ERR_EM(exp, opt_msg) EXCEPTION_MACRO_EM(exp, std::runtime_error, opt_msg)
+
+//std::logic_error
+#define STD_LOG_ERR_E(exp) EXCEPTION_MACRO_E(exp, std::logic_error)
+#define STD_LOG_ERR_M(msg) EXCEPTION_MACRO_M(msg, std::logic_error)
+#define STD_LOG_ERR_EM(exp, opt_msg) EXCEPTION_MACRO_EM(exp, std::logic_error, opt_msg)
+
+//std::invalid_argument()
+#define STD_INVALID_ARG_E(exp) EXCEPTION_MACRO_E(exp, std::invalid_argument)
+#define STD_INVALID_ARG_M(msg) EXCEPTION_MACRO_M(msg, std::invalid_argument)
+#define STD_INVALID_ARG_EM(exp, opt_msg) EXCEPTION_MACRO_EM(exp, std::invalid_argument, opt_msg)
+
+//std::length_error()
+#define STD_LENGTH_ERROR_E(exp) EXCEPTION_MACRO_E(exp, std::length_error)
+#define STD_LENGTH_ERROR_M(msg) EXCEPTION_MACRO_M(msg, std::length_error)
+#define STD_LENGTH_ERROR_EM(exp, opt_msg) EXCEPTION_MACRO_EM(exp, std::length_error, opt_msg)
+
+//std::system_error exception macro
+#define EXP_CHK_SYSERR(exp) \
+if (!!(exp)) ; else { \
+  std::ostringstream stream; \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << ": (" << #exp << ") is false. System message"; \
+  throw std::system_error( errno, std::system_category(), stream.str() ); \
+}
+
+#define EXP_CHK_SYSERR_M(exp, opt_msg) \
+if (!!(exp)) ; else { \
+  std::ostringstream stream; \
+  stream << FILENAME << ":" << CURRENT_FUNC << ":" << __LINE__ << \
+            ": (" << #exp << ") is false. " << opt_msg << ". System message"; \
+  throw std::system_error( errno, std::system_category(), stream.str() ); \
+}
+
 /*
   below is a modified version of OpenCV's assertion/error system found in base.hpp, system.cpp, core.hpp
   just another way to do things...
@@ -74,6 +144,16 @@ inline void error(const mio::Exception &exc){
 inline void error(int code, const std::string &err, const char *func, const char *file, int line){
   mio::error(mio::Exception(code, err, func, file, line));
 }
+
+#define MIO_ASSERT( expr ) \
+if (!!(expr)) ; \
+else mio::error( mio::ErrCode::StsAssert, #expr, CURRENT_FUNC, FILENAME, __LINE__ )
+
+#ifdef _DEBUG
+#define MIO_DBG_ASSERT(expr) MIO_ASSERT(expr)
+#else
+#define MIO_DBG_ASSERT(expr)
+#endif
 
 } //namespace mio
 #endif

@@ -7,7 +7,6 @@
 #include <unistd.h> //getdtablesize()
 #include <stdint.h>
 #include <fcntl.h>
-#include "mio/altro/error.h"
 
 enum ParityType {
   NoneParity = 0,
@@ -19,18 +18,18 @@ enum ParityType {
 #endif
 };
 
-enum InputType{
+enum InputType {
   CanonicalInput = 0,
   RawInput
 };
 
-enum OutputType{
+enum OutputType {
   ProcessedOutput = 0, 
   RawOutput
 };
 
 
-class SerialCom{
+class SerialCom {
 
   private:
     bool is_init_;
