@@ -463,13 +463,13 @@ int SerialCom::GetSoftwareFlowControl(bool &software_flow_control) {
 }
 
 
-int SerialCom::Write(const void *data_buf, const unsigned int data_buf_len, const bool drain_buffer, 
-                     const unsigned int time_out_sec, const unsigned int time_out_limit) {
+int SerialCom::Write(const void *data_buf, const size_t data_buf_len, const bool drain_buffer, 
+                     const size_t time_out_sec, const size_t time_out_limit) {
   LOG_EXP(warning, is_init_, return -1)
   LOG_EXP(error, data_buf_len > 0, return 0)
   
   int num_byte, num_active_fd;
-  unsigned int num_timeout = 0, num_byte_written = 0;
+  size_t num_timeout = 0, num_byte_written = 0;
   fd_set write_fd_set;
   struct timeval tv, tv_temp;
 
@@ -489,7 +489,7 @@ int SerialCom::Write(const void *data_buf, const unsigned int data_buf_len, cons
         LOG_EXP_M(error, num_timeout < time_out_limit, return -1, "timeout occured")
       } else{
         LOG_EXP_ERRNO(error, (num_byte = write(port_fd_, static_cast<const uint8_t*>(data_buf)+num_byte_written,
-                                        data_buf_len-num_byte_written)) != -1, return -1)
+                                               data_buf_len-num_byte_written)) != -1, return -1)
       }
     }while (num_active_fd == 0); //loop for timeout check instances
     num_byte_written += num_byte;
@@ -513,17 +513,16 @@ int SerialCom::SendByte(void *single_byte) {
 
 
 /*
-unsigned char *pucData = input buffer data (MUST BE LARGE ENOUGH!)
-int nReqLen            = attempt to read up to nReqLen number of bytes from port_fd_
-int &nActualLen        = number of bytes actually received from port
+  req_buffer_len ... attempt to read up to nReqLen number of bytes from port_fd_
+  num_byte_read .... number of bytes actually received from port
 */
-int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned int &num_read_byte,
-                    const unsigned int time_out_sec, const unsigned int time_out_limit) {
+int SerialCom::Read(void *data_buf, const size_t req_buffer_len, unsigned int &num_byte_read,
+                    const size_t time_out_sec, const size_t time_out_limit) {
   LOG_EXP(warning, is_init_, return -1)
   LOG_EXP(error, req_buffer_len > 0, return 0) 
   
   int num_byte, num_active_fd;
-  unsigned int num_timeout = 0;
+  size_t num_timeout = 0;
   fd_set read_fd_set;
   struct timeval tv, tv_temp;
 
@@ -531,8 +530,8 @@ int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned 
   tv.tv_sec = time_out_sec;
   tv.tv_usec = 0;
 
-  num_read_byte = 0;
-  while (req_buffer_len > num_read_byte) {
+  num_byte_read = 0;
+  while (req_buffer_len > num_byte_read) {
     do {
       FD_ZERO(&read_fd_set);
       FD_SET(port_fd_, &read_fd_set);
@@ -543,8 +542,8 @@ int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned 
         ++num_timeout;
         LOG_EXP_M(error, num_timeout < time_out_limit, return -1, "timeout occured")
       } else{
-        LOG_EXP_ERRNO(error, (num_byte = read(port_fd_, reinterpret_cast<uint8_t*>(data_buf)+num_read_byte, 
-                                       req_buffer_len-num_read_byte)) != -1, return -1)
+        LOG_EXP_ERRNO(error, (num_byte = read(port_fd_, reinterpret_cast<uint8_t*>(data_buf)+num_byte_read, 
+                                              req_buffer_len-num_byte_read)) != -1, return -1)
         // If a USB TTL cable is disconnected (ie. the file associated with
         // port_fd_ is deleted), select will return immediately with
         // num_active_fd set to 1. An easy way to handle this edge case is the
@@ -554,10 +553,64 @@ int SerialCom::Read(void *data_buf, const unsigned int req_buffer_len, unsigned 
         }
       }
     } while (num_active_fd == 0); //loop for timeout check instances
-    num_read_byte += num_byte;
+    num_byte_read += num_byte;
   }
   
   return 0;
+}
+
+
+/*
+  term_str ....... this pattern must be read before the timeout to terminate Read()
+  term_str_len ... the length of the termination string
+  returns the number of bytes read
+*/
+int SerialCom::Read(void *data_buf, const char *term_str, size_t term_str_len,
+                    const size_t time_out_sec, const size_t time_out_limit) {
+  LOG_EXP(warning, is_init_, return -1)
+  LOG_EXP(error, term_str_len > 0, return 0) 
+  
+  int num_byte, num_active_fd;
+  size_t num_timeout = 0;
+  fd_set read_fd_set;
+  struct timeval tv, tv_temp;
+
+  //Wait up to five seconds.
+  tv.tv_sec = time_out_sec;
+  tv.tv_usec = 0;
+
+  size_t num_byte_read = 0;
+  while (1) {
+    if (num_byte_read >= term_str_len) {
+      if (std::memcmp(reinterpret_cast<char*>(data_buf)+num_byte_read-term_str_len, term_str, term_str_len) == 0) {
+        break;
+      }
+    }
+    do {
+      FD_ZERO(&read_fd_set);
+      FD_SET(port_fd_, &read_fd_set);
+      tv_temp = tv;  // Select may be modifying tv_temp so reset
+      num_active_fd = select(port_fd_ + 1, &read_fd_set, NULL, NULL, &tv_temp); //getdtablesize()
+      EXP_CHK_ERRNO_M(num_active_fd != -1, return -1, "select() error")
+      if (num_active_fd == 0) {
+        ++num_timeout;
+        LOG_EXP_M(error, num_timeout < time_out_limit, return -1, "timeout occured")
+      } else{
+        LOG_EXP_ERRNO(error,
+          (num_byte = read(port_fd_, reinterpret_cast<uint8_t*>(data_buf)+num_byte_read, 1)) != -1, return -1)
+        // If a USB TTL cable is disconnected (ie. the file associated with
+        // port_fd_ is deleted), select will return immediately with
+        // num_active_fd set to 1. An easy way to handle this edge case is the
+        // any calls to read() will not actually read any bytes.
+        if (time_out_sec > 0) {
+          LOG_EXP_M(error, num_byte > 0, return -1, "file descriptor error")
+        }
+      }
+    } while (num_active_fd == 0); //loop for timeout check instances
+    num_byte_read += num_byte;
+  }
+  
+  return num_byte_read;
 }
 
 

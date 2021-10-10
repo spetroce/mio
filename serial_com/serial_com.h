@@ -71,11 +71,13 @@ class SerialCom {
     int SetSoftwareFlowControl(const bool software_flow_control);
     int GetSoftwareFlowControl(bool &software_flow_control);
     
-    int Write(const void *data_buf, const unsigned int data_buf_len, const bool drain_buffer, 
-               const unsigned int time_out_sec = 3, const unsigned int time_out_limit = 3);
+    int Write(const void *data_buf, const size_t data_buf_len, const bool drain_buffer, 
+              const size_t time_out_sec = 3, const size_t time_out_limit = 3);
     int SendByte(void *single_byte);
-    int Read(void *pvDataBuf, const unsigned int req_buffer_len, unsigned int &num_read_byte,
-              const unsigned int time_out_sec = 3, const unsigned int time_out_limit = 3);
+    int Read(void *pvDataBuf, const size_t req_buffer_len, unsigned int &num_read_byte,
+             const size_t time_out_sec = 3, const size_t time_out_limit = 3);
+    int Read(void *data_buf, const char *term_str, size_t term_str_len,
+             const size_t time_out_sec = 3, const size_t time_out_limit = 3);
     
     int CheckCTS(bool &state);
     int SetRTS(const bool state);
